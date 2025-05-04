@@ -1,0 +1,22 @@
+name: software
+
+services:
+  db:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=software
+      - POSTGRES_PASSWORD=software
+      - POSTGRES_DB=software
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "software" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - host_network
+
+networks:
+  host_network:
