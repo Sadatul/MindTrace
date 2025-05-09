@@ -1,0 +1,35 @@
+meta {
+  name: GetReminder
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{host}}/v1/logs/:id
+  body: none
+  auth: bearer
+}
+
+params:path {
+  id: 
+}
+
+docs {
+  **Desc**: Used to retrieve reminder \
+  **Authorization**: USER or CAREGIVER \
+  **Response Bodies**:
+  ```
+  status: 200
+  
+  {
+    "msg": "log with :id"
+    "reminder": {
+        "id": "string",
+        "type": "string",
+        "title": "string",
+        "description": "string",
+        "time": "cron format string"
+      }
+  }
+  ```
+}

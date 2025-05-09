@@ -1,0 +1,24 @@
+meta {
+  name: DeleteReminder
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{host}}/v1/logs/:id
+  body: none
+  auth: bearer
+}
+
+params:path {
+  id: 
+}
+
+docs {
+  **Desc**: Delete reminder \
+  **Authorization**: USER or CAREGIVER \
+  **Response Bodies**:
+  ```
+  status: 204
+  ```
+}

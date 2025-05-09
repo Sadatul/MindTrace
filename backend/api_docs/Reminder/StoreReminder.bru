@@ -1,0 +1,40 @@
+meta {
+  name: StoreReminder
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{host}}/v1/logs
+  body: json
+  auth: bearer
+}
+
+body:json {
+  {
+    "type": "string",
+    "title": "string",
+    "description": "string",
+    "time": "cron format string"
+  }
+}
+
+docs {
+  **Desc**: Used to store logs \
+  **Authorization**: USER or CAREGIVER \
+  **Response Bodies**:
+  ```
+  status: 201
+  
+  {
+    "msg": "SAVED Reminder",
+    "reminder": {
+      "id": "string",
+      "type": "string",
+      "title": "string",
+      "description": "string",
+      "time": "cron format string"
+    }
+  }
+  ```
+}

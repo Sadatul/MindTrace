@@ -1,0 +1,51 @@
+meta {
+  name: GetReminders
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{host}}/v1/logs?type="type"&title="title"&description="semantic search by description"&starttime="start time of search interval"&endtime="end time of search interval"&size="size"&page="page number"
+  body: none
+  auth: bearer
+}
+
+params:query {
+  type: "type"
+  title: "title"
+  description: "semantic search by description"
+  starttime: "start time of search interval"
+  endtime: "end time of search interval"
+  size: "size"
+  page: "page number"
+}
+
+docs {
+  **Desc**: Used to retrieve reminders \
+  **Authorization**: USER or CAREGIVER \
+  **Response Bodies**:
+  ```
+  status: 200
+  {
+    "content":[
+      {
+        "id": "string",
+        "time": "cron time string",
+        "title": "string",
+        "description": "string",
+        "type": "string"
+      }
+    ],
+    "page":{
+      "size": number,
+      "number": pagenumber (starts from 0),
+      "totalElements": 1,
+      "totalPages": 1
+    }
+  }
+  ```
+  
+  **NOTES:**
+  * This endpoint has filtering logic. There are two params.
+      1. Event: The user can ask for a certain event. The api will retrieve similar events based on semantic search
+}
