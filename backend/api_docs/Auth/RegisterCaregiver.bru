@@ -1,0 +1,33 @@
+meta {
+  name: RegisterCaregiver
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{host}}/v1/auth/register/caregiver
+  body: json
+  auth: bearer
+}
+
+body:json {
+  {
+    "name": "string",
+    "phone": "string",
+    "email": "string",
+    "image": "string (url)"
+  }
+}
+
+docs {
+  **Desc**: Used for caregiver registration \
+  **Authorization**: CAREGIVER \
+  **Response Bodies**:
+  ```
+  status: 201
+  
+  {
+    "msg": "CAREGIVER CREATED"
+  }
+  ```
+}

@@ -1,0 +1,38 @@
+meta {
+  name: StoreLog
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{host}}/v1/logs
+  body: json
+  auth: bearer
+}
+
+body:json {
+  {
+    "event": "string",
+    "purpose": "string",
+    "time": "integer (how many minutes ago)"
+  }
+}
+
+docs {
+  **Desc**: Used to store logs \
+  **Authorization**: USER \
+  **Response Bodies**:
+  ```
+  status: 201
+  
+  {
+    "msg": "SAVED LOG",
+    "log": {
+      "id": "string",
+      "time": "crono time string",
+      "event": "string",
+      "purpose": "string"
+    }
+  }
+  ```
+}

@@ -1,0 +1,24 @@
+meta {
+  name: healthy
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/v1/public/health
+  body: none
+  auth: inherit
+}
+
+docs {
+  **Desc**: Used for health checks \
+  **Authorization**: None \
+  **Response Bodies**:
+  ```
+  status: 200
+  
+  {
+    "message": "I am healthy"
+  }
+  ```
+}

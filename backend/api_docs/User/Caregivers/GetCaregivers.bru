@@ -1,0 +1,41 @@
+meta {
+  name: GetCaregivers
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/v1/user/caregivers?name&page&limit
+  body: none
+  auth: bearer
+}
+
+params:query {
+  name: 
+  page: 
+  limit: 
+}
+
+docs {
+  **Desc**: Used to retrieve caregivers by user \
+  **Authorization**: USER \
+  **Response Bodies**:
+  ```
+  status: 200
+  {
+    "content":[
+      {
+        "id": "string",
+        "name": "string",
+        "profile_picture": "string"
+      }
+    ],
+    "page":{
+      "size": number,
+      "number": pagenumber (starts from 0),
+      "totalElements": 1,
+      "totalPages": 1
+    }
+  }
+  ```
+}

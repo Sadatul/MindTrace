@@ -1,0 +1,38 @@
+meta {
+  name: RegisterUser
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{host}}/v1/auth/register/user
+  body: json
+  auth: bearer
+}
+
+body:json {
+  {
+    "name": "string",
+    "bod": "string(date)",
+    "gender": "string",
+    "timezone": "string",
+    "profile_picture": "string",
+    "primary_contact": {
+      "id": "caregiver id",
+      "relationship": "string"
+    }
+  }
+}
+
+docs {
+  **Desc**: Used for user registration \
+  **Authorization**: USER \
+  **Response Bodies**:
+  ```
+  status: 201
+  
+  {
+    "msg": "USER CREATED"
+  }
+  ```
+}

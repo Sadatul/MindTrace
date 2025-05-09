@@ -1,0 +1,38 @@
+meta {
+  name: GetPatient
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{host}}/v1/caregivers/patients/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 
+}
+
+docs {
+  **Desc**: Used to retrieve patient \
+  **Authorization**: CAREGIVER \
+  **Response Bodies**:
+  ```
+  status: 200
+  {
+    "name": "string",
+    "bod": "string(date)",
+    "gender": "string",
+    "timezone": "string",
+    "profile_picture": "string",
+    "primary_contact": {
+      "id": "caregiver id",
+      "name": "string",
+      "phone": "string",
+      "email": "string",
+      "image": "string (url)"
+    }
+  }
+  ```
+}

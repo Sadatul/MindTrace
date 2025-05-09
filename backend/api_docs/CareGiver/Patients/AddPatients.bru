@@ -1,0 +1,18 @@
+meta {
+  name: AddPatients
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{host}}/v1/caregivers/patients
+  body: json
+  auth: bearer
+}
+
+body:json {
+  {
+    "patientId": "string",
+    "otp": "otp"
+  }
+}

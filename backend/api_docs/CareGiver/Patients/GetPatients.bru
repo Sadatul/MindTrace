@@ -1,0 +1,43 @@
+meta {
+  name: GetPatients
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{host}}/v1/caregivers/patients?name&gender&page&size
+  body: none
+  auth: bearer
+}
+
+params:query {
+  name: 
+  gender: 
+  page: 
+  size: 
+}
+
+docs {
+  **Desc**: Used to retrieve patients \
+  **Authorization**: CAREGIVER \
+  **Response Bodies**:
+  ```
+  status: 200
+  {
+    "content":[
+      {
+        "id": "string",
+        "name": "string",
+        "gender": "string",
+        "profile_picture": "string"
+      }
+    ],
+    "page":{
+      "size": number,
+      "number": pagenumber (starts from 0),
+      "totalElements": 1,
+      "totalPages": 1
+    }
+  }
+  ```
+}

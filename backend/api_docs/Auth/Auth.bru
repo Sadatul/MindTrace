@@ -1,0 +1,42 @@
+meta {
+  name: Auth
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{host}}/v1/auth
+  body: json
+  auth: bearer
+}
+
+body:json {
+  {
+    "role": "CAREGIVER/USER"
+  }
+}
+
+docs {
+  **Desc**: Used when a user logs in \
+  **Authorization**: ANY \
+  **Response Bodies**:
+  ```
+  status: 201
+  
+  {
+    "msg": "NEW USER",
+  }
+  ```
+  ```
+  status: 200
+  
+  {
+    "msg": "USER",
+  }
+  ```
+  
+  
+  **NOTES:**
+  * This endpoint is called each time a user logs in. If it's an old user 200 status is returned. If it is a new user 201 is returned, now the frotend will direct him to a registration page.
+  * When requesting this endpoint, you don't need any specific authorization but you will be required to pass the jwt token you got from firebase.
+}

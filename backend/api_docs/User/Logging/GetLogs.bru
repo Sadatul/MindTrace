@@ -1,0 +1,48 @@
+meta {
+  name: GetLogs
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{host}}/v1/logs?event="semantic search by event"&starttime="start time"&endtime="end time"&page="page number"&size="size"
+  body: none
+  auth: bearer
+}
+
+params:query {
+  event: "semantic search by event"
+  starttime: "start time"
+  endtime: "end time"
+  page: "page number"
+  size: "size"
+}
+
+docs {
+  **Desc**: Used to retrieve logs \
+  **Authorization**: USER \
+  **Response Bodies**:
+  ```
+  status: 200
+  {
+    "content":[
+      {
+        "id": "string",
+        "time": "time",
+        "event": "string",
+        "purpose": "string"
+      }
+    ],
+    "page":{
+      "size": number,
+      "number": pagenumber (starts from 0),
+      "totalElements": 1,
+      "totalPages": 1
+    }
+  }
+  ```
+  
+  **NOTES:**
+  * This endpoint has filtering logic. There are two params.
+      1. Event: The user can ask for a certain event. The api will retrieve similar events based on semantic search
+}

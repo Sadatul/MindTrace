@@ -1,0 +1,24 @@
+meta {
+  name: RemovePatient
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{host}}/v1/caregivers/patients/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 
+}
+
+docs {
+  **Desc**: Used to remove patient from caregiver \
+  **Authorization**: CAREGIVER \
+  **Response Bodies**:
+  ```
+  status: 204
+  ```
+}

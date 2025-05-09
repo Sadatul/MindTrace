@@ -1,0 +1,15 @@
+meta {
+  name: GetPatientOTP
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{host}}/v1/caregivers/patients/:id/otp
+  body: none
+  auth: bearer
+}
+
+params:path {
+  id: 
+}

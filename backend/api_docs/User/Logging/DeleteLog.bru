@@ -1,0 +1,24 @@
+meta {
+  name: DeleteLog
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{host}}/v1/logs/:id
+  body: none
+  auth: bearer
+}
+
+params:path {
+  id: 
+}
+
+docs {
+  **Desc**: Delete log \
+  **Authorization**: USER \
+  **Response Bodies**:
+  ```
+  status: 204
+  ```
+}

@@ -1,0 +1,35 @@
+meta {
+  name: DeleteCaregiver
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{host}}/v1/user/caregivers/:caregiverId?otp=
+  body: none
+  auth: inherit
+}
+
+params:query {
+  otp: 
+}
+
+params:path {
+  caregiverId: 
+}
+
+body:json {
+  {
+    "caregiverId": "string",
+    "otp":"otp"
+  }
+}
+
+docs {
+  **Desc**: Used to remove caregivers by user \
+  **Authorization**: USER \
+  **Response Bodies**:
+  ```
+  status:204
+  ```
+}

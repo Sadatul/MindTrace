@@ -1,0 +1,34 @@
+meta {
+  name: GetLog
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{host}}/v1/logs/:id
+  body: none
+  auth: bearer
+}
+
+params:path {
+  id: 
+}
+
+docs {
+  **Desc**: Used to retrieve log \
+  **Authorization**: USER \
+  **Response Bodies**:
+  ```
+  status: 200
+  
+  {
+    "msg": "log with :id"
+    "log": {
+        "id": "string",
+        "time": "time",
+        "event": "string",
+        "purpose": "string"
+      }
+  }
+  ```
+}

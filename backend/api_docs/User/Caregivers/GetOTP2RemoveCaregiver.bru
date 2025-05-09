@@ -1,0 +1,26 @@
+meta {
+  name: GetOTP2RemoveCaregiver
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{host}}/v1/user/caregivers/:caregiverId/otp
+  body: none
+  auth: inherit
+}
+
+params:path {
+  caregiverId: 
+}
+
+docs {
+  **Desc**: Used to get otp to remove caregivers by user \
+  **Authorization**: USER \
+  **Response Bodies**:
+  ```
+  {
+    "msg": "OTP sent"
+  }
+  ```
+}
