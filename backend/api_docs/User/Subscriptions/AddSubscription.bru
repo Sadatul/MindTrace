@@ -1,0 +1,30 @@
+meta {
+  name: AddSubscription
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{host}}/v1/subscriptions
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "packageId": "string"
+  }
+}
+
+docs {
+  **Desc**: Used to buy subscriptions \
+  **Authorization**: USER \
+  **Response Bodies**:
+  ```
+  status: 202
+  
+  {
+    "msg": "Accepted subscirption request"
+  }
+  ```
+}

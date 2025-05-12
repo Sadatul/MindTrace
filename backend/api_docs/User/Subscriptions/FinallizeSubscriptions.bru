@@ -1,0 +1,19 @@
+meta {
+  name: FinallizeSubscriptions
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{host}}/v1/subsciriptions/confirm
+  body: none
+  auth: inherit
+}
+
+docs {
+  **Desc**: Confirms subscription\
+  **Authorization**: USER or CAREGIVER \
+  
+  **Note**
+  * Called by SSLCommerz
+}
