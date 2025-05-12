@@ -1,0 +1,31 @@
+meta {
+  name: addChat
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{host}}/v1/chats
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "message": "string",
+    "sentBy": "USER/SYSTEM"
+  }
+}
+
+docs {
+  **Desc**: Add chat to database \
+  **Authorization**: USER\
+  **Response Bodies**:
+  ```
+  status: 201
+  
+  {
+    "msg": "SAVED",
+  }
+  ```
+}

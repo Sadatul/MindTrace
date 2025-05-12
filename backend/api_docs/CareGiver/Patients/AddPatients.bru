@@ -16,3 +16,19 @@ body:json {
     "otp": "otp"
   }
 }
+
+docs {
+  **Desc**: Used to add a caregiver for patient with after otp \
+  **Authorization**: CAREGIVER \
+  **Response Bodies**:
+  ```
+  status: 201
+  
+  {
+    "msg": "Added patient",
+  }
+  ```
+  
+  **NOTES:**
+  * OTP will be verified before adding patient
+}
