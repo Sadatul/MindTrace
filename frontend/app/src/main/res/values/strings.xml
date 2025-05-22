@@ -1,0 +1,9 @@
+<resources>
+    <!-- Add your string resources here -->
+    <string name="dementia_caregiver_app">Dementia Caregiver App</string>
+    <string name="login">Login</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="are_you_a_caregiver_or_a_patient">Are you a Caregiver or a Patient?</string>
+    <string name="caregiver">Caregiver</string>
+    <string name="patient">Patient</string>
+</resources>
