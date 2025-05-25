@@ -2,4 +2,6 @@
 <resources>
     <item name="userIdInput" type="id" />
     <item name="passwordInput" type="id" />
+    <item name="signupHeader" type="id" />
+    <item name="fullName" type="id" />
 </resources>

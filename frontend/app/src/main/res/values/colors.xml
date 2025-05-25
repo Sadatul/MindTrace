@@ -1,6 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Basic Colors -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="light_blue">#A8D0E6</color>
+    <color name="red">#FFFF0000</color>
+    <color name="green">#FF00FF00</color>
+    <color name="blue">#FF0000FF</color>
+    <color name="yellow">#FFFFFF00</color>
+    <color name="gray">#FF808080</color>
+
+    <!-- Background Colors -->
+    <color name="background">#F5F5F5</color>  <!-- Light gray background -->
+    <color name="primary_background">#FFFFFF</color> <!-- White background -->
+    <color name="secondary_background">#F0F0F0</color> <!-- Off white background -->
+
+    <!-- Primary and Secondary Colors -->
+    <color name="primary_color">#6200EE</color>  <!-- Purple for primary buttons and elements -->
+    <color name="secondary_color">#03DAC6</color>  <!-- Teal for secondary elements -->
+    <color name="primary_dark">#3700B3</color>  <!-- Darker shade for primary color -->
+    <color name="secondary_dark">#018786</color> <!-- Darker shade for secondary color -->
+
+    <!-- Text Colors -->
+    <color name="primary_text">#000000</color>  <!-- Black text -->
+    <color name="secondary_text">#616161</color>  <!-- Dark gray text -->
+    <color name="hint_text">#9E9E9E</color>  <!-- Light gray text (for hints) -->
+    <color name="error_text">#D32F2F</color>  <!-- Red for error messages -->
+
+    <!-- Accent Colors -->
+    <color name="accent_color">#FF4081</color>  <!-- Pinkish accent color -->
+    <color name="button_color">#6200EE</color>  <!-- Purple button color -->
+
+    <!-- Status Bar and Navigation Bar -->
+    <color name="status_bar_color">#6200EE</color>  <!-- Status bar color -->
+    <color name="navigation_bar_color">#FFFFFF</color>  <!-- Navigation bar color (white) -->
+
+    <!-- Transparent Colors -->
+    <color name="transparent">#00000000</color>  <!-- Fully transparent -->
+    <color name="semi_transparent">#80000000</color>  <!-- 50% transparent black -->
+
+    <!-- Shades -->
+    <color name="light_shade">#B3B3B3</color>  <!-- Light gray shade -->
+    <color name="dark_shade">#333333</color>  <!-- Dark gray shade -->
+
+    <!-- Green Shades -->
+    <color name="light_green">#81C784</color>  <!-- Light green -->
+    <color name="dark_green">#388E3C</color>   <!-- Dark green -->
+
+    <!-- Blue Shades -->
+    <color name="light_blue">#64B5F6</color>  <!-- Light blue -->
+    <color name="dark_blue">#1565C0</color>   <!-- Dark blue -->
+
+    <!-- Red Shades -->
+    <color name="light_red">#FF6F60</color>  <!-- Light red -->
+    <color name="dark_red">#D32F2F</color>   <!-- Dark red -->
+
+    <!-- Accent and Action Colors -->
+    <color name="action_button">#FF4081</color> <!-- Action button accent color -->
+    <color name="success_color">#4CAF50</color>  <!-- Green color for success -->
+    <color name="error_color">#D32F2F</color>  <!-- Red for errors -->
+
+    <!-- Custom Colors -->
+    <color name="custom_gray">#B0BEC5</color>  <!-- Light gray -->
+    <color name="custom_yellow">#FFEB3B</color> <!-- Custom yellow for highlights -->
 </resources>

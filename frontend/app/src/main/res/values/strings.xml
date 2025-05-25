@@ -1,9 +1,35 @@
 <resources>
     <!-- Add your string resources here -->
-    <string name="dementia_caregiver_app">Dementia Caregiver App</string>
+    <!-- First page strings -->
+    <string name="app_name">Dementia Caregiver App</string>
     <string name="login">Login</string>
     <string name="sign_up">Sign Up</string>
-    <string name="are_you_a_caregiver_or_a_patient">Are you a Caregiver or a Patient?</string>
-    <string name="caregiver">Caregiver</string>
-    <string name="patient">Patient</string>
+    <string name="login_role_selection_text">Want to Login as Caregiver or Patient?</string>
+    <string name="signup_role_selection_text">Want to Sign Up as Caregiver or Patient?</string>
+    <string name="caregiver">I am a Caregiver</string>
+    <string name="patient">I am a Patient</string>
+
+
+
+    <!-- Login Page Strings-->
+    <string name="patient_login">Patient Login</string>
+    <string name="caregiver_login">Caregiver Login</string>
+    <string name="username_email_field">Username or Email</string>
+    <string name="email_hint">Enter your email</string>
+    <string name="password_field">Password</string>
+    <string name="password_hint">Enter your password</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="remember_me">Remember Me</string>
+    <string name="login_button">Log In</string>
+    <string name="or">OR</string>
+    <string name="social_login">Login with Social Accounts</string>
+    <string name="facebook_login">Facebook login button</string>
+    <string name="google_login">Google login button</string>
+    <string name="twitter_login">Twitter login button</string>
+    <string name="sign_up_label">Don\'t have an account yet?</string>
+    <string name="caregiver_signup">Caregiver Signup</string>
+    <string name="i_agree_to_the_terms_and_conditions">I agree to the Terms and Conditions</string>
+    <string name="patient_signup">Patient Signup</string>
+
+
 </resources>
