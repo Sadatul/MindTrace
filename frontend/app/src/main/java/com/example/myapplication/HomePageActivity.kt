@@ -2,12 +2,21 @@ package com.example.myapplication
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.google.gson.Gson
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.net.HttpURLConnection
+import java.net.URL
+
 
 class HomePageActivity : AppCompatActivity() {
 
@@ -85,6 +94,33 @@ class HomePageActivity : AppCompatActivity() {
                 }
             }
         }
+
+        val testApiButton : Button = findViewById(R.id.test_api_button)
+        testApiButton.setOnClickListener {
+            println("API Hit will go here")
+
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    val url = URL("http://192.168.43.169:8080/v1/public/health")
+                    val connection = url.openConnection() as HttpURLConnection
+                    connection.requestMethod = "GET"
+
+                    val inputStream = connection.inputStream
+                    val response = inputStream.bufferedReader().use { it.readText() }
+
+                    // Switch to main thread to update UI
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@HomePageActivity, response, Toast.LENGTH_SHORT).show()
+                    }
+
+                } catch (e: Exception) {
+                    Log.e("API_ERROR", e.toString())
+                }
+            }
+
+        }
+
+
     }
 
     // Function to show the Alert Dialog for Login or Sign Up confirmation
