@@ -1,0 +1,38 @@
+meta {
+  name: RegisterPatient
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{host}}/v1/auth/register/patient
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJSUzI1NiIsImtpZCI6ImZlNjVjY2I4ZWFkMGJhZWY1ZmQzNjE5NWQ2NTI4YTA1NGZiYjc2ZjMiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiU0FEQVRVTCBJU0xBTSBTQURJIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0pjTHBuRUh6U3htZWFMRDliNy1xbXVKTmdxRDVnRk1jYzhhY3YtLWdNQjR5U1FEQT1zOTYtYyIsInNjcCI6IkFETUlOIiwiaXNzIjoiaHR0cHM6Ly9zZWN1cmV0b2tlbi5nb29nbGUuY29tL3Rlc3QtYXV0aC1jYTI4YyIsImF1ZCI6InRlc3QtYXV0aC1jYTI4YyIsImF1dGhfdGltZSI6MTc0ODI0MTA0OSwidXNlcl9pZCI6IjZ1R0VvVVN5SUxVbFZyS2hvZ0tkQ3ZuRFdhTjIiLCJzdWIiOiI2dUdFb1VTeUlMVWxWcktob2dLZEN2bkRXYU4yIiwiaWF0IjoxNzQ4MjQxMDQ5LCJleHAiOjE3NDgyNDQ2NDksImVtYWlsIjoiMjAwNTA3N0B1Z3JhZC5jc2UuYnVldC5hYy5iZCIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7Imdvb2dsZS5jb20iOlsiMTAxNjM5ODkyOTcxMjE5ODA2NjAzIl0sImVtYWlsIjpbIjIwMDUwNzdAdWdyYWQuY3NlLmJ1ZXQuYWMuYmQiXX0sInNpZ25faW5fcHJvdmlkZXIiOiJnb29nbGUuY29tIn19.mrSIEOEGIHgiZ8DM4rSeLqgNNyhQgn0TYhF5MI34jCc3ZAZcmT6IKSwALJ-xij2wUQPwCrpVe0OeHaz5pYWM_6RGsO251aYUJXPfcmcSCVJUaPvx2tNdps8Hd35um5jGt0yjksMJM7BNg3_RMfgVWM8TXgLhBRQQ65ossbpCdstuxKHqlupbdMvIPl9PhxWgHPkxMeVN4MX-RIdoOwp2_iaDL7CNON8oz-3MBjr8AkcyjDqKmCpS3etPwpvANMXkTxw4oHU8wgluuDWCxQX3TZhTa2UYZZDi9hsWzA-gHgZP6h2M1df5b_7K1Dh_dyuC3DWp6kEVVdOzsRCFsNj4WQ
+}
+
+body:json {
+  {
+    "name": "Sadi",
+    "dob": "2003-11-23",
+    "gender": "M",
+    "primaryContact": "9Awgxq7kzAUm1WihcqkGyYvogMV2",
+    "otp": "524821"
+  }
+}
+
+docs {
+  **Desc**: Used for user registration \
+  **Authorization**: USER \
+  **Response Bodies**:
+  ```
+  status: 201
+  
+  {
+    "msg": "USER CREATED"
+  }
+  ```
+}

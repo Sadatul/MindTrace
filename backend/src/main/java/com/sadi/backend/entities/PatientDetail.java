@@ -28,4 +28,9 @@ public class PatientDetail {
     @JoinColumn(name = "primary_contact", nullable = false)
     private User primaryContact;
 
+    public PatientDetail(User user, User primaryContact) {
+        this.user = user;
+        this.primaryContact = primaryContact;
+    }
+
 }

@@ -43,4 +43,15 @@ public class User {
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
+
+    public User(String id, String email, String name, Role role, String profilePicture, LocalDate dateOfBirth, Gender gender) {
+        this.id = id;
+        this.email = email;
+        this.name = name;
+        this.role = role;
+        this.profilePicture = profilePicture;
+        this.dateOfBirth = dateOfBirth;
+        this.gender = gender;
+        this.createdAt = Instant.now();
+    }
 }
