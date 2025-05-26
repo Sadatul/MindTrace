@@ -71,13 +71,10 @@ class FirebaseSignupActivity : AppCompatActivity() {
         auth.signInWithCredential(credential)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
-                    // Sign in success
-                    Toast.makeText(
-                        this,
-                        "Sign in successful!",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    finish()
+                    // Sign in success, go to dashboard
+                    val intent = Intent(this, DashboardActivity::class.java)
+                    startActivity(intent)
+                    finish() // Close this activity
                 } else {
                     // If sign in fails, display a message to the user.
                     Toast.makeText(
