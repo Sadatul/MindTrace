@@ -22,6 +22,7 @@ class HomePageActivity : AppCompatActivity() {
 
     private lateinit var loginButton: Button
     private lateinit var signupButton: Button
+    private lateinit var firebaseSignupButton: Button
     private lateinit var caregiverCheckBox: CheckBox
     private lateinit var patientCheckBox: CheckBox
 
@@ -32,8 +33,15 @@ class HomePageActivity : AppCompatActivity() {
         // Initialize the views here after setContentView()
         loginButton = findViewById(R.id.loginButton)
         signupButton = findViewById(R.id.signupButton)
+        firebaseSignupButton = findViewById(R.id.firebaseSignupButton)
         caregiverCheckBox = findViewById(R.id.caregiverCheckBox)
         patientCheckBox = findViewById(R.id.patientCheckBox)
+
+        // Firebase Signup Button logic
+        firebaseSignupButton.setOnClickListener {
+            val intent = Intent(this, FirebaseSignupActivity::class.java)
+            startActivity(intent)
+        }
 
         // Login Button logic
         loginButton.setOnClickListener {

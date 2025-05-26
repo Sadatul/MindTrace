@@ -34,6 +34,7 @@
         <activity android:name=".SignupPatientActivity" />
         <activity android:name=".DashboardCaregiverActivity" />
         <activity android:name=".DashboardPatientActivity" />
+        <activity android:name=".FirebaseSignupActivity" />
 
     </application>
 
