@@ -44,6 +44,11 @@ public class User {
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
+    public User(String userId)
+    {
+        this.id = userId;
+    }
+
     public User(String id, String email, String name, Role role, String profilePicture, LocalDate dateOfBirth, Gender gender) {
         this.id = id;
         this.email = email;
