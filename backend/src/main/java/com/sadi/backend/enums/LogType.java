@@ -1,5 +1,10 @@
 package com.sadi.backend.enums;
 
 public enum LogType {
-    BASIC
+    EATING,
+    MEDICINE,
+    SOCIAL,
+    OUTINGS,
+    BATHING,
+    START
 }
