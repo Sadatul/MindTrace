@@ -42,10 +42,19 @@ public class StoredMessageDTO implements Message {
     }
 
     public Message toMessage() {
+        Map<String, Object> enrichedMetadata = new HashMap<>();
+        if (this.metadata != null) {
+            enrichedMetadata.putAll(this.metadata);
+        }
+
+        enrichedMetadata.put("timestamp", this.timestamp);
+        enrichedMetadata.put("type", this.messageType.name());
+
         return switch (this.messageType) {
-            case ASSISTANT -> new AssistantMessage(this.text, this.metadata);
-            case SYSTEM -> new SystemMessage(this.text);
-            default -> new UserMessage(this.text);
+            case ASSISTANT -> new AssistantMessage(this.text, enrichedMetadata);
+            case SYSTEM -> SystemMessage.builder().text(this.text).metadata(enrichedMetadata).build();
+            default -> UserMessage.builder().text(this.text).metadata(enrichedMetadata).build();
+
         };
     }
 
