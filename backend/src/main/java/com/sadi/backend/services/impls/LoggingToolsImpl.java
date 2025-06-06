@@ -1,5 +1,6 @@
 package com.sadi.backend.services.impls;
 
+import com.sadi.backend.dtos.LogDTO;
 import com.sadi.backend.entities.Log;
 import com.sadi.backend.entities.User;
 import com.sadi.backend.enums.LogType;
@@ -51,5 +52,24 @@ public class LoggingToolsImpl implements LoggingTools {
         logService.saveLog(myLog);
         logVectorStore.add(List.of(new Document(details, myLog.getMetadata())));
         return "Log Saved Successfully";
+    }
+
+    @Override
+    @Tool(description = """
+            Use this tool to get logs between start and end timestamp. Remember start and end must be in utc time format.
+            With each log you will get a date specifying the date on which the log was created and time on which the log was created
+            """)
+    public List<LogDTO> getLogs(
+            @ToolParam(description = "Start time in utc format")
+            Instant start,
+            @ToolParam(description = "End time in utc format")
+            Instant end,
+            ToolContext toolContext
+    ) {
+        String userId = (String) toolContext.getContext().get("userId");
+        String zoneId = (String) toolContext.getContext().get("zone");
+
+        log.info("Get logs between {} and {}, {}, {}", start, end, userId, zoneId);
+        return logService.getLogsByTimeStamp(userId, zoneId, start, end);
     }
 }
