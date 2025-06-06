@@ -33,7 +33,7 @@ public class LogServiceImpl implements LogService {
                 .stream()
                 .map(l -> new LogDTO(l.getDescription(), l.getCreatedAt().atZone(zone).toLocalDate(), l.getCreatedAt().atZone(zone).toLocalTime()))
                 .toList();
-        log.info("Returned list of logs: {}", list);
+        log.debug("Returned list of logs: {}", list);
         return list;
     }
 }

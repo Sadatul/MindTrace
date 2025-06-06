@@ -47,7 +47,7 @@ public class LoggingToolsImpl implements LoggingTools {
         if(type.isEmpty()){
             return "failed to save log due to invalid log type";
         }
-        log.info("Saving log {} to {}", logType, userId);
+        log.debug("Saving log {} to {}", logType, userId);
         Log myLog = new Log(user, type.get(), details, Instant.now().minus(minutes, ChronoUnit.MINUTES));
         logService.saveLog(myLog);
         logVectorStore.add(List.of(new Document(details, myLog.getMetadata())));
@@ -69,7 +69,7 @@ public class LoggingToolsImpl implements LoggingTools {
         String userId = (String) toolContext.getContext().get("userId");
         String zoneId = (String) toolContext.getContext().get("zone");
 
-        log.info("Get logs between {} and {}, {}, {}", start, end, userId, zoneId);
+        log.debug("Get logs between {} and {}, {}, {}", start, end, userId, zoneId);
         return logService.getLogsByTimeStamp(userId, zoneId, start, end);
     }
 }
