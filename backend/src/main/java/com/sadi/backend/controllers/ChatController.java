@@ -50,10 +50,8 @@ public class ChatController {
                 .toolContext(Map.of("userId", userId, "zone", zone))
                 .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, userId))
                 .stream().chatResponse().doOnNext(
-                        chatResponse -> {
-                            response.append(chatResponse.getResult().getOutput().getText());
-                            log.info("Tokens {}", chatResponse.getMetadata().getUsage().getTotalTokens());
-                        }
+                        chatResponse ->
+                            response.append(chatResponse.getResult().getOutput().getText())
                 )
                 .doOnComplete(() ->
                     chatService.saveChat(query, response.toString(), userId)

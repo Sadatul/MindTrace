@@ -9,4 +9,5 @@ import java.util.List;
 public interface LoggingTools {
     String saveLog(String logType, String details, Integer minutes, ToolContext toolContext);
     List<LogDTO> getLogs(Instant start, Instant end, ToolContext toolContext);
+    List<LogDTO> getLogsForSpecificTopic(String queryString, String logType, Instant start, Instant end, ToolContext toolContext);
 }
