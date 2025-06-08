@@ -62,6 +62,10 @@ public class LogServiceImpl implements LogService {
                     Points.ScrollPoints.newBuilder()
                             .setCollectionName("logs")
                             .setFilter(filter)
+                            .setOrderBy(Points.OrderBy.newBuilder()
+                                    .setKey("createdAt")
+                                    .setDirection(Points.Direction.Asc)
+                                    .build())
                             .setWithPayload(WithPayloadSelectorFactory.enable(true))
                             .build()
             ).get();
