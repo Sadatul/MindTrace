@@ -15,18 +15,24 @@ public record LogDTO(
     public LogDTO(Points.ScoredPoint point, ZoneId zoneId) {
         this(
                 point.getPayloadMap().get("doc_content").getStringValue(), // details from document content
-                extractDate(point, zoneId),
-                extractTime(point, zoneId)
+                extractDate(point.getPayloadMap().get("createdAt").getStringValue(), zoneId),
+                extractTime(point.getPayloadMap().get("createdAt").getStringValue(), zoneId)
         );
     }
 
-    private static LocalDate extractDate(Points.ScoredPoint point, ZoneId zoneId) {
-        String createdAtStr = point.getPayloadMap().get("createdAt").getStringValue();
+    public LogDTO(Points.RetrievedPoint point, ZoneId zoneId) {
+        this(
+                point.getPayloadMap().get("doc_content").getStringValue(), // details from document content
+                extractDate(point.getPayloadMap().get("createdAt").getStringValue(), zoneId),
+                extractTime(point.getPayloadMap().get("createdAt").getStringValue(), zoneId)
+        );
+    }
+
+    private static LocalDate extractDate(String createdAtStr, ZoneId zoneId) {
         return Instant.parse(createdAtStr).atZone(zoneId).toLocalDate();
     }
 
-    private static LocalTime extractTime(Points.ScoredPoint point, ZoneId zoneId) {
-        String createdAtStr = point.getPayloadMap().get("createdAt").getStringValue();
+    private static LocalTime extractTime(String createdAtStr, ZoneId zoneId) {
         return Instant.parse(createdAtStr).atZone(zoneId).toLocalTime();
     }
 }

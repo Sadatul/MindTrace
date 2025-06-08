@@ -1,50 +1,29 @@
 package com.sadi.backend.services.impls;
 
-import com.google.protobuf.Timestamp;
 import com.sadi.backend.dtos.LogDTO;
 import com.sadi.backend.entities.Log;
 import com.sadi.backend.entities.User;
 import com.sadi.backend.enums.LogType;
 import com.sadi.backend.services.abstractions.LogService;
 import com.sadi.backend.services.abstractions.LoggingTools;
-import io.qdrant.client.QdrantClient;
-import io.qdrant.client.QueryFactory;
-import io.qdrant.client.WithPayloadSelectorFactory;
-import io.qdrant.client.grpc.Points;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ToolContext;
-import org.springframework.ai.document.Document;
-import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
-import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
-
-import static io.qdrant.client.ConditionFactory.datetimeRange;
-import static io.qdrant.client.ConditionFactory.matchKeyword;
 
 @Slf4j
 @Component
 public class LoggingToolsImpl implements LoggingTools {
     private final LogService logService;
-    private final VectorStore logVectorStore;
-    private final QdrantClient qdrantClient;
-    private final EmbeddingModel embeddingModel;
 
-    public LoggingToolsImpl(LogService logService, VectorStore logVectorStore, QdrantClient qdrantClient, EmbeddingModel embeddingModel) {
+    public LoggingToolsImpl(LogService logService) {
         this.logService = logService;
-        this.logVectorStore = logVectorStore;
-        this.qdrantClient = qdrantClient;
-        this.embeddingModel = embeddingModel;
     }
 
     @Tool(description = "User this tool to saveLogs")
@@ -67,7 +46,6 @@ public class LoggingToolsImpl implements LoggingTools {
         log.debug("Saving log {} to {}", logType, userId);
         Log myLog = new Log(user, type.get(), details, Instant.now().minus(minutes, ChronoUnit.MINUTES));
         logService.saveLog(myLog);
-        logVectorStore.add(List.of(new Document(details, myLog.getMetadata())));
         return "Log Saved Successfully";
     }
 
@@ -108,44 +86,7 @@ public class LoggingToolsImpl implements LoggingTools {
         String userId = (String) toolContext.getContext().get("userId");
         String zoneId = (String) toolContext.getContext().get("zone");
 
-
-        // Always filter by userId and logType
-        List<Points.Condition> conditions = new ArrayList<>();
-        conditions.add(matchKeyword("userId", userId));
-        conditions.add(matchKeyword("type", logType));
-
-        // Add timestamp filtering if both start and end are provided
-        if (start != null && end != null) {
-            conditions.add(datetimeRange("createdAt",
-                    Points.DatetimeRange.newBuilder()
-                            .setGte(Timestamp.newBuilder().setSeconds(start.getEpochSecond()).build())
-                            .setLte(Timestamp.newBuilder().setSeconds(end.getEpochSecond()).build())
-                            .build()
-            ));
-        }
-
-        Points.Filter filter = Points.Filter.newBuilder()
-                .addAllMust(conditions)
-                .build();
-
-        try {
-            List<Points.ScoredPoint> points = qdrantClient.queryAsync(
-                    Points.QueryPoints.newBuilder().setCollectionName("logs")
-                            .setQuery(QueryFactory.nearest(embeddingModel.embed(queryString)))
-                            .setWithPayload(WithPayloadSelectorFactory.enable(true))
-                            .setFilter(filter)
-                            .setLimit(10)
-                            .build()
-            ).get();
-            List<LogDTO> logDtos = points.stream()
-                    .map(p -> new LogDTO(p, ZoneId.of(zoneId)))
-                    .collect(Collectors.toList());
-            log.debug("logs from getLogsForSpecificTopic {}", logDtos);
-            return logDtos;
-
-        } catch (InterruptedException | ExecutionException e) {
-            log.error(e.getMessage());
-            return List.of();
-        }
+        log.debug("Get logs for specific topic with query: {}, logType: {}, userId: {}, start: {}, end: {}", queryString, logType, userId, start, end);
+        return logService.getLogsByQuery(userId, zoneId, queryString, logType, start, end);
     }
 }
