@@ -9,7 +9,6 @@ import org.springframework.ai.chat.messages.*;
 
 import java.time.Instant;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @JsonDeserialize
@@ -63,7 +62,9 @@ public class StoredMessageDTO implements Message {
         this.text = message.getText();
         this.messageType = message.getMessageType();
         this.metadata = message.getMetadata() != null ? message.getMetadata() : new HashMap<>();
-        this.timestamp = Instant.now();
+        this.timestamp = this.metadata.containsKey("timestamp") && this.metadata.get("timestamp") instanceof Instant
+                ? (Instant) this.metadata.get("timestamp")
+                : Instant.now();
     }
 
     @Override

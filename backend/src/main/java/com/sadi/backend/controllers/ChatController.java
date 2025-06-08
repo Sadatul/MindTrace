@@ -1,6 +1,7 @@
 package com.sadi.backend.controllers;
 
 import com.sadi.backend.dtos.requests.ChatRequest;
+import com.sadi.backend.dtos.responses.ChatResponse;
 import com.sadi.backend.services.abstractions.ChatService;
 import com.sadi.backend.services.abstractions.LoggingTools;
 import com.sadi.backend.utils.BasicUtils;
@@ -14,6 +15,8 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.prompt.SystemPromptTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
+import org.springframework.data.web.PagedModel;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
@@ -56,5 +59,20 @@ public class ChatController {
                     chatService.saveChat(req.query(), response.toString(), userId)
                 )
                 .mapNotNull(chatResponse -> chatResponse.getResult().getOutput().getText());
+    }
+
+    @GetMapping
+    public ResponseEntity<PagedModel<ChatResponse>> getChats(
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @RequestParam(required = false, defaultValue = "20") Integer size
+    ) {
+        return ResponseEntity.ok(new PagedModel<>(chatService.getChats(page, size)));
+    }
+
+    @PutMapping("/history")
+    public ResponseEntity<Void> updateChatHistory()
+    {
+        chatService.updateChatHistory();
+        return ResponseEntity.noContent().build();
     }
 }
