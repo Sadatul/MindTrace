@@ -2,6 +2,7 @@ package com.sadi.backend.controllers;
 
 import com.sadi.backend.services.abstractions.ChatService;
 import com.sadi.backend.services.abstractions.LoggingTools;
+import com.sadi.backend.utils.BasicUtils;
 import com.sadi.backend.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +40,7 @@ public class ChatController {
     ) {
         log.debug("Received query: {}", query);
         SystemPromptTemplate template = new SystemPromptTemplate(systemPrompt);
-        Message sysPrompt = template.createMessage(Map.of("time", Instant.now().toString()));
+        Message sysPrompt = template.createMessage(Map.of("time", BasicUtils.getISOStringFromZoneIdAndInstant(zone, Instant.now())));
         StringBuilder response = new StringBuilder();
         String userId = SecurityUtils.getName();
         return chatClient
