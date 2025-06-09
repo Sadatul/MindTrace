@@ -35,4 +35,11 @@ public class Chat {
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
+
+    public Chat(User user, ChatType type, String message) {
+        this.user = user;
+        this.type = type;
+        this.message = message;
+        this.createdAt = Instant.now();
+    }
 }
