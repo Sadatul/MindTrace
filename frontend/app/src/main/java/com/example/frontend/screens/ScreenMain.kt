@@ -24,6 +24,7 @@ fun MainScreen(
 
     LaunchedEffect(key1 = null) {
         val body = RetrofitInstance.dementiaAPI.getHealth().body()
+        println(body)
         body?.let {
             serverStatus = body.status
         }
@@ -32,18 +33,15 @@ fun MainScreen(
     Column {
         Text("Server is $serverStatus")
 
-
-        Row {
-            TextField(
-                value = token,
-                onValueChange = { token = it },
-                label = {
-                    Text("Firebase token")
-                }
-            )
-            Button(onClick = { toChatScreen(token) } ) {
-                Text("Chat screen")
+        TextField(
+            value = token,
+            onValueChange = { token = it },
+            label = {
+                Text("Firebase token")
             }
+        )
+        Button(onClick = { toChatScreen(token) } ) {
+            Text("Chat screen")
         }
 
         Button(onClick = toRegisterCaregiverScreen) {
