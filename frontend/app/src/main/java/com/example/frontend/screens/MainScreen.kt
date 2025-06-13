@@ -17,19 +17,17 @@ fun MainScreen(
     toRegisterCaregiverScreen: () -> Unit
 ) {
 
-    var serverIsUp by remember { mutableStateOf(false) }
+    var serverStatus by remember { mutableStateOf("<Loading...>") }
 
     LaunchedEffect(key1 = null) {
         val body = RetrofitInstance.dementiaAPI.getHealth().body()
         body?.let {
-            if (body.status == "UP") {
-                serverIsUp = true;
-            }
+            serverStatus = body.status
         }
     }
 
     Column {
-        Text("Server is " + if(serverIsUp) "UP" else "DOWN")
+        Text("Server is $serverStatus")
 
         Button(onClick = toChatScreen) {
             Text("Chat screen")

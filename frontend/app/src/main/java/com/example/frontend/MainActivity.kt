@@ -25,7 +25,10 @@ class MainActivity : ComponentActivity() {
 
             FrontendTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Box(modifier = Modifier.padding(innerPadding)) {
+                    Box(modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                    ) {
                         SetupNavGraph(navController)
                     }
                 }
