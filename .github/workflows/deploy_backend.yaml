@@ -15,7 +15,6 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: 'maven'
       - name: Print Version Name
         run: echo ${{ github.ref_name }}
       - name: Print Actor Name
@@ -34,5 +33,7 @@ jobs:
           push: true
           context: ./backend
           tags: ghcr.io/sadatul/mindtrace_backend:${{github.ref_name}}
+          build-args: |
+            profile=prod
           cache-from: type=gha
           cache-to: type=gha,mode=max
