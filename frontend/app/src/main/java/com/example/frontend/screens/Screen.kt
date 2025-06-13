@@ -15,5 +15,5 @@ sealed class Screen {
     @Serializable
     data object Dashboard: Screen()
     @Serializable
-    data object Chat: Screen()
+    data class Chat(val token: String): Screen()
 }

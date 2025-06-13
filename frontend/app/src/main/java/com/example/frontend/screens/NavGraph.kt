@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
 
 @Composable
 fun SetupNavGraph(navController: NavHostController) {
@@ -14,8 +15,8 @@ fun SetupNavGraph(navController: NavHostController) {
                     navController.navigate(Screen.RegisterCaregiver)
                 },
 
-                toChatScreen = {
-                   navController.navigate(Screen.Chat)
+                toChatScreen = { token ->
+                   navController.navigate(Screen.Chat(token))
                 }
             )
         }
@@ -36,8 +37,9 @@ fun SetupNavGraph(navController: NavHostController) {
             DashboardScreen()
         }
 
-        composable<Screen.Chat> {
-            ChatScreen()
+        composable<Screen.Chat> { backStackEntry ->
+            val (token) = backStackEntry.toRoute<Screen.Chat>()
+            ChatScreen(token)
         }
     }
 }
