@@ -35,5 +35,6 @@ jobs:
           tags: ghcr.io/sadatul/mindtrace_backend:${{github.ref_name}}
           build-args: |
             profile=prod
+            release_description=${{ github.event.release.body }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
