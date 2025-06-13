@@ -12,7 +12,5 @@ FROM gcr.io/distroless/java21-debian12
 EXPOSE 8080
 COPY --from=build /home/app/target/*.jar backend.jar
 ARG profile=dev
-ARG release_description="Development build"
 ENV spring_profiles_active=${profile}
-LABEL org.opencontainers.image.description="${release_description}"
 CMD ["-jar", "backend.jar"]
