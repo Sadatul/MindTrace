@@ -104,4 +104,9 @@ public class UserService {
             throw new InternalError("Error adding scope to user in firebase");
         }
     }
+
+    public PatientDetail getPatientDetail(String userId) {
+        return patientDetailRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Patient not found"));
+    }
 }
