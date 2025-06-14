@@ -32,7 +32,7 @@ fun ChatScreen(token: String) {
     var hasMorePages by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
-    val pageSize = 20
+    val pageSize = 6
 
     // Set the auth token
     LaunchedEffect(token) {
@@ -150,6 +150,9 @@ fun ChatScreen(token: String) {
                             messages = listOf(ChatMessage(userMessage, true)) + messages
                             inputText = ""
 
+                            // Auto-scroll to bottom (newest message) immediately after adding user message
+                            listState.animateScrollToItem(0)
+
                             try {
                                 val response = RetrofitInstance.dementiaAPI.sendChatMessage(
                                     RequestChat(userMessage)
@@ -158,7 +161,7 @@ fun ChatScreen(token: String) {
                                     response.body()?.string()?.let { reply ->
                                         // Add assistant response to the beginning
                                         messages = listOf(ChatMessage(reply, false)) + messages
-                                        // Scroll to top (newest message)
+                                        // Scroll to bottom (newest message) - index 0 with reverseLayout=true
                                         listState.animateScrollToItem(0)
                                     }
                                 } else {
@@ -166,12 +169,16 @@ fun ChatScreen(token: String) {
                                         "Error: ${response.code()}",
                                         false
                                     )) + messages
+                                    // Scroll to bottom after error message
+                                    listState.animateScrollToItem(0)
                                 }
                             } catch (e: Exception) {
                                 messages = listOf(ChatMessage(
                                     "Error: ${e.message}",
                                     false
                                 )) + messages
+                                // Scroll to bottom after error message
+                                listState.animateScrollToItem(0)
                             } finally {
                                 isLoading = false
                             }
