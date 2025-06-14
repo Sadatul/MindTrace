@@ -14,7 +14,7 @@ import com.example.frontend.api.RetrofitInstance
 @Composable
 fun MainScreen(
     toChatScreen: () -> Unit,
-    toRegisterCaregiverScreen: () -> Unit
+    toRegisterScreen: () -> Unit
 ) {
 
     var serverStatus by remember { mutableStateOf("<Loading...>") }
@@ -33,8 +33,8 @@ fun MainScreen(
             Text("Chat screen")
         }
 
-        Button(onClick = toRegisterCaregiverScreen) {
-            Text("Register caregiver screen")
+        Button(onClick = toRegisterScreen) {
+            Text("Register screen")
         }
     }
 }
