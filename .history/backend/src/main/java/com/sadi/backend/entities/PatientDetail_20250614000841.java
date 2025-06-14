@@ -1,7 +1,10 @@
 package com.sadi.backend.entities;
 
+import com.sadi.backend.enums.SubscriptionType;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.time.LocalDateTime;
 
 @Entity
 @NoArgsConstructor
