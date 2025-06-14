@@ -44,6 +44,8 @@ public class User {
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
+    private String telegramChatId;
+
     public User(String userId)
     {
         this.id = userId;
