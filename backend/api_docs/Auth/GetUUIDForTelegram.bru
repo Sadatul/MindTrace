@@ -13,3 +13,20 @@ get {
 auth:bearer {
   token: eyJhbGciOiJSUzI1NiIsImtpZCI6ImE0YTEwZGVjZTk4MzY2ZDZmNjNlMTY3Mjg2YWU5YjYxMWQyYmFhMjciLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiU2FkYXR1bCBpc2xhbSBTYWRpIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0lENEktWEJheGJweGFuR09TZmR4MWhKclFRSUM1aERfMjVEYXp4LU1YWHJJT2I5QT1zOTYtYyIsInNjcCI6IkNBUkVHSVZFUiIsImlzcyI6Imh0dHBzOi8vc2VjdXJldG9rZW4uZ29vZ2xlLmNvbS90ZXN0LWF1dGgtY2EyOGMiLCJhdWQiOiJ0ZXN0LWF1dGgtY2EyOGMiLCJhdXRoX3RpbWUiOjE3NDk4OTM0ODQsInVzZXJfaWQiOiI5QXdneHE3a3pBVW0xV2loY3FrR3lZdm9nTVYyIiwic3ViIjoiOUF3Z3hxN2t6QVVtMVdpaGNxa0d5WXZvZ01WMiIsImlhdCI6MTc0OTg5MzQ4NCwiZXhwIjoxNzQ5ODk3MDg0LCJlbWFpbCI6InNhZGF0dWxpc2xhbXNhZGlAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZ29vZ2xlLmNvbSI6WyIxMTU3MDcxODIwMjY5NTI3MDIwMDEiXSwiZW1haWwiOlsic2FkYXR1bGlzbGFtc2FkaUBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJnb29nbGUuY29tIn19.ioyLxlyry7tTJXitmbeTd2TczVoCGKyr6yr54vnmJtwLKM4cS1AUWWirWghManI9fn5SVkzrSt4M--FPVBY_1CkxHIXf2_LdmqArnegyyd7QO65QQ7pp58lnizhkkPUi_RFkthMiLoQtF16vOXxD15K7QJhZADT0r4kLzbcvW6bRO11IOPFI781FtFVyA42xrtXSRZyKZshZsAjgyzh23zwBSveSrBC1HjlS8v5kz-WaoBt7DeWfkjUooEwn8O-qF9B9QF-WUc1gGtVWbnbagsEBlObumYOjc3kkveaEcbk26lgTj2_AcqVrJm0qaZxhcTOqGMQgAQ2OtfB6NIGoGQ
 }
+
+docs {
+  **Desc**: Used when a user tries to connect to telegram \
+  **Authorization**: CAREGIVER \
+  **Response Bodies**:
+  ```
+  status: 200
+  
+  {
+    "value": "acf8366e-d7a7-4685-a40d-607d5fdab0e2"
+  }
+  ```
+  
+  
+  **NOTES:**
+  * Use this userId to create a button that takes user to the following link https://t.me/mindtracebot?start=acf8366e-d7a7-4685-a40d-607d5fdab0e2 . Set start equal to the value.
+}
