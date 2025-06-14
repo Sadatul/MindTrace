@@ -1,11 +1,11 @@
 package com.example.frontend.api.models
 
 data class ResponseChat(
-    val content: List<ChatMessageResponse>,
+    val content: List<ChatContent>,
     val page: PageInfo
 )
 
-data class ChatMessageResponse(
+data class ChatContent(
     val message: String,
     val id: String,
     val type: String,
