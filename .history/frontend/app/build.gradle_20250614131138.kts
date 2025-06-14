@@ -4,16 +4,11 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 
     id("org.jetbrains.kotlin.plugin.serialization") version "2.2.0-RC2"
-    id("com.google.gms.google-services")
 }
 
 android {
     namespace = "com.example.frontend"
     compileSdk = 35
-
-    buildFeatures {
-        buildConfig = true
-    }
 
     defaultConfig {
         applicationId = "com.example.frontend"
@@ -23,6 +18,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "WEB_CLIENT_ID", " ")
     }
 
     buildTypes {
@@ -75,14 +71,15 @@ dependencies {
     // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
     
-    // Credential Manager for Google Sign-In
-    implementation("androidx.credentials:credentials:1.2.2")
-    implementation("androidx.credentials:credentials-play-services-auth:1.2.2")
-    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.0")
+    // Firebase Authentication
+    implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
     
     // Retrofit for API calls
     implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
 
+    implementation ("com.google.android.gms:play-services-auth:20.7.0")
     implementation ("androidx.compose.ui:ui:1.6.0")
     implementation ("androidx.compose.runtime:runtime:1.6.0")
     implementation ("androidx.compose.ui:ui-tooling:1.6.0")

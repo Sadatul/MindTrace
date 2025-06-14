@@ -10,34 +10,37 @@ fun SetupNavGraph(navController: NavHostController) {
     NavHost(navController = navController, startDestination = Screen.Main) {
         composable<Screen.Main> {
             MainScreen(
-                toRegisterCaregiverScreen = {
-                    navController.navigate(Screen.RegisterCaregiver)
+                toRegisterScreen = {
+                    navController.navigate(Screen.Register)
                 },
-
                 toChatScreen = {
-                   navController.navigate(Screen.Chat)
+                    navController.navigate(Screen.Chat)
                 }
             )
         }
 
-        composable<Screen.RegisterCaregiver> {
-            RegisterCaregiverScreen()
+        composable<Screen.Register> {
+            ScreenRegister(
+                onNavigateToDashboard = { role ->
+                    val destination = if (role == "patient") Screen.DashBoardPatient else Screen.DashboardCareGiver
+                    navController.navigate(destination) {
+                        popUpTo(Screen.Main) { inclusive = true }
+                    }
+                }
+            )
         }
 
-        composable<Screen.GetOTP> {
-            GetOTPScreen()
+
+        composable<Screen.DashBoardPatient> {
+            ScreenDashboardPatient()
         }
 
-        composable<Screen.RegisterPatient> {
-            RegisterPatientScreen()
-        }
-
-        composable<Screen.Dashboard> {
-            DashboardScreen()
+        composable<Screen.DashboardCareGiver> {
+            ScreenDashboardCareGiver()
         }
 
         composable<Screen.Chat> {
-            ChatScreen()
+            ScreenChatScreen()
         }
     }
 }
