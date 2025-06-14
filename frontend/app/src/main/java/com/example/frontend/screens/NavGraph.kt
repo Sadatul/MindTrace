@@ -32,11 +32,11 @@ fun SetupNavGraph(navController: NavHostController) {
 
 
         composable<Screen.DashBoardPatient> {
-            ScreenDashboardPatient()
+            ScreenPatient(onNavigateToChat = { navController.navigate(Screen.Chat) })
         }
 
         composable<Screen.DashboardCareGiver> {
-            ScreenDashboardCareGiver()
+            ScreenCareGiver()
         }
 
         composable<Screen.Chat> {
