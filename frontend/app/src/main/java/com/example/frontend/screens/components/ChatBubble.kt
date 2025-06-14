@@ -20,6 +20,7 @@ fun ChatBubble(message: ChatMessage) {
     ) {
         Box(
             modifier = Modifier
+                .widthIn(max = 280.dp)
                 .clip(
                     RoundedCornerShape(
                         topStart = 16.dp,
@@ -38,8 +39,8 @@ fun ChatBubble(message: ChatMessage) {
                 text = message.text,
                 color = if (message.isUser) MaterialTheme.colorScheme.onPrimary
                 else MaterialTheme.colorScheme.onSecondaryContainer,
-                textAlign = if (message.isUser) TextAlign.End else TextAlign.Start
+                textAlign = TextAlign.Start
             )
         }
     }
-} 
+}
