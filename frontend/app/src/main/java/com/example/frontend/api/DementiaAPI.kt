@@ -5,6 +5,7 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Body
 import retrofit2.http.Query
+import retrofit2.http.Header
 import com.example.frontend.api.models.RequestChat
 import com.example.frontend.api.models.ResponseHealth
 import com.example.frontend.api.models.ResponseChat
@@ -16,12 +17,16 @@ interface DementiaAPI {
 
     @GET("/v1/chat")
     suspend fun getChatHistory(
+        @Header("Authorization") firebaseIdToken: String,
         @Query("page") page: Int,
         @Query("size") size: Int
     ): Response<ResponseChat>
 
     @POST("/v1/chat")
-    suspend fun sendChatMessage(@Body request: RequestChat): Response<ResponseBody>
+    suspend fun sendChatMessage(
+        @Header("Authorization") firebaseIdToken: String,
+        @Body request: RequestChat
+    ): Response<ResponseBody>
 }
 
 data class ChatRequest(

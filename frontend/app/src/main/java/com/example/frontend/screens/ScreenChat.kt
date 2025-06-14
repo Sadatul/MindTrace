@@ -1,14 +1,36 @@
 package com.example.frontend.screens
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -18,30 +40,23 @@ import com.example.frontend.api.models.RequestChat
 import com.example.frontend.screens.components.ChatBubble
 import com.example.frontend.screens.models.ChatMessage
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.collect
-import androidx.compose.runtime.snapshotFlow
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(token: String) {
     var messages by remember { mutableStateOf(listOf<ChatMessage>()) }
     var inputText by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var isLoadingMore by remember { mutableStateOf(false) }
-    var currentPage by remember { mutableStateOf(0) }
+    var currentPage by remember { mutableIntStateOf(0) }
     var hasMorePages by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
-    val pageSize = 6
+    val pageSize = 20
 
-    // Set the auth token
-    LaunchedEffect(token) {
-        RetrofitInstance.setAuthToken(token)
-    }
 
     // Load initial messages
     LaunchedEffect(Unit) {
-        loadMessages(0, pageSize) { newMessages, hasMore ->
+        loadMessages(token, 0, pageSize) { newMessages, hasMore ->
             messages = newMessages
             hasMorePages = hasMore
             currentPage = 0
@@ -70,7 +85,7 @@ fun ChatScreen(token: String) {
                 isLoadingMore = true
                 val nextPage = currentPage + 1
 
-                loadMessages(nextPage, pageSize) { newMessages, hasMore ->
+                loadMessages(token, nextPage, pageSize) { newMessages, hasMore ->
                     if (newMessages.isNotEmpty()) {
                         // Add older messages to the end of the list (since reverseLayout=true)
                         messages = messages + newMessages
@@ -155,6 +170,7 @@ fun ChatScreen(token: String) {
 
                             try {
                                 val response = RetrofitInstance.dementiaAPI.sendChatMessage(
+                                    "Bearer $token",
                                     RequestChat(userMessage)
                                 )
                                 if (response.isSuccessful) {
@@ -197,12 +213,13 @@ fun ChatScreen(token: String) {
 }
 
 private suspend fun loadMessages(
+    token: String,
     page: Int,
     size: Int,
     onComplete: (List<ChatMessage>, Boolean) -> Unit
 ) {
     try {
-        val response = RetrofitInstance.dementiaAPI.getChatHistory(page, size)
+        val response = RetrofitInstance.dementiaAPI.getChatHistory("Bearer $token", page, size)
         if (response.isSuccessful) {
             response.body()?.let { chatResponse ->
                 val newMessages = chatResponse.content.map { msg ->
