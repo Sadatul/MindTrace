@@ -28,7 +28,3 @@ interface DementiaAPI {
         @Body request: RequestChat
     ): Response<ResponseBody>
 }
-
-data class ChatRequest(
-    val query: String
-)
