@@ -6,14 +6,35 @@ import kotlinx.serialization.Serializable
 sealed class Screen {
     @Serializable
     data object Main: Screen()
+
     @Serializable
-    data object RegisterCaregiver: Screen()
+    data object Register: Screen()
+
     @Serializable
-    data object GetOTP: Screen()
+    data class DashBoardPatient(
+        val name: String,
+        val email: String,
+        val dob: String,
+        val gender: String
+    ): Screen()
+
     @Serializable
-    data object RegisterPatient: Screen()
+    data class DashboardCareGiver(
+        val name: String,
+        val email: String,
+        val dob: String,
+        val gender: String,
+        val uid: String,
+        val token: String
+    ): Screen()
+
     @Serializable
+<<<<<<< HEAD
+    object Chat: Screen()
+}
+=======
     data object Dashboard: Screen()
     @Serializable
     data class Chat(val token: String): Screen()
 }
+>>>>>>> main
