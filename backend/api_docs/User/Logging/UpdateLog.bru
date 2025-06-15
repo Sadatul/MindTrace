@@ -1,0 +1,26 @@
+meta {
+  name: UpdateLog
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{host}}/v1/logs/:id
+  body: json
+  auth: bearer
+}
+
+params:path {
+  id: 6b72d157-241a-4a86-8fa0-85f241001ee0
+}
+
+auth:bearer {
+  token: eyJhbGciOiJSUzI1NiIsImtpZCI6ImE0YTEwZGVjZTk4MzY2ZDZmNjNlMTY3Mjg2YWU5YjYxMWQyYmFhMjciLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiU0FEQVRVTCBJU0xBTSBTQURJIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0pjTHBuRUh6U3htZWFMRDliNy1xbXVKTmdxRDVnRk1jYzhhY3YtLWdNQjR5U1FEQT1zOTYtYyIsInNjcCI6IlBBVElFTlQiLCJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vdGVzdC1hdXRoLWNhMjhjIiwiYXVkIjoidGVzdC1hdXRoLWNhMjhjIiwiYXV0aF90aW1lIjoxNzQ5OTk3MzE2LCJ1c2VyX2lkIjoiNnVHRW9VU3lJTFVsVnJLaG9nS2RDdm5EV2FOMiIsInN1YiI6IjZ1R0VvVVN5SUxVbFZyS2hvZ0tkQ3ZuRFdhTjIiLCJpYXQiOjE3NDk5OTczMTYsImV4cCI6MTc1MDAwMDkxNiwiZW1haWwiOiIyMDA1MDc3QHVncmFkLmNzZS5idWV0LmFjLmJkIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZ29vZ2xlLmNvbSI6WyIxMDE2Mzk4OTI5NzEyMTk4MDY2MDMiXSwiZW1haWwiOlsiMjAwNTA3N0B1Z3JhZC5jc2UuYnVldC5hYy5iZCJdfSwic2lnbl9pbl9wcm92aWRlciI6Imdvb2dsZS5jb20ifX0.dZDScY4cyVU0RDiHU8ErAtUFL_mN9GDNtVF8xq7IDpeGDDn0y0NdfviUmKa5BG793OE2C8jOV48RuCpOTe0uM60dbITokOIXgNm6ETPeAf9oPHAbMGlj87Q-cLmFCBXQ2Bs_NmMhoyVFv75hUM369vuljiR3rfn11Pi7-_4rXjtoQfXnaSWUvX7YJ523YvH6z3BJzCI0cIa6C30kpR10j1By9N8TXSZnNdaHAHRZe8l6g5uf8ioCEhEE9_QCDqozVj_bB0lfm3xtLWw9O_n2xjFMJtL-SSoP5kQriN8Vx3R7ysSpNkmVQC09gM7mhNOeXx7q9OcgmRfqc-PmoQnixw
+}
+
+body:json {
+  {
+    "type": "EATING",
+    "description": "Took tea and cookies for snack"
+  }
+}
