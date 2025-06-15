@@ -36,4 +36,10 @@ public class PatientCaregiver {
     @Column
     // null means still active
     private Instant removedAt;
+
+    public PatientCaregiver(User patient, User caregiver) {
+        this.patient = patient;
+        this.caregiver = caregiver;
+        this.createdAt = Instant.now();
+    }
 }

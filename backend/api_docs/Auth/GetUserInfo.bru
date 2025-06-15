@@ -1,0 +1,63 @@
+meta {
+  name: GetUserInfo
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{host}}/v1/users?userId=9Awgxq7kzAUm1WihcqkGyYvogMV2
+  body: none
+  auth: bearer
+}
+
+params:query {
+  userId: 9Awgxq7kzAUm1WihcqkGyYvogMV2
+}
+
+auth:bearer {
+  token: eyJhbGciOiJSUzI1NiIsImtpZCI6ImE0YTEwZGVjZTk4MzY2ZDZmNjNlMTY3Mjg2YWU5YjYxMWQyYmFhMjciLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiU0FEQVRVTCBJU0xBTSBTQURJIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0pjTHBuRUh6U3htZWFMRDliNy1xbXVKTmdxRDVnRk1jYzhhY3YtLWdNQjR5U1FEQT1zOTYtYyIsInNjcCI6IlBBVElFTlQiLCJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vdGVzdC1hdXRoLWNhMjhjIiwiYXVkIjoidGVzdC1hdXRoLWNhMjhjIiwiYXV0aF90aW1lIjoxNzQ5OTIxMDIwLCJ1c2VyX2lkIjoiNnVHRW9VU3lJTFVsVnJLaG9nS2RDdm5EV2FOMiIsInN1YiI6IjZ1R0VvVVN5SUxVbFZyS2hvZ0tkQ3ZuRFdhTjIiLCJpYXQiOjE3NDk5MjEwMjAsImV4cCI6MTc0OTkyNDYyMCwiZW1haWwiOiIyMDA1MDc3QHVncmFkLmNzZS5idWV0LmFjLmJkIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZ29vZ2xlLmNvbSI6WyIxMDE2Mzk4OTI5NzEyMTk4MDY2MDMiXSwiZW1haWwiOlsiMjAwNTA3N0B1Z3JhZC5jc2UuYnVldC5hYy5iZCJdfSwic2lnbl9pbl9wcm92aWRlciI6Imdvb2dsZS5jb20ifX0.b2Kag42wNzpgTklwmQNWupVzWUhGNxBeQq0b3uAsgjH3rCWzhlTGdVnzcu5KTCptNxD2W9wtnVuo_Dg846tYpl06_8sY7OPRS4niDSmcx8Fd00_z2SRBORBbUWCEcS7pNpTzsI1nHxalnudMLPQHUtFsqxeJNSEsUr2j0B2lDzBYmbrqBWsD9jGrt1IH4rT9KWrpCSUDfaD67DHi5AJf2v62UPFvWKNznnS8IhuR2v5TLiLODRe_5OdBjn1VhYTGhxd5KHA8PGXBCv77uj2K3yLYM3_kJ2RfMYabDnIqUrRGrgrAcKz0ZiVix4GgVh2YHEvepuXFRIOXF7BpgnBeEQ
+}
+
+docs {
+  **Desc**: Get User Info \
+  **Authorization**: ALL \
+  **Response Bodies**:
+  ```
+  status: 200
+  For role -> PATIENT
+  {
+    "id": "6uGEoUSyILUlVrKhogKdCvnDWaN2",
+    "name": "Sadi 2005077",
+    "email": "2005077@ugrad.cse.buet.ac.bd",
+    "role": "PATIENT",
+    "gender": "M",
+    "dob": "2003-11-23",
+    "profilePicture": null,
+    "primaryContact": {
+      "id": "9Awgxq7kzAUm1WihcqkGyYvogMV2",
+      "name": "Sadatul Islam Sadi",
+      "gender": "M",
+      "profilePicture": null
+    },
+    "createdAt": "2025-06-14T17:12:17.973752Z",
+    "telegramChatId": null
+  }
+  
+  For role CAREGIVER
+  {
+    "id": "9Awgxq7kzAUm1WihcqkGyYvogMV2",
+    "name": "Sadatul Islam Sadi",
+    "email": "sadatulislamsadi@gmail.com",
+    "role": "CAREGIVER",
+    "gender": "M",
+    "dob": "2000-08-28",
+    "profilePicture": null,
+    "primaryContact": null,
+    "createdAt": "2025-06-04T16:34:03.913162Z",
+    "telegramChatId": "1858635326"
+  }
+  ```
+  
+  **Note**:
+  * if userId is ommited info of current logged in user will be shown. If userId is provided that users info will be returned.
+}
