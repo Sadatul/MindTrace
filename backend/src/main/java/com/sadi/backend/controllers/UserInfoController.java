@@ -33,7 +33,7 @@ public class UserInfoController {
         CaregiversPatientsDTO dto = null;
         if(user.getRole() == Role.PATIENT)
         {
-            PatientDetail patientDetail = userService.getPatientDetail(userId);
+            PatientDetail patientDetail = userService.getPatientDetail(userId, false);
             User primaryContact = patientDetail.getPrimaryContact();
             dto = new CaregiversPatientsDTO(primaryContact.getId(), primaryContact.getName(),
                     primaryContact.getGender(), primaryContact.getProfilePicture());
