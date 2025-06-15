@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.server.ResponseStatusException;
@@ -58,6 +59,7 @@ public class TelegramServiceRedisImpl {
         redisTemplate.delete(key);
     }
 
+    @Async
     public void sendMessage(String chatId, String message) {
         log.info("Sending message to chat {}: {}", chatId, message);
 
