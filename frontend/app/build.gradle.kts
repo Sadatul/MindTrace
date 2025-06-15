@@ -29,8 +29,8 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                    getDefaultProguardFile("proguard-android-optimize.txt"),
+                    "proguard-rules.pro"
             )
         }
     }
@@ -38,17 +38,11 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = "11"
-    }
-    buildFeatures {
-        compose = true
-    }
+    kotlinOptions { jvmTarget = "11" }
+    buildFeatures { compose = true }
 }
 
 dependencies {
-
-    // Core Android and Jetpack libraries
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -60,8 +54,7 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.6.7") // Extended Material Icons
 
     // Testing libraries
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
+    testImplementation(libs.junit) androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom)) // Compose BOM for testing
     androidTestImplementation(libs.androidx.ui.test.junit4)
@@ -98,4 +91,5 @@ dependencies {
     implementation("androidx.credentials:credentials:1.2.2")
     implementation("androidx.credentials:credentials-play-services-auth:1.2.2") // Bridges Credential Manager with Play Services
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.0") // Google Identity Services library
+    implementation("androidx.compose.material:material-icons-extended:1.7.8")
 }
