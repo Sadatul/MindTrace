@@ -68,6 +68,7 @@ public class PatientCaregiverMgmtServiceRedisImpl implements PatientCaregiverMgm
         redisTemplate.delete(otpKey);
     }
 
+    @Override
     public UUID addPatientToCaregiver(String patientId, String otp)
     {
         verifyOtp(patientId, otp);
