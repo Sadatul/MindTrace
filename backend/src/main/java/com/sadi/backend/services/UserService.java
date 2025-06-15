@@ -110,6 +110,14 @@ public class UserService {
         }
     }
 
+    public void verifyCaregiver(String patientId, String userId) {
+        patientCaregiverRepository.findByPatientAndCaregiver(new User(patientId), new User(userId))
+                .filter(r -> r.getRemovedAt() == null)
+                .ifPresentOrElse(r -> {}, () -> {
+                    throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Forbidden");
+                });
+    }
+
     public PatientDetail getPatientDetail(String userId, Boolean fetchUser) {
         if(!fetchUser)
             return patientDetailRepository.findById(userId)
