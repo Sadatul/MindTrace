@@ -4,19 +4,23 @@ import com.sadi.backend.dtos.requests.CreateLogRequest;
 import com.sadi.backend.dtos.requests.UpdateLogRequest;
 import com.sadi.backend.dtos.responses.LogFullResponse;
 import com.sadi.backend.entities.Log;
+import com.sadi.backend.enums.LogType;
 import com.sadi.backend.services.abstractions.LogService;
 import com.sadi.backend.utils.SecurityUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.*;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.UUID;
+import java.util.*;
 
 @RestController
 @RequestMapping("/v1/logs")
@@ -62,5 +66,23 @@ public class PatientLogController {
         logService.verifyOwner(lg, SecurityUtils.getName());
         return  ResponseEntity.ok(new LogFullResponse(lg.getId(), lg.getType(), lg.getDescription(),
                 lg.getCreatedAt()));
+    }
+
+    @GetMapping
+    public ResponseEntity<PagedModel<LogFullResponse>> getLogs(
+            @RequestParam(required = false) Instant start,
+            @RequestParam(required = false) Instant end,
+            @RequestParam(required = false) LogType type,
+            @RequestParam(required = false, defaultValue = "DESC") Sort.Direction direction,
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @RequestParam(required = false, defaultValue = "20") Integer size
+            ) {
+        log.debug("Get logs based on following params - start: {}, end: {}, type: {}, sort: {}, page: {}, size: {}",
+                start, end, type, direction, page, size);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, "createdAt"));
+        Page<Log> logPage = logService.getLogs(SecurityUtils.getName(), type, start, end, pageable);
+        List<LogFullResponse> results = logPage.getContent().stream().map(LogFullResponse::getLogFullResponseFromLog).toList();
+        Page<LogFullResponse> pagedResult = new PageImpl<>(results, pageable, logPage.getTotalElements());
+        return ResponseEntity.ok(new PagedModel<>(pagedResult));
     }
 }

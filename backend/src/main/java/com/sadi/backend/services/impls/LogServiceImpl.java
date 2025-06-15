@@ -9,6 +9,7 @@ import com.sadi.backend.enums.LogType;
 import com.sadi.backend.repositories.LogRepository;
 import com.sadi.backend.services.UserService;
 import com.sadi.backend.services.abstractions.LogService;
+import com.sadi.backend.specifications.LogSpecification;
 import com.sadi.backend.utils.SecurityUtils;
 import io.qdrant.client.QdrantClient;
 import io.qdrant.client.QueryFactory;
@@ -20,6 +21,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -178,5 +182,10 @@ public class LogServiceImpl implements LogService {
         verifyOwner(lg, SecurityUtils.getName());
         logRepository.delete(lg);
         logVectorStore.delete(List.of(id.toString()));
+    }
+
+    public Page<Log> getLogs(String userId, LogType type, Instant start, Instant end, Pageable pageable) {
+        Specification<Log> spec = LogSpecification.getSpecification(userId, type, start, end);
+        return logRepository.findAll(spec, pageable);
     }
 }

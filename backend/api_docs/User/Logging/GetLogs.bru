@@ -5,17 +5,18 @@ meta {
 }
 
 get {
-  url: {{host}}/v1/logs?event="semantic search by event"&starttime="start time"&endtime="end time"&page="page number"&size="size"
+  url: {{host}}/v1/logs?start=2025-06-15T16:45:10.356067Z&end
   body: none
   auth: bearer
 }
 
 params:query {
-  event: "semantic search by event"
-  starttime: "start time"
-  endtime: "end time"
-  page: "page number"
-  size: "size"
+  start: 2025-06-15T16:45:10.356067Z
+  end: 
+}
+
+auth:bearer {
+  token: eyJhbGciOiJSUzI1NiIsImtpZCI6ImE0YTEwZGVjZTk4MzY2ZDZmNjNlMTY3Mjg2YWU5YjYxMWQyYmFhMjciLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiU0FEQVRVTCBJU0xBTSBTQURJIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0pjTHBuRUh6U3htZWFMRDliNy1xbXVKTmdxRDVnRk1jYzhhY3YtLWdNQjR5U1FEQT1zOTYtYyIsInNjcCI6IlBBVElFTlQiLCJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vdGVzdC1hdXRoLWNhMjhjIiwiYXVkIjoidGVzdC1hdXRoLWNhMjhjIiwiYXV0aF90aW1lIjoxNzUwMDA3MzYzLCJ1c2VyX2lkIjoiNnVHRW9VU3lJTFVsVnJLaG9nS2RDdm5EV2FOMiIsInN1YiI6IjZ1R0VvVVN5SUxVbFZyS2hvZ0tkQ3ZuRFdhTjIiLCJpYXQiOjE3NTAwMDczNjMsImV4cCI6MTc1MDAxMDk2MywiZW1haWwiOiIyMDA1MDc3QHVncmFkLmNzZS5idWV0LmFjLmJkIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZ29vZ2xlLmNvbSI6WyIxMDE2Mzk4OTI5NzEyMTk4MDY2MDMiXSwiZW1haWwiOlsiMjAwNTA3N0B1Z3JhZC5jc2UuYnVldC5hYy5iZCJdfSwic2lnbl9pbl9wcm92aWRlciI6Imdvb2dsZS5jb20ifX0.fp5--j1H-uiSNSkQeYSFJWO3PPgS1WYqmgE6-eX1vW_zsA-50eArbgATSXMrfaRIzixZwl7hHXIBL-b_XTESVw9CBt5p7GkT9okAJVZ6uvwQyzdK34ETRxF4_5Vb9uI5QRHXsYc8mAqfn1E_CnjcGr7gY0jpYLG-Glig9klUYTCmCS-XsqPt8BfNGzTbAqcL85bPj4iExNX-OG15qcR2TrxdMmDmdVfw-ac_QEDeDM3Qr8aiJov0G4ZD3YTtHOH0R-qCcBilFn-oYEewiH6VppQIeYr2e_770qO-vVbD_s56gYXwSgGfX0SMpDSF4fDdaVAOErZi-BthSQlZijo2OA
 }
 
 docs {
@@ -25,24 +26,32 @@ docs {
   ```
   status: 200
   {
-    "content":[
+    "content": [
       {
-        "id": "string",
-        "time": "time",
-        "event": "string",
-        "purpose": "string"
+        "id": "fef0b9ff-fc29-48aa-8266-d2f8207cf5ce",
+        "type": "MEDICINE",
+        "description": "Took my cold medicine",
+        "createdAt": "2025-06-15T16:45:10.356067Z"
+      },
+      {
+        "id": "7cab4d96-a7ac-4d14-ac69-447de877a25a",
+        "type": "EATING",
+        "description": "Had rice, cool, chicken curry and sambar for lunch",
+        "createdAt": "2025-06-15T10:44:56.955675Z"
       }
     ],
-    "page":{
-      "size": number,
-      "number": pagenumber (starts from 0),
-      "totalElements": 1,
+    "page": {
+      "size": 20,
+      "number": 0,
+      "totalElements": 2,
       "totalPages": 1
     }
   }
   ```
   
   **NOTES:**
-  * This endpoint has filtering logic. There are two params.
-      1. Event: The user can ask for a certain event. The api will retrieve similar events based on semantic search
+  * This endpoint has filtering logic:
+  * start, end -> utc time stamp -> 2025-06-15T16:45:10.356067Z. Any of them can be null. start is null, all logs before end time will be shown and vice-versa
+  * type -> EATING, BATHING, SOCIAL, MEDICINE, OUTINGS
+  * page and size for pagination.
 }
