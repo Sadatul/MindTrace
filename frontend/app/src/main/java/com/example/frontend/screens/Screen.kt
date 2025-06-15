@@ -11,11 +11,23 @@ sealed class Screen {
     data object Register: Screen()
 
     @Serializable
-    data object DashBoardPatient: Screen()
+    data class DashBoardPatient(
+        val name: String,
+        val email: String,
+        val dob: String,
+        val gender: String
+    ): Screen()
 
     @Serializable
-    data object DashboardCareGiver: Screen()
+    data class DashboardCareGiver(
+        val name: String,
+        val email: String,
+        val dob: String,
+        val gender: String,
+        val uid: String,
+        val token: String
+    ): Screen()
 
     @Serializable
-    data object Chat: Screen()
+    object Chat: Screen()
 }
