@@ -59,6 +59,7 @@ public class PatientLogController {
     ResponseEntity<LogFullResponse> getLog(@PathVariable UUID id) {
         log.debug("Received get log request: {}", id);
         Log lg = logService.getLog(id);
+        logService.verifyOwner(lg, SecurityUtils.getName());
         return  ResponseEntity.ok(new LogFullResponse(lg.getId(), lg.getType(), lg.getDescription(),
                 lg.getCreatedAt()));
     }
