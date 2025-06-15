@@ -3,6 +3,7 @@ package com.sadi.backend.controllers;
 import com.sadi.backend.dtos.requests.AddPatientCaregiverReq;
 import com.sadi.backend.dtos.responses.CaregiversPatientsDTO;
 import com.sadi.backend.services.abstractions.PatientCaregiverMgmtService;
+import com.sadi.backend.utils.SecurityUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,21 +17,21 @@ import java.util.UUID;
 
 @RestController
 @Slf4j
-@RequestMapping("/v1/caregivers/patients")
+@RequestMapping("/v1")
 @RequiredArgsConstructor
 public class UserCaregiverController {
 
     private final PatientCaregiverMgmtService patientCaregiverMgmtService;
 
-    @GetMapping("/{userId}/otp")
+    @GetMapping("/caregivers/patients/{userId}/otp")
     public ResponseEntity<Void> getPatientPrimaryContactOtp(
             @PathVariable String userId
     ){
-        patientCaregiverMgmtService.sendOtpToPatientPrimaryContact(userId);
+        patientCaregiverMgmtService.sendOtpToAddPatient(userId);
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping
+    @PostMapping("/caregivers/patients")
     public ResponseEntity<Void> addPatientToCaregiver(
            @Valid @RequestBody AddPatientCaregiverReq req
     ){
@@ -41,22 +42,53 @@ public class UserCaregiverController {
         return ResponseEntity.created(uri).build();
     }
 
-    @DeleteMapping("/{patientId}")
+    @DeleteMapping("/caregivers/patients/{patientId}")
     public ResponseEntity<Void> deletePatientFromCaregiver(
             @PathVariable String patientId
     ) {
         log.debug("Received request to delete patient {} from caregiver", patientId);
-        patientCaregiverMgmtService.deletePatientFromCaregiver(patientId);
+        patientCaregiverMgmtService.deletePatientFromCaregiver(patientId, SecurityUtils.getName());
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping
+    @GetMapping("/caregivers/patients")
     public ResponseEntity<List<CaregiversPatientsDTO>> getAllCaregiversPatients(
             @RequestParam(required = false, defaultValue = "false") Boolean includeDeleted
     )
     {
         log.debug("Received request to get all caregivers patients");
         List<CaregiversPatientsDTO> caregiversPatients = patientCaregiverMgmtService.getAllCaregiversPatients(includeDeleted);
+        return ResponseEntity.ok(caregiversPatients);
+    }
+
+    @GetMapping("/users/caregivers/{caregiverId}/otp")
+    public ResponseEntity<Void> sendOtpToRemoveCaregiver(
+            @PathVariable String caregiverId
+    ) {
+        log.debug("Received request to send OTP to remove caregiver {} from patient", caregiverId);
+        patientCaregiverMgmtService.sendOtpToRemovePatient(caregiverId);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/users/caregivers/{caregiverId}")
+    public ResponseEntity<Void> deleteCaregiverFromPatient(
+            @PathVariable String caregiverId,
+            @RequestParam String otp
+    ) {
+        log.debug("Received request to delete caregiver {} from patient", caregiverId);
+        String patientId = SecurityUtils.getName();
+        patientCaregiverMgmtService.verifyOtp(patientId, caregiverId, otp, PatientCaregiverMgmtService.OtpPurpose.REMOVE);
+        patientCaregiverMgmtService.deletePatientFromCaregiver(patientId, caregiverId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/users/caregivers")
+    public ResponseEntity<List<CaregiversPatientsDTO>> getAllPatientsCaregivers(
+            @RequestParam(required = false, defaultValue = "false") Boolean includeDeleted
+    )
+    {
+        log.debug("Received request to get caregivers for a patient");
+        List<CaregiversPatientsDTO> caregiversPatients = patientCaregiverMgmtService.getAllPatientsCaregiver(includeDeleted);
         return ResponseEntity.ok(caregiversPatients);
     }
 }
