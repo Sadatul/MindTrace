@@ -1,5 +1,7 @@
 package com.example.frontend.screens
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -40,7 +42,9 @@ import com.example.frontend.api.models.RequestChat
 import com.example.frontend.screens.components.ChatBubble
 import com.example.frontend.screens.models.ChatMessage
 import kotlinx.coroutines.launch
+import java.time.Instant
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ChatScreen(token: String) {
     var messages by remember { mutableStateOf(listOf<ChatMessage>()) }
@@ -162,7 +166,11 @@ fun ChatScreen(token: String) {
                             isLoading = true
                             val userMessage = inputText
                             // Add new message to the beginning of the list (newest first)
-                            messages = listOf(ChatMessage(userMessage, true)) + messages
+                            messages = listOf(ChatMessage(
+                                text = userMessage,
+                                isUser = true,
+                                timestamp = Instant.now().toString()
+                            )) + messages
                             inputText = ""
 
                             // Auto-scroll to bottom (newest message) immediately after adding user message
@@ -176,22 +184,28 @@ fun ChatScreen(token: String) {
                                 if (response.isSuccessful) {
                                     response.body()?.string()?.let { reply ->
                                         // Add assistant response to the beginning
-                                        messages = listOf(ChatMessage(reply, false)) + messages
+                                        messages = listOf(ChatMessage(
+                                            text = reply,
+                                            isUser = false,
+                                            timestamp = Instant.now().toString()
+                                        )) + messages
                                         // Scroll to bottom (newest message) - index 0 with reverseLayout=true
                                         listState.animateScrollToItem(0)
                                     }
                                 } else {
                                     messages = listOf(ChatMessage(
-                                        "Error: ${response.code()}",
-                                        false
+                                        text = "Error: ${response.code()}",
+                                        isUser = false,
+                                        timestamp = Instant.now().toString()
                                     )) + messages
                                     // Scroll to bottom after error message
                                     listState.animateScrollToItem(0)
                                 }
                             } catch (e: Exception) {
                                 messages = listOf(ChatMessage(
-                                    "Error: ${e.message}",
-                                    false
+                                    text = "Error: ${e.message}",
+                                    isUser = false,
+                                    timestamp = Instant.now().toString()
                                 )) + messages
                                 // Scroll to bottom after error message
                                 listState.animateScrollToItem(0)
@@ -225,7 +239,8 @@ private suspend fun loadMessages(
                 val newMessages = chatResponse.content.map { msg ->
                     ChatMessage(
                         text = if (msg.type == "ASSISTANT") msg.message.dropLast(4) else msg.message,
-                        isUser = msg.type == "USER"
+                        isUser = msg.type == "USER",
+                        timestamp = msg.createdAt
                     )
                 }
                 val hasMore = page < chatResponse.page.totalPages - 1

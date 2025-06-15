@@ -6,17 +6,22 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.frontend.screens.models.ChatMessage
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 @Composable
 fun ChatBubble(message: ChatMessage) {
-    Row(
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = if (message.isUser) Arrangement.End else Arrangement.Start
+        horizontalAlignment = if (message.isUser) Alignment.End else Alignment.Start
     ) {
         Box(
             modifier = Modifier
@@ -42,5 +47,25 @@ fun ChatBubble(message: ChatMessage) {
                 textAlign = TextAlign.Start
             )
         }
+        
+        Spacer(modifier = Modifier.height(4.dp))
+        
+        Text(
+            text = formatTimestamp(message.timestamp),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 4.dp)
+        )
+    }
+}
+
+private fun formatTimestamp(utcTimestamp: String): String {
+    return try {
+        val instant = Instant.parse(utcTimestamp)
+        val localDateTime = instant.atZone(ZoneId.systemDefault()).toLocalDateTime()
+        DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
+            .format(localDateTime)
+    } catch (e: Exception) {
+        utcTimestamp
     }
 }
