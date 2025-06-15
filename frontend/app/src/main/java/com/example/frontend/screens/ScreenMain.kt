@@ -3,6 +3,7 @@ package com.example.frontend.screens
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -12,29 +13,24 @@ import androidx.compose.runtime.setValue
 import com.example.frontend.api.RetrofitInstance
 
 @Composable
-fun MainScreen(
-    toChatScreen: () -> Unit,
-    toRegisterScreen: () -> Unit
-) {
+fun MainScreen(toChatScreen: (token: String) -> Unit, toRegisterCaregiverScreen: () -> Unit) {
 
     var serverStatus by remember { mutableStateOf("<Loading...>") }
+    var token by remember { mutableStateOf("") }
 
     LaunchedEffect(key1 = null) {
         val body = RetrofitInstance.dementiaAPI.getHealth().body()
-        body?.let {
-            serverStatus = body.status
-        }
+        println(body)
+        body?.let { serverStatus = body.status }
     }
 
     Column {
         Text("Server is $serverStatus")
 
-        Button(onClick = toChatScreen) {
-            Text("Chat screen")
-        }
+        TextField(value = token, onValueChange = { token = it }, label = { Text("Firebase token") })
+        Button(onClick = { toChatScreen(token) }) { Text("Chat screen") }
 
-        Button(onClick = toRegisterScreen) {
-            Text("Register screen")
-        }
+        Button(onClick = toRegisterScreen) { Text("Register screen") }
     }
 }
+

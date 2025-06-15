@@ -2,9 +2,14 @@ package com.sadi.backend.services.impls;
 
 import com.google.protobuf.Timestamp;
 import com.sadi.backend.dtos.LogDTO;
+import com.sadi.backend.dtos.requests.UpdateLogRequest;
 import com.sadi.backend.entities.Log;
+import com.sadi.backend.entities.User;
+import com.sadi.backend.enums.LogType;
 import com.sadi.backend.repositories.LogRepository;
+import com.sadi.backend.services.UserService;
 import com.sadi.backend.services.abstractions.LogService;
+import com.sadi.backend.utils.SecurityUtils;
 import io.qdrant.client.QdrantClient;
 import io.qdrant.client.QueryFactory;
 import io.qdrant.client.WithPayloadSelectorFactory;
@@ -15,12 +20,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -35,12 +43,24 @@ public class LogServiceImpl implements LogService {
     private final QdrantClient qdrantClient;
     private final EmbeddingModel embeddingModel;
     private final VectorStore logVectorStore;
+    private final UserService userService;
 
     @Override
     @Transactional
-    public void saveLog(Log log) {
+    public UUID saveLog(Log log) {
         Log savedLog = logRepository.save(log);
-        logVectorStore.add(List.of(new Document(savedLog.getDescription(), savedLog.getMetadata())));
+        logVectorStore.add(List.of(new Document(savedLog.getId().toString(),
+                savedLog.getDescription(),
+                savedLog.getMetadata())));
+        return savedLog.getId();
+    }
+
+    @Override
+    @Transactional
+    public UUID saveLog(String userId, LogType type, String description, Instant createdAt) {
+        User user = userService.getUser(userId);
+        Log log = new Log(user, type, description, createdAt);
+        return saveLog(log);
     }
 
     @Override
@@ -119,5 +139,44 @@ public class LogServiceImpl implements LogService {
             log.error(e.getMessage());
             return List.of();
         }
+    }
+
+    @Override
+    public Log getLog(UUID id) {
+        return logRepository.findById(id).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Log not found with id: " + id)
+        );
+    }
+
+    @Override
+    @Transactional
+    public void updateLog(UUID id, UpdateLogRequest req) {
+        Log lg = getLog(id);
+        verifyOwner(lg, SecurityUtils.getName());
+
+        lg.setDescription(req.description());
+        lg.setType(req.type());
+
+        logVectorStore.add(List.of(new Document(
+                lg.getId().toString(),
+                lg.getDescription(),
+                lg.getMetadata()
+        )));
+    }
+
+    @Override
+    public void verifyOwner(Log lg, String userId) {
+        if (!lg.getUser().getId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to access this log");
+        }
+    }
+
+    @Override
+    @Transactional
+    public void deleteLog(UUID id) {
+        Log lg = getLog(id);
+        verifyOwner(lg, SecurityUtils.getName());
+        logRepository.delete(lg);
+        logVectorStore.delete(List.of(id.toString()));
     }
 }

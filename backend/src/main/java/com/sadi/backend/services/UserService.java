@@ -4,6 +4,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.sadi.backend.dtos.requests.CaregiverRegistrationRequest;
 import com.sadi.backend.dtos.requests.PatientRegistrationRequest;
+import com.sadi.backend.entities.PatientCaregiver;
 import com.sadi.backend.entities.PatientDetail;
 import com.sadi.backend.entities.User;
 import com.sadi.backend.enums.Role;
@@ -18,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import com.sadi.backend.repositories.PatientCaregiverRepository;
 
 import java.util.Collections;
 
@@ -27,11 +29,13 @@ public class UserService {
     private final UserRepository userRepository;
     private final PatientDetailRepository patientDetailRepository;
     private final UserVerificationService userVerificationService;
+    private final PatientCaregiverRepository patientCaregiverRepository;
 
-    public UserService(UserRepository userRepository, PatientDetailRepository patientDetailRepository, UserVerificationService userVerificationService) {
+    public UserService(UserRepository userRepository, PatientDetailRepository patientDetailRepository, UserVerificationService userVerificationService, PatientCaregiverRepository patientCaregiverRepository) {
         this.userRepository = userRepository;
         this.patientDetailRepository = patientDetailRepository;
         this.userVerificationService = userVerificationService;
+        this.patientCaregiverRepository = patientCaregiverRepository;
     }
 
     public Boolean existsByEmail(String email) {
@@ -90,6 +94,7 @@ public class UserService {
 
         User primaryContact = getUser(req.primaryContact());
         patientDetailRepository.save(new PatientDetail(saveUser, primaryContact));
+        patientCaregiverRepository.save(new PatientCaregiver(saveUser, primaryContact));
 
         addScope(id, Role.PATIENT);
         return id;
@@ -103,5 +108,14 @@ public class UserService {
             log.error("Error adding scope to user in firebase: {}", e.getMessage());
             throw new InternalError("Error adding scope to user in firebase");
         }
+    }
+
+    public PatientDetail getPatientDetail(String userId, Boolean fetchUser) {
+        if(!fetchUser)
+            return patientDetailRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Patient not found"));
+
+        return patientDetailRepository.getPatientDetailWithUserById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Patient not found"));
     }
 }

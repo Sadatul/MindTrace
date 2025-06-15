@@ -1,5 +1,6 @@
 package com.sadi.backend.dtos.responses;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.sadi.backend.enums.ChatType;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
@@ -16,6 +17,7 @@ public interface ChatResponse{
     String getMessage();
     Instant getCreatedAt();
 
+    @JsonIgnore
     default Message getMessageObject(
     ) {
         Map<String, Object> enrichedMetadata = new HashMap<>();
