@@ -9,6 +9,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -16,40 +18,33 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.frontend.R
-import com.example.frontend.api.AuthSession
+import com.example.frontend.api.AuthManagerResponse // Ensure this matches your data class (should have 'role' field)
 import com.example.frontend.api.CaregiverRegisterRequest
 import com.example.frontend.api.PatientRegisterRequest
 import com.example.frontend.api.RetrofitInstance
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
-import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
-import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.launch
+import com.google.gson.Gson
+import kotlinx.coroutines.tasks.await
 
 private const val TAG = "ScreenRegister"
 
-/**
- * Main Composable for the Registration/Login Screen.
- * This screen handles the entire user authentication and registration flow.
- *
- * @param onNavigateToDashboard Lambda function to be invoked upon successful login/registration,
- *                              passing the user type ("caregiver" or "patient").
- */
 @Composable
 fun ScreenRegister(
-    onNavigateToDashboard: (userType: String) -> Unit
+    onNavigateToDashboard: (role: String, name: String?, email: String?, dob: String?, gender: String?, uid: String?, token: String?) -> Unit
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    // --- STATE MANAGEMENT ---
     var isLoading by remember { mutableStateOf(false) }
     var errorMsg by remember { mutableStateOf<String?>(null) }
 
@@ -61,299 +56,439 @@ fun ScreenRegister(
 
     var selectedRole by remember { mutableStateOf<String?>(null) }
 
-    // Caregiver form states
+    // Form fields
     var caregiverName by remember { mutableStateOf("") }
+    var caregiverEmail by remember { mutableStateOf("") }
     var caregiverDob by remember { mutableStateOf("") }
     var caregiverGender by remember { mutableStateOf("") }
 
-    // Patient form states
     var patientName by remember { mutableStateOf("") }
+    var patientEmail by remember { mutableStateOf("") }
     var patientDob by remember { mutableStateOf("") }
     var patientGender by remember { mutableStateOf("") }
     var primaryContact by remember { mutableStateOf("") }
     var patientOtp by remember { mutableStateOf("") }
 
+    // Remembered Firebase credentials
+    var rememberedFirebaseUserUID by remember { mutableStateOf<String?>(null) }
+    var rememberedFirebaseDisplayName by remember { mutableStateOf<String?>(null) }
+    var rememberedFirebaseEmail by remember { mutableStateOf<String?>(null) }
+    var rememberedFirebaseIdToken by remember { mutableStateOf<String?>(null) }
 
-    // --- GOOGLE & FIREBASE AUTH LOGIC ---
+
     val firebaseAuth = Firebase.auth
-
-    // Prepare GoogleSignInClient
     val googleSignInClient = remember {
         Log.d(TAG, "Initializing GoogleSignInClient.")
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(context.getString(R.string.default_web_client_id)) // From google-services.json
+            .requestIdToken(context.getString(R.string.default_web_client_id)) // Ensure this string resource exists
             .requestEmail()
             .build()
         GoogleSignIn.getClient(context, gso)
     }
 
-    // Function to authenticate with the backend after successful Firebase login
-    fun handleBackendAuth(googleIdToken: String) {
-        Log.d(TAG, "handleBackendAuth called.")
+    fun clearAllDialogs(clearSelectedRoleToo: Boolean = true) {
+        showRegisterPrompt = false
+        showRoleDialog = false
+        showCaregiverForm = false
+        showPatientForm = false
+        showConfirmationDialog = false
+        if (clearSelectedRoleToo) {
+            selectedRole = null
+        }
+        Log.d(TAG, "All dialogs cleared. Selected role also cleared: $clearSelectedRoleToo")
+    }
+
+    fun handleBackendAuth(
+        firebaseIdToken: String,
+        firebaseUserUID: String,
+        firebaseDisplayName: String?,
+        firebaseEmail: String?
+    ) {
+        Log.d(TAG, "handleBackendAuth initiated.")
+        Log.d(TAG, "  >> Firebase User UID: $firebaseUserUID")
+        Log.d(TAG, "  >> Firebase Display Name: $firebaseDisplayName")
+        Log.d(TAG, "  >> Firebase Email: $firebaseEmail")
+        Log.d(TAG, "  >> Firebase ID Token (first 30 chars): ${firebaseIdToken.take(30)}...")
+
         coroutineScope.launch {
             isLoading = true
             errorMsg = null
             try {
-                Log.d(TAG, "Calling backend /v1/auth with Google ID Token (first 10 chars): ${googleIdToken.take(10)}...")
-                val response = RetrofitInstance.dementiaAPI.postAuth("Bearer $googleIdToken")
-                val authBody = response.body()
-                val rawErrorBody = if (!response.isSuccessful && response.errorBody() != null) {
-                    response.errorBody()?.string() ?: "Error body was null but response not successful"
-                } else {
-                    "N/A (Response successful or error body not applicable)"
-                }
+                Log.i(TAG, "Calling backend /v1/auth with Firebase ID Token...")
+                val response = RetrofitInstance.dementiaAPI.postAuth("Bearer $firebaseIdToken")
+                Log.d(TAG, "/v1/auth RAW Response Code: ${response.code()}")
 
-                Log.d(TAG, "Backend /v1/auth response: Code=${response.code()}, IsSuccessful=${response.isSuccessful}, Body=${authBody}, RawErrorBody='$rawErrorBody'")
+                if (response.isSuccessful) {
+                    val parsedBody: AuthManagerResponse? = response.body()
+                    Log.i(TAG, "/v1/auth Call Successful (Code: ${response.code()})")
+                    Log.d(TAG, "/v1/auth PARSED Body: $parsedBody")
 
-                if (response.isSuccessful && authBody != null) {
-                    AuthSession.token = authBody.response // This is now the backend session token or a status like "exist"/"not exists"
-                    AuthSession.userType = authBody.userType
-                    Log.d(TAG, "Backend auth successful. AuthSession.token set to: ${AuthSession.token}, UserType: ${AuthSession.userType}")
+                    if (parsedBody != null) {
+                        when (parsedBody.status) {
+                            "new user" -> {
+                                Log.i(TAG, "Backend: New user detected. Storing Firebase credentials.")
+                                rememberedFirebaseUserUID = firebaseUserUID
+                                rememberedFirebaseDisplayName = firebaseDisplayName
+                                rememberedFirebaseEmail = firebaseEmail
+                                rememberedFirebaseIdToken = firebaseIdToken
+                                Log.d(TAG, "Stored for registration - UID: $rememberedFirebaseUserUID, Token (start): ${rememberedFirebaseIdToken?.take(10)}")
+                                clearAllDialogs()
+                                showRegisterPrompt = true
+                            }
+                            "exists" -> {
+                                Log.i(TAG, "Backend: Existing user detected.")
+                                //onNavigateToDashboard("patient", firebaseDisplayName, firebaseEmail, patientDob, patientGender, null)
+                                onNavigateToDashboard("caregiver", firebaseDisplayName, firebaseEmail, caregiverDob, caregiverGender, firebaseUserUID, firebaseIdToken)
 
-                    when {
-                        // Case 1: User exists, token is a real session token from backend
-                        !AuthSession.token.isNullOrEmpty() && AuthSession.token != "exist" && AuthSession.token != "not exists" && !AuthSession.userType.isNullOrEmpty() -> {
-                            Log.i(TAG, "User authenticated with backend. Token received. Navigating to dashboard as ${AuthSession.userType}.")
-                            onNavigateToDashboard(AuthSession.userType!!)
+                            }
+                            else -> {
+                                errorMsg = "Backend returned unknown status: ${parsedBody.status}. Check logs."
+                                Log.e(TAG, "Unknown status from backend: ${parsedBody.status}. Parsed Body: $parsedBody")
+                                clearAllDialogs()
+                            }
                         }
-                        // Case 2: User exists, backend confirms, use userType from backend
-                        authBody.response == "exist" && !AuthSession.userType.isNullOrEmpty() -> {
-                            Log.i(TAG, "User already exists (confirmed by backend). Navigating to dashboard as ${AuthSession.userType}.")
-                            // Potentially, the Google ID token could be stored if needed for subsequent calls,
-                            // or the backend should provide a session token even for "exist" if it's a new login session.
-                            // For now, assuming navigation is enough if backend says "exist".
-                            // If a session token is needed, the backend should provide it.
-                            // If AuthSession.token is "exist", we might need to re-evaluate what token to use for API calls.
-                            // For now, we proceed to dashboard.
-                            onNavigateToDashboard(AuthSession.userType!!)
-                        }
-                        // Case 3: User does not exist, backend confirms
-                        authBody.response == "not exists" -> {
-                            Log.i(TAG, "User not registered with backend. Showing registration prompt.")
-                            AuthSession.token = googleIdToken // Store Google ID token for registration process
-                            showRegisterPrompt = true; Log.d(TAG, "showRegisterPrompt set to true")
-                        }
-                        else -> {
-                            errorMsg = "Received an unknown or incomplete response from the server during auth. Body: $authBody"
-                            Log.e(TAG, "Unknown backend auth response: $authBody, Token: ${AuthSession.token}, UserType: ${AuthSession.userType}")
-                        }
+                    } else {
+                        errorMsg = "Backend auth response body was null. Check logs."
+                        Log.e(TAG, "/v1/auth successful but response body is null.")
+                        clearAllDialogs()
                     }
-                } else if (response.code() == 404) { // User not found by backend
-                    Log.i(TAG, "User not found by backend (404). Showing registration prompt.")
-                    AuthSession.token = googleIdToken // Store Google ID token for registration process
-                    showRegisterPrompt = true; Log.d(TAG, "showRegisterPrompt set to true")
-                }
-                else { // Other errors from backend
-                    errorMsg = "Backend authentication failed (Code: ${response.code()}): $rawErrorBody"
-                    Log.e(TAG, "Backend auth failed: Code: ${response.code()}, ErrorBody: $rawErrorBody")
+                } else {
+                    val errorBodyString = try { response.errorBody()?.string() ?: "No error body." } catch (e: Exception) { "Failed to read error body." }
+                    Log.e(TAG, "/v1/auth Call Failed (Code: ${response.code()}). Error Body: $errorBodyString")
+                    errorMsg = "Backend authentication failed (Code ${response.code()}). See logs."
+                    clearAllDialogs()
                 }
             } catch (e: retrofit2.HttpException) {
-                val errorBodyString = try { e.response()?.errorBody()?.string() } catch (ioe: java.io.IOException) { "Error reading error body." }
-                errorMsg = "Server error during authentication (Code: ${e.code()}). Check logs."
-                Log.e(TAG, "Backend auth HttpException: Code: ${e.code()}, ErrorBody: $errorBodyString", e)
-            }
-            catch (e: java.io.IOException) { // Network errors
-                errorMsg = "Network error during authentication. Please check your connection."
-                Log.e(TAG, "Backend auth IOException (Network issue).", e)
-            }
-            catch (e: Exception) { // Other unexpected errors
-                errorMsg = "An unexpected error occurred during backend authentication: ${e.message}"
-                Log.e(TAG, "Backend auth exception", e)
+                val errorBodyString = try { e.response()?.errorBody()?.string() } catch (ioe: java.io.IOException) { "N/A" }
+                Log.e(TAG, "/v1/auth Retrofit HttpException: Code=${e.code()}, Msg=${e.message()}, ErrorBody='$errorBodyString'", e)
+                errorMsg = "Backend server error (HTTP ${e.code()}). Check logs."
+                clearAllDialogs()
+            } catch (e: java.io.IOException) {
+                Log.e(TAG, "/v1/auth Network IOException: ${e.message}", e)
+                errorMsg = "Network error during backend auth. Check connection."
+                clearAllDialogs()
+            } catch (e: Exception) {
+                Log.e(TAG, "/v1/auth General Exception: ${e.message}", e)
+                errorMsg = "An unexpected error occurred during backend auth. Check logs."
+                clearAllDialogs()
             } finally {
                 isLoading = false
-                Log.d(TAG, "handleBackendAuth finished. isLoading: $isLoading")
+                Log.d(TAG, "handleBackendAuth finished. isLoading=$isLoading, errorMsg=$errorMsg, showRegisterPrompt=$showRegisterPrompt")
             }
         }
     }
 
-    // Launcher for the Google Sign-In intent
     val signInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         isLoading = true
         errorMsg = null
         Log.d(TAG, "Google Sign-In result received. ResultCode: ${result.resultCode}")
+
         if (result.resultCode == Activity.RESULT_OK) {
             val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
             try {
-                val account = task.getResult(ApiException::class.java)!!
-                val idToken = account.idToken
-                Log.d(TAG, "Google Sign-In successful. Email: ${account.email}, ID Token present: ${!idToken.isNullOrEmpty()}")
+                val account = task.getResult(ApiException::class.java)
+                if (account == null) {
+                    errorMsg = "Failed to get Google Account. Please try again."
+                    Log.e(TAG, "GoogleSignIn.getSignedInAccountFromIntent returned null account.")
+                    isLoading = false
+                    return@rememberLauncherForActivityResult
+                }
 
-                if (idToken == null) {
+                val googleIdToken = account.idToken
+                Log.d(TAG, "Google Sign-In successful.")
+                Log.d(TAG, "  >> Google User Email: ${account.email}")
+                Log.d(TAG, "  >> Google User Name: ${account.displayName}")
+                Log.d(TAG, "  >> Google ID Token present: ${!googleIdToken.isNullOrEmpty()}")
+
+                if (googleIdToken == null) {
                     errorMsg = "Failed to get Google ID Token. Please try again."
-                    Log.e(TAG, "Google ID Token is null after successful sign-in.")
+                    Log.e(TAG, "Google ID Token is null.")
                     isLoading = false
                     return@rememberLauncherForActivityResult
                 }
 
                 Log.d(TAG, "Attempting Firebase sign-in with Google ID Token.")
-                val credential = GoogleAuthProvider.getCredential(idToken, null)
-                firebaseAuth.signInWithCredential(credential)
-                    .addOnCompleteListener { authTask ->
-                        if (authTask.isSuccessful) {
-                            Log.i(TAG, "Firebase sign-in successful. UID: ${authTask.result.user?.uid}")
-                            // Firebase auth is successful, now authenticate with YOUR backend
-                            handleBackendAuth(idToken)
-                        } else {
+                val credential = GoogleAuthProvider.getCredential(googleIdToken, null)
+                coroutineScope.launch {
+                    try {
+                        val authResult = firebaseAuth.signInWithCredential(credential).await()
+                        val firebaseUser = authResult.user
+                        if (firebaseUser == null) {
+                            errorMsg = "Firebase auth succeeded but user is null."
+                            Log.e(TAG, "Firebase sign-in successful but firebaseUser is null.")
                             isLoading = false
-                            errorMsg = "Firebase authentication failed: ${authTask.exception?.message}"
-                            Log.e(TAG, "Firebase auth failed", authTask.exception)
-                            if (authTask.exception is FirebaseAuthInvalidCredentialsException) {
-                                Log.e(TAG, "Firebase: Invalid credentials. Check SHA-1, package name, google-services.json, and API key restrictions.")
-                            } else if (authTask.exception is FirebaseAuthUserCollisionException) {
-                                Log.e(TAG, "Firebase: User collision. This shouldn't happen with Google Sign-In if linking is not explicitly done.")
-                            }
+                            googleSignInClient.signOut()
+                            return@launch
                         }
+
+                        Log.i(TAG, "Firebase sign-in successful.")
+                        Log.d(TAG, "  >> Firebase User UID: ${firebaseUser.uid}")
+                        Log.d(TAG, "  >> Firebase Display Name: ${firebaseUser.displayName}")
+                        Log.d(TAG, "  >> Firebase Email: ${firebaseUser.email}")
+
+                        val tokenResult = firebaseUser.getIdToken(true).await() // Force refresh
+                        Log.i(TAG, "Firebase ID Token : ${tokenResult.token}")
+
+                        val freshFirebaseIdToken = tokenResult.token
+                        if (freshFirebaseIdToken != null) {
+                            Log.i(TAG, "Successfully obtained/refreshed Firebase ID Token.")
+                            Log.d(TAG, "  >> Fresh Firebase ID Token (first 30 chars): ${freshFirebaseIdToken.take(30)}...")
+                            handleBackendAuth(
+                                firebaseIdToken = freshFirebaseIdToken,
+                                firebaseUserUID = firebaseUser.uid,
+                                firebaseDisplayName = firebaseUser.displayName,
+                                firebaseEmail = firebaseUser.email
+                            )
+                        } else {
+                            errorMsg = "Failed to get Firebase ID token (null after refresh)."
+                            Log.w(TAG, "Firebase ID token null after refresh.")
+                            isLoading = false
+                        }
+                    } catch (e: Exception) {
+                        errorMsg = "Firebase operation failed: ${e.localizedMessage}"
+                        Log.w(TAG, "Firebase operation (sign-in or token refresh) failed", e)
+                        isLoading = false
+                        googleSignInClient.signOut()
                     }
+                }
             } catch (e: ApiException) {
-                isLoading = false
-                errorMsg = "Google Sign-In failed (API): ${e.statusCode} - ${e.message}"
+                errorMsg = "Google Sign-In failed (API Exception): ${e.statusCode} - ${e.message}"
                 Log.e(TAG, "Google Sign-In ApiException: StatusCode: ${e.statusCode}", e)
-            } catch (e: Exception) {
                 isLoading = false
-                errorMsg = "An unexpected error occurred during Google Sign-In: ${e.message}"
+            } catch (e: Exception) {
+                errorMsg = "Unexpected error during Google Sign-In: ${e.message}"
                 Log.e(TAG, "Google Sign-In general exception", e)
+                isLoading = false
             }
         } else {
+            errorMsg = "Google Sign-In cancelled or failed. (ResultCode: ${result.resultCode})"
+            Log.w(TAG, "Google sign in cancelled/failed. ResultCode: ${result.resultCode}")
             isLoading = false
-            errorMsg = "Google Sign-In was cancelled or failed. (ResultCode: ${result.resultCode})"
-            Log.w(TAG, "Google sign in cancelled or failed. ResultCode: ${result.resultCode}")
         }
     }
 
 
-    // --- BACKEND API REGISTRATION LOGIC ---
+
     fun handleCaregiverRegistration() {
         Log.d(TAG, "handleCaregiverRegistration called.")
-        // This token should be the Google ID token stored in AuthSession if user is new
-        val googleIdTokenForRegistration = AuthSession.token
-        if (googleIdTokenForRegistration == null || googleIdTokenForRegistration == "exist" || googleIdTokenForRegistration == "not exists") {
-            errorMsg = "Authentication session is invalid for registration. Please sign in again."
+        val tokenForRegistration = rememberedFirebaseIdToken
+        val userUidForRegistration = rememberedFirebaseUserUID
+
+        Log.d(TAG, "  Using for Caregiver Registration:")
+        Log.d(TAG, "    >> Remembered Firebase User UID: $userUidForRegistration")
+        Log.d(TAG, "    >> Remembered Firebase ID Token (start): ${tokenForRegistration?.take(10)}...")
+
+        // Clear previous error messages specific to this form
+        errorMsg = null
+
+        if (tokenForRegistration.isNullOrBlank() || userUidForRegistration.isNullOrBlank()) {
+            // This is a more fundamental auth issue, likely hide form and show error on main screen
+            errorMsg = "Authentication session is invalid. Please sign in again."
+            Log.e(TAG, "Caregiver registration: Missing remembered Firebase ID token or UID.")
+            clearAllDialogs() // Hide all dialogs, including the form
             isLoading = false
-            Log.e(TAG, "Caregiver registration: Invalid or missing Google ID token in AuthSession. Current token: $googleIdTokenForRegistration")
             return
         }
 
-        Log.d(TAG, "Caregiver registration form data: Name='${caregiverName}', DOB='${caregiverDob}', Gender='${caregiverGender}'")
+        Log.d(TAG, "  Caregiver Form Input:")
+        Log.d(TAG, "    >> Name: '$caregiverName'")
+        Log.d(TAG, "    >> DOB: '$caregiverDob'")
+        Log.d(TAG, "    >> Gender: '$caregiverGender'")
+
         if (caregiverName.isBlank() || caregiverDob.isBlank() || caregiverGender.isBlank()) {
-            errorMsg = "All fields are required for caregiver registration."
-            Log.w(TAG, "Caregiver registration: Form validation failed. Fields: Name='${caregiverName}', DOB='${caregiverDob}', Gender='${caregiverGender}'")
+            errorMsg = "All fields (Name, DOB, Gender) are required."
+            Log.w(TAG, "Caregiver registration: Form validation failed. Error: $errorMsg")
+            showCaregiverForm=false
+            isLoading = false // Ensure loading is stopped if validation fails early
             return
         }
+
         val request = CaregiverRegisterRequest(name = caregiverName, dob = caregiverDob, gender = caregiverGender)
+        val gson = Gson()
+        Log.d(TAG, "Attempting Caregiver Registration with API:")
+        Log.d(TAG, "  >> Authorization: Bearer ${tokenForRegistration.take(20)}...")
+        Log.d(TAG, "  >> Request Body (JSON): ${gson.toJson(request)}")
 
         coroutineScope.launch {
             isLoading = true
-            errorMsg = null
-            Log.i(TAG, "Attempting to register caregiver: $caregiverName with Google ID Token (first 10 chars): ${googleIdTokenForRegistration.take(10)}...")
+            // errorMsg is reset at the start of the function, or if validation fails.
+            // For network/server errors, it will be set in catch blocks.
+
+            var registrationApiFailed = false // Flag to control dialog visibility on API failure
+
             try {
-                val response = RetrofitInstance.dementiaAPI.registerCaregiver("Bearer $googleIdTokenForRegistration", request)
-                Log.d(TAG, "Caregiver registration response: Code=${response.code()}, IsSuccessful=${response.isSuccessful}, Body=${response.body()}")
-                if (response.isSuccessful && response.code() == 201) { // 201 Created
+                val response = RetrofitInstance.dementiaAPI.registerCaregiver(
+                    "Bearer $tokenForRegistration", request
+                )
+                Log.d(TAG, "Caregiver Register RAW Response Code: ${response.code()}")
+                if (response.isSuccessful && response.code() == 201) {
                     Log.i(TAG, "Caregiver registered successfully: ${response.body()?.msg}")
-                    // After successful registration, the user is essentially "logged in" as this new role.
-                    // The backend should ideally return the new userType and a session token if applicable,
-                    // or we re-trigger handleBackendAuth to get the session token.
-                    // For now, we assume registration implies login for this role.
-                    AuthSession.userType = "caregiver" // Set user type locally
-                    // AuthSession.token should be updated if backend returns a new session token here.
-                    // If not, the Google ID token is still there, might need re-auth with backend.
-                    // Let's try to re-run backend auth to get a proper session token.
-                    handleBackendAuth(googleIdTokenForRegistration) // Re-auth to get session token and confirm userType
+                    clearAllDialogs()
+                    onNavigateToDashboard("caregiver", caregiverName, caregiverEmail, caregiverDob, caregiverGender, userUidForRegistration, tokenForRegistration)
                 } else {
+                    registrationApiFailed = true
                     val errorBody = response.errorBody()?.string() ?: "Unknown error"
-                    errorMsg = "Caregiver registration failed (Code: ${response.code()}): $errorBody"
-                    Log.e(TAG, "Caregiver registration failed: Code: ${response.code()}, ErrorBody: $errorBody")
+                    errorMsg = "Caregiver backend registration failed (Code: ${response.code()}): $errorBody"
+                    Log.e(TAG, "Caregiver registration failed: Code: ${response.code()}, Error: $errorBody, Request: ${gson.toJson(request)}")
                 }
             } catch (e: retrofit2.HttpException) {
-                val errorBodyString = try { e.response()?.errorBody()?.string() } catch (ioe: java.io.IOException) { "Error reading error body." }
-                errorMsg = "Server error during caregiver registration (Code: ${e.code()}). Check logs."
-                Log.e(TAG, "Caregiver registration HttpException: Code: ${e.code()}, ErrorBody: $errorBodyString", e)
-            }
-            catch (e: java.io.IOException) {
+                registrationApiFailed = true
+                val errBody = try { e.response()?.errorBody()?.string() } catch (ioe: java.io.IOException) { "N/A" }
+                errorMsg = "Server error during caregiver registration (Code: ${e.code()}). Details: $errBody"
+                Log.e(TAG, "Caregiver registration HttpException: Code: ${e.code()}, ErrorBody: $errBody", e)
+            } catch (e: java.io.IOException) {
+                registrationApiFailed = true
                 errorMsg = "Network error during caregiver registration. Please check connection."
                 Log.e(TAG, "Caregiver registration IOException", e)
-            }
-            catch (e: Exception) {
-                errorMsg = "An error occurred during caregiver registration: ${e.message}"
+            } catch (e: Exception) {
+                registrationApiFailed = true
+                errorMsg = "Caregiver registration error: ${e.localizedMessage}"
                 Log.e(TAG, "Caregiver registration exception", e)
             } finally {
                 isLoading = false
-                Log.d(TAG, "handleCaregiverRegistration finished. isLoading: $isLoading")
+                if (registrationApiFailed) {
+                    // For API failures, hide the form and show error on main screen
+                    showCaregiverForm = false
+                    showConfirmationDialog = false // Also hide confirmation if it was somehow still visible
+                }
+                // If it was a client-side validation error, showCaregiverForm remains true
+                // and errorMsg is already set to the validation message.
+                Log.d(TAG, "handleCaregiverRegistration finished. isLoading: $isLoading, errorMsg: $errorMsg, showCaregiverForm: $showCaregiverForm")
             }
         }
     }
 
     fun handlePatientRegistration() {
         Log.d(TAG, "handlePatientRegistration called.")
-        val googleIdTokenForRegistration = AuthSession.token
-        if (googleIdTokenForRegistration == null || googleIdTokenForRegistration == "exist" || googleIdTokenForRegistration == "not exists") {
-            errorMsg = "Authentication session is invalid for registration. Please sign in again."
+        val tokenForRegistration = rememberedFirebaseIdToken
+        val userUidForRegistration = rememberedFirebaseUserUID
+
+        Log.d(TAG, "  Using for Patient Registration:")
+        Log.d(TAG, "    >> Remembered Firebase User UID: $userUidForRegistration")
+        Log.d(TAG, "    >> Remembered Firebase ID Token (start): ${tokenForRegistration?.take(10)}...")
+
+        // Clear previous error messages specific to this form
+        errorMsg = null
+
+        if (tokenForRegistration.isNullOrBlank() || userUidForRegistration.isNullOrBlank()) {
+            // This is a more fundamental auth issue, likely hide form and show error on main screen
+            errorMsg = "Authentication session is invalid. Please sign in again."
+            Log.e(TAG, "Patient registration: Missing remembered Firebase ID token or UID.")
+            clearAllDialogs() // Hide all dialogs, including the form
             isLoading = false
-            Log.e(TAG, "Patient registration: Invalid or missing Google ID token in AuthSession. Current token: $googleIdTokenForRegistration")
             return
         }
 
-        Log.d(TAG, "Patient registration form data: Name='${patientName}', DOB='${patientDob}', Gender='${patientGender}', Contact='${primaryContact}', OTP='${patientOtp}'")
+        Log.d(TAG, "  Patient Form Input:")
+        Log.d(TAG, "    >> Name: '$patientName'")
+        Log.d(TAG, "    >> DOB: '$patientDob'")
+        Log.d(TAG, "    >> Gender: '$patientGender'")
+        Log.d(TAG, "    >> Primary Contact: '$primaryContact'")
+        Log.d(TAG, "    >> OTP: '$patientOtp'")
+
         if (patientName.isBlank() || patientDob.isBlank() || patientGender.isBlank() || primaryContact.isBlank() || patientOtp.isBlank()) {
             errorMsg = "All fields are required for patient registration."
-            Log.w(TAG, "Patient registration: Form validation failed.")
+            Log.w(TAG, "Patient registration: Form validation failed. Error: $errorMsg")
+            showPatientForm=false
+            isLoading = false // Ensure loading is stopped
             return
         }
+
         val request = PatientRegisterRequest(
-            name = patientName,
-            dob = patientDob,
-            gender = patientGender,
-            primaryContact = primaryContact,
-            otp = patientOtp
+            name = patientName, dob = patientDob, gender = patientGender,
+            primaryContact = primaryContact, otp = patientOtp
         )
+        val gson = Gson()
+        Log.d(TAG, "Attempting Patient Registration with API:")
+        Log.d(TAG, "  >> Authorization: Bearer ${tokenForRegistration.take(20)}...")
+        Log.d(TAG, "  >> Request Body (JSON): ${gson.toJson(request)}")
 
         coroutineScope.launch {
             isLoading = true
-            errorMsg = null
-            Log.i(TAG, "Attempting to register patient: $patientName with Google ID Token (first 10 chars): ${googleIdTokenForRegistration.take(10)}...")
+            // errorMsg is reset at the start or on validation fail.
+            // For network/server errors, it will be set in catch blocks.
+
+            var registrationApiFailed = false // Flag to control dialog visibility
+
             try {
-                val response = RetrofitInstance.dementiaAPI.registerPatient("Bearer $googleIdTokenForRegistration", request)
-                Log.d(TAG, "Patient registration response: Code=${response.code()}, IsSuccessful=${response.isSuccessful}, Body=${response.body()}")
-                if (response.isSuccessful && response.code() == 201) { // 201 Created
+                val response = RetrofitInstance.dementiaAPI.registerPatient(
+                    "Bearer $tokenForRegistration", request
+                )
+                Log.d(TAG, "Patient Register RAW Response Code: ${response.code()}")
+                if (response.isSuccessful && response.code() == 201) {
                     Log.i(TAG, "Patient registered successfully: ${response.body()?.msg}")
-                    AuthSession.userType = "patient"
-                    handleBackendAuth(googleIdTokenForRegistration) // Re-auth to get session token
+                    clearAllDialogs()
+                    onNavigateToDashboard("patient", patientName, patientEmail, patientDob, patientGender, userUidForRegistration,tokenForRegistration)
                 } else {
+                    registrationApiFailed = true
                     val errorBody = response.errorBody()?.string() ?: "Unknown error"
-                    errorMsg = "Patient registration failed (Code: ${response.code()}): $errorBody"
-                    Log.e(TAG, "Patient registration failed: Code: ${response.code()}, ErrorBody: $errorBody")
+                    errorMsg = "Patient backend registration failed (Code: ${response.code()}): $errorBody"
+                    Log.e(TAG, "Patient registration failed: Code: ${response.code()}, Error: $errorBody, Request: ${gson.toJson(request)}")
                 }
             } catch (e: retrofit2.HttpException) {
-                val errorBodyString = try { e.response()?.errorBody()?.string() } catch (ioe: java.io.IOException) { "Error reading error body." }
-                errorMsg = "Server error during patient registration (Code: ${e.code()}). Check logs."
-                Log.e(TAG, "Patient registration HttpException: Code: ${e.code()}, ErrorBody: $errorBodyString", e)
-            }
-            catch (e: java.io.IOException) {
+                registrationApiFailed = true
+                val errBody = try { e.response()?.errorBody()?.string() } catch (ioe: java.io.IOException) { "N/A" }
+                errorMsg = "Server error during patient registration (Code: ${e.code()}). Details: $errBody"
+                Log.e(TAG, "Patient registration HttpException: Code: ${e.code()}, ErrorBody: $errBody", e)
+            } catch (e: java.io.IOException) {
+                registrationApiFailed = true
                 errorMsg = "Network error during patient registration. Please check connection."
                 Log.e(TAG, "Patient registration IOException", e)
-            }
-            catch (e: Exception) {
-                errorMsg = "An error occurred during patient registration: ${e.message}"
+            } catch (e: Exception) {
+                registrationApiFailed = true
+                errorMsg = "Patient registration error: ${e.localizedMessage}"
                 Log.e(TAG, "Patient registration exception", e)
             } finally {
                 isLoading = false
-                Log.d(TAG, "handlePatientRegistration finished. isLoading: $isLoading")
+                if (registrationApiFailed) {
+                    // For API failures, hide the form
+                    showPatientForm = false
+                    showConfirmationDialog = false // Also hide confirmation
+                }
+                // If client-side validation error, showPatientForm remains true
+                // and errorMsg is already set.
+                Log.d(TAG, "handlePatientRegistration finished. isLoading: $isLoading, errorMsg: $errorMsg, showPatientForm: $showPatientForm")
             }
         }
     }
 
-
-    // --- UI & DIALOGS ---
+    // --- UI Composition ---
     Surface(modifier = Modifier.fillMaxSize()) {
         RegisterScreenUI(
             isLoading = isLoading,
             errorMsg = errorMsg,
             onGoogleSignIn = {
                 Log.d(TAG, "Google Sign-In button clicked.")
-                errorMsg = null // Clear previous errors
-                signInLauncher.launch(googleSignInClient.signInIntent)
+                errorMsg = null // Clear any previous error messages
+                clearAllDialogs()
+
+                // **Launch a coroutine here to perform suspend functions**
+                coroutineScope.launch {
+                    try {
+                        Log.i(TAG, "Attempting to sign out from Firebase...")
+                        Firebase.auth.signOut()
+                        Log.i(TAG, "Firebase sign-out successful.")
+
+                        Log.i(TAG, "Attempting to sign out from GoogleSignInClient...")
+                        googleSignInClient.signOut().await() // Now this is called within a coroutine
+                        Log.i(TAG, "GoogleSignInClient sign-out successful.")
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Error during explicit sign-out before new sign-in attempt", e)
+                        // It's generally safe to continue with the sign-in attempt even if sign-out failed,
+                        // as the new sign-in flow might override the previous state.
+                    } finally {
+                        // Clear remembered credentials after sign-out attempt and before new sign-in
+                        rememberedFirebaseIdToken = null
+                        rememberedFirebaseUserUID = null
+                        rememberedFirebaseDisplayName = null
+                        rememberedFirebaseEmail = null
+                        Log.d(TAG, "Cleared remembered Firebase credentials.")
+                        Log.d(TAG, "Launching Google Sign-In Intent...")
+                        signInLauncher.launch(googleSignInClient.signInIntent)
+                    }
+                }
             }
         )
 
@@ -363,11 +498,12 @@ fun ScreenRegister(
                 onDismiss = {
                     Log.d(TAG, "RegisterPromptDialog dismissed.")
                     showRegisterPrompt = false
+                    errorMsg = "Registration cancelled."
                 },
                 onRegister = {
                     Log.d(TAG, "RegisterPromptDialog: Register clicked.")
                     showRegisterPrompt = false
-                    showRoleDialog = true; Log.d(TAG, "showRoleDialog set to true")
+                    showRoleDialog = true
                 }
             )
         }
@@ -378,12 +514,14 @@ fun ScreenRegister(
                 onDismiss = {
                     Log.d(TAG, "RoleSelectionDialog dismissed.")
                     showRoleDialog = false
+                    selectedRole = null
+                    errorMsg = "Role selection cancelled."
                 },
                 onRoleSelected = { role ->
                     Log.i(TAG, "Role selected: $role")
                     selectedRole = role
                     showRoleDialog = false
-                    showConfirmationDialog = true; Log.d(TAG, "showConfirmationDialog set to true")
+                    showConfirmationDialog = true
                 }
             )
         }
@@ -392,29 +530,36 @@ fun ScreenRegister(
             Log.d(TAG, "Displaying ConfirmationDialog for role: $selectedRole.")
             ConfirmationDialog(
                 role = selectedRole!!,
-                onDismiss = {
-                    Log.d(TAG, "ConfirmationDialog dismissed.")
-                    showConfirmationDialog = false
-                    selectedRole = null; Log.d(TAG, "selectedRole reset to null")
-                },
                 onConfirm = {
-                    Log.i(TAG, "Role confirmed: $selectedRole. Proceeding to respective form.")
                     showConfirmationDialog = false
-                    // Clear previous form data when role is confirmed
-                    caregiverName = ""; caregiverDob = ""; caregiverGender = ""
-                    patientName = ""; patientDob = ""; patientGender = ""; primaryContact = ""; patientOtp = ""
-                    Log.d(TAG, "Form fields cleared for new role entry.")
+                    // Reset form fields before showing the form
+                    // Name is pre-filled from Firebase Display Name if available
+                    // Email is pre-filled from Firebase Email
+                    val defaultName = rememberedFirebaseDisplayName ?: ""
+                    val currentEmail = rememberedFirebaseEmail ?: "Email not available"
 
                     if (selectedRole == "caregiver") {
-                        showCaregiverForm = true; Log.d(TAG, "showCaregiverForm set to true")
-                    } else {
-                        showPatientForm = true; Log.d(TAG, "showPatientForm set to true")
+                        caregiverName = if (caregiverName.isBlank()) defaultName else caregiverName
+                        caregiverEmail = if (caregiverEmail.isBlank()) currentEmail else caregiverEmail
+                        caregiverDob = ""
+                        caregiverGender = ""
+                        showCaregiverForm = true
+                    } else { // Patient
+                        patientName = if (patientName.isBlank()) defaultName else patientName
+                        patientEmail = if (patientEmail.isBlank()) currentEmail else patientEmail
+                        patientDob = ""
+                        patientGender = ""
+                        primaryContact = ""
+                        patientOtp = ""
+                        showPatientForm = true
                     }
                 },
-                onBack = {
-                    Log.d(TAG, "ConfirmationDialog: Back clicked.")
+                onBackToRoleSelection = {
                     showConfirmationDialog = false
-                    showRoleDialog = true; Log.d(TAG, "showRoleDialog set to true (back to role selection)")
+                    showRoleDialog = true // Return to role selection
+                },
+                onDismissDialog = { // Dismiss via tap outside or system back
+                    showConfirmationDialog = false
                 }
             )
         }
@@ -422,19 +567,17 @@ fun ScreenRegister(
         if (showCaregiverForm) {
             Log.d(TAG, "Displaying CaregiverRegisterDialog.")
             CaregiverRegisterDialog(
-                name = caregiverName,
-                dob = caregiverDob,
-                gender = caregiverGender,
+                name = caregiverName, email = caregiverEmail, dob = caregiverDob, gender = caregiverGender,
                 onNameChange = { caregiverName = it },
+                onEmailChange = { caregiverEmail = it },
                 onDobChange = { caregiverDob = it },
                 onGenderChange = { caregiverGender = it },
                 onDismiss = {
-                    Log.d(TAG, "CaregiverRegisterDialog dismissed.")
+                    Log.d(TAG, "CaregiverRegisterDialog dismissed (Cancel/Back).")
                     showCaregiverForm = false
-                    selectedRole = null; Log.d(TAG, "selectedRole reset to null")
                 },
                 onConfirm = {
-                    Log.d(TAG, "CaregiverRegisterDialog: Confirm clicked.")
+                    Log.d(TAG, "CaregiverRegisterDialog: Confirm (Register) clicked.")
                     handleCaregiverRegistration()
                 }
             )
@@ -443,23 +586,18 @@ fun ScreenRegister(
         if (showPatientForm) {
             Log.d(TAG, "Displaying PatientRegisterDialog.")
             PatientRegisterDialog(
-                name = patientName,
-                dob = patientDob,
-                gender = patientGender,
-                primaryContact = primaryContact,
-                otp = patientOtp,
-                onNameChange = { patientName = it },
+                name = patientName, email = patientEmail,dob = patientDob, gender = patientGender,
+                primaryContact = primaryContact, otp = patientOtp,
+                onNameChange = { patientName = it }, onEmailChange = { patientEmail = it },
                 onDobChange = { patientDob = it },
-                onGenderChange = { patientGender = it },
-                onPrimaryContactChange = { primaryContact = it },
+                onGenderChange = { patientGender = it }, onPrimaryContactChange = { primaryContact = it },
                 onOtpChange = { patientOtp = it },
                 onDismiss = {
-                    Log.d(TAG, "PatientRegisterDialog dismissed.")
+                    Log.d(TAG, "PatientRegisterDialog dismissed (Cancel/Back).")
                     showPatientForm = false
-                    selectedRole = null; Log.d(TAG, "selectedRole reset to null")
                 },
                 onConfirm = {
-                    Log.d(TAG, "PatientRegisterDialog: Confirm clicked.")
+                    Log.d(TAG, "PatientRegisterDialog: Confirm (Register) clicked.")
                     handlePatientRegistration()
                 }
             )
@@ -467,14 +605,6 @@ fun ScreenRegister(
     }
 }
 
-/**
- * The main UI for the registration screen.
- * This composable displays the app branding and the Google Sign-In button.
- *
- * @param isLoading Boolean indicating if a loading process is active.
- * @param errorMsg Optional string containing an error message to display.
- * @param onGoogleSignIn Lambda function to be invoked when the Google Sign-In button is clicked.
- */
 @Composable
 private fun RegisterScreenUI(
     isLoading: Boolean,
@@ -494,12 +624,12 @@ private fun RegisterScreenUI(
         Column(
             modifier = Modifier
                 .padding(32.dp)
-                .fillMaxWidth(), // Ensure column takes width for alignment
+                .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             Image(
-                painter = painterResource(id = R.drawable.ic_mindtrace_logo), // Corrected logo name
+                painter = painterResource(id = R.drawable.ic_mindtrace_logo),
                 contentDescription = "Mind Trace Logo",
                 modifier = Modifier.size(120.dp)
             )
@@ -522,35 +652,29 @@ private fun RegisterScreenUI(
 
             errorMsg?.let {
                 Log.d(TAG, "RegisterScreenUI: Displaying error message: $it")
+                Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = it,
-                    color = MaterialTheme.colorScheme.error, // Use theme's error color
-                    modifier = Modifier.padding(top = 16.dp),
-                    style = MaterialTheme.typography.bodyMedium // Consistent text style
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
                 )
             }
         }
     }
 }
 
-/**
- * A Composable section that displays a "Sign in with Google" button.
- *
- * @param onGoogleSignIn Lambda function to be invoked when the button is clicked.
- */
 @Composable
-fun GoogleSignUpSection(
-    onGoogleSignIn: () -> Unit)
-{
+fun GoogleSignUpSection(onGoogleSignIn: () -> Unit) {
     Button(
         onClick = onGoogleSignIn,
         colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
         modifier = Modifier.fillMaxWidth()
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.ic_google_logo), // Ensure ic_google_logo drawable exists
+            painter = painterResource(id = R.drawable.ic_google_logo),
             contentDescription = "Google Logo",
-            tint = Color.Unspecified, // Keep original colors of the Google logo
+            tint = Color.Unspecified,
             modifier = Modifier.size(24.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))
@@ -558,12 +682,6 @@ fun GoogleSignUpSection(
     }
 }
 
-/**
- * A dialog that prompts the user to complete registration if their account is not found.
- *
- * @param onDismiss Lambda function to be invoked when the dialog is dismissed.
- * @param onRegister Lambda function to be invoked when the "Register" button is clicked.
- */
 @Composable
 fun RegisterPromptDialog(onDismiss: () -> Unit, onRegister: () -> Unit) {
     AlertDialog(
@@ -579,157 +697,199 @@ fun RegisterPromptDialog(onDismiss: () -> Unit, onRegister: () -> Unit) {
     )
 }
 
-/**
- * A dialog that allows the user to select their role (Patient or Caregiver).
- *
- * @param onDismiss Lambda function to be invoked when the dialog is dismissed.
- * @param onRoleSelected Lambda function to be invoked with the selected role string ("patient" or "caregiver").
- */
 @Composable
 fun RoleSelectionDialog(onDismiss: () -> Unit, onRoleSelected: (String) -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Select Role") },
+        title = { Text("Select Your Role") },
         text = {
-            Column {
-                Text("Please select your role:")
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("Please choose whether you are registering as a Patient or a Caregiver.", textAlign = TextAlign.Center)
+                Spacer(modifier = Modifier.height(20.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
                     Button(onClick = { onRoleSelected("patient") }) { Text("Patient") }
                     Button(onClick = { onRoleSelected("caregiver") }) { Text("Caregiver") }
                 }
             }
         },
-        confirmButton = { /* No explicit confirm button, selection is direct */ },
+        confirmButton = { /* No explicit confirm, selection is the action */ },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
-        }
-    )
-}
-
-/**
- * A dialog to confirm the user's selected role before proceeding.
- *
- * @param role The role selected by the user.
- * @param onDismiss Lambda function to be invoked when the dialog is dismissed (e.g., "Cancel" clicked).
- * @param onConfirm Lambda function to be invoked when the "Continue" button is clicked.
- * @param onBack Lambda function to be invoked when the "Back" button is clicked (to go back to role selection).
- */
-@Composable
-fun ConfirmationDialog(role: String, onDismiss: () -> Unit, onConfirm: () -> Unit, onBack: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Confirm Role") },
-        text = { Text("You selected: ${role.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }}. Continue?") },
-        confirmButton = {
-            TextButton(onClick = onConfirm) { Text("Continue") }
-        },
-        dismissButton = {
-            Row {
-                TextButton(onClick = onBack) { Text("Back") }
-                Spacer(modifier = Modifier.width(8.dp)) // Add some space between Back and Cancel
+            Row(modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp), horizontalArrangement = Arrangement.End) {
                 TextButton(onClick = onDismiss) { Text("Cancel") }
             }
         }
     )
 }
 
-/**
- * A dialog form for patient registration.
- *
- * @param name Current value for the patient's name.
- * @param dob Current value for the patient's date of birth.
- * @param gender Current value for the patient's gender.
- * @param primaryContact Current value for the patient's primary contact (Caregiver's email).
- * @param otp Current value for the OTP (received from Caregiver).
- * @param onNameChange Lambda function invoked when the name field changes.
- * @param onDobChange Lambda function invoked when the DOB field changes.
- * @param onGenderChange Lambda function invoked when the gender field changes.
- * @param onPrimaryContactChange Lambda function invoked when the primary contact field changes.
- * @param onOtpChange Lambda function invoked when the OTP field changes.
- * @param onDismiss Lambda function to be invoked when the dialog is dismissed.
- * @param onConfirm Lambda function to be invoked when the "Register" button is clicked.
- */
 @Composable
-fun PatientRegisterDialog(
-    name: String,
-    dob: String,
-    gender: String,
-    primaryContact: String,
-    otp: String,
-    onNameChange: (String) -> Unit,
-    onDobChange: (String) -> Unit,
-    onGenderChange: (String) -> Unit,
-    onPrimaryContactChange: (String) -> Unit,
-    onOtpChange: (String) -> Unit,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit
+fun ConfirmationDialog(
+    role: String,
+    onConfirm: () -> Unit, // Proceeds to the next step (form)
+    onBackToRoleSelection: () -> Unit, // Goes back to RoleSelectionDialog
+    onDismissDialog: () -> Unit // Handles general dismiss (e.g., tapping outside, system back)
 ) {
     AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Patient Registration") },
-        text = {
-            Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                OutlinedTextField(value = name, onValueChange = onNameChange, label = { Text("Name") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = dob, onValueChange = onDobChange, label = { Text("Date of Birth (YYYY-MM-DD)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = gender, onValueChange = onGenderChange, label = { Text("Gender") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = primaryContact, onValueChange = onPrimaryContactChange, label = { Text("Primary Contact (Caregiver Email)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = otp, onValueChange = onOtpChange, label = { Text("OTP (From Caregiver)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-            }
-        },
+        onDismissRequest = onDismissDialog,
+        title = { Text("Confirm Role: ${role.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }}") },
+        text = { Text("You have selected the role of a ${role.lowercase()}. Do you want to continue registration as a ${role.lowercase()}?") },
         confirmButton = {
-            TextButton(onClick = onConfirm) { Text("Register") }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            // Row to arrange buttons horizontally
+            Row(
+                modifier = Modifier.fillMaxWidth(), // Occupy full width to allow spacing
+                horizontalArrangement = Arrangement.End // Align buttons to the end (right)
+            ) {
+                // "Back" button (now the dismiss action in this context)
+                TextButton(
+                    onClick = onBackToRoleSelection,
+                    modifier = Modifier.padding(end = 8.dp) // Add some spacing between buttons
+                ) {
+                    Text("Back")
+                }
+                // "Continue" button (the confirm action)
+                TextButton(onClick = onConfirm) {
+                    Text("Continue as ${role.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }}")
+                }
+            }
         }
     )
 }
 
-/**
- * A dialog form for caregiver registration.
- *
- * @param name Current value for the caregiver's name.
- * @param dob Current value for the caregiver's date of birth.
- * @param gender Current value for the caregiver's gender.
- * @param onNameChange Lambda function invoked when the name field changes.
- * @param onDobChange Lambda function invoked when the DOB field changes.
- * @param onGenderChange Lambda function invoked when the gender field changes.
- * @param onDismiss Lambda function to be invoked when the dialog is dismissed.
- * @param onConfirm Lambda function to be invoked when the "Register" button is clicked.
- */
+@OptIn(ExperimentalMaterial3Api::class) // Added OptIn for OutlinedTextField
 @Composable
 fun CaregiverRegisterDialog(
-    name: String,
-    dob: String,
-    gender: String,
-    onNameChange: (String) -> Unit,
-    onDobChange: (String) -> Unit,
-    onGenderChange: (String) -> Unit,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit
+    name: String, email: String, dob: String, gender: String,
+    onNameChange: (String) -> Unit, onEmailChange: (String) -> Unit, onDobChange: (String) -> Unit, onGenderChange: (String) -> Unit,
+    onDismiss: () -> Unit, onConfirm: () -> Unit
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Caregiver Registration") },
         text = {
             Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                OutlinedTextField(value = name, onValueChange = onNameChange, label = { Text("Name") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = onNameChange,
+                    label = { Text("Full Name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = dob, onValueChange = onDobChange, label = { Text("Date of Birth (YYYY-MM-DD)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = onEmailChange,
+                    label = { Text("Email Address") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = gender, onValueChange = onGenderChange, label = { Text("Gender") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+
+                OutlinedTextField(
+                    value = dob,
+                    onValueChange = onDobChange,
+                    label = { Text("Date of Birth (YYYY-MM-DD)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = gender,
+                    onValueChange = onGenderChange,
+                    label = { Text("Gender") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    "Please fill in all details for registration.",
+                    style = MaterialTheme.typography.bodySmall, // Used MaterialTheme style
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         },
-        confirmButton = {
-            TextButton(onClick = onConfirm) { Text("Register") }
+        confirmButton = { TextButton(onClick = onConfirm) { Text("Register") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class) // Added OptIn for OutlinedTextField
+@Composable
+fun PatientRegisterDialog(
+    name: String, email: String, dob: String, gender: String,
+    primaryContact: String, otp: String,
+    onNameChange: (String) -> Unit, onEmailChange: (String) -> Unit, onDobChange: (String) -> Unit, onGenderChange: (String) -> Unit,
+    onPrimaryContactChange: (String) -> Unit, onOtpChange: (String) -> Unit,
+    onDismiss: () -> Unit, onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Patient Registration") },
+        text = {
+            Column(modifier = Modifier
+                .padding(vertical = 8.dp)
+                .fillMaxWidth()) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = onNameChange,
+                    label = { Text("Full Name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = onEmailChange,
+                    label = { Text("Email Address") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = dob,
+                    onValueChange = onDobChange,
+                    label = { Text("Date of Birth (YYYY-MM-DD)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = gender,
+                    onValueChange = onGenderChange,
+                    label = { Text("Gender") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = primaryContact,
+                    onValueChange = onPrimaryContactChange,
+                    label = { Text("Primary Contact (Caregiver UID)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = otp,
+                    onValueChange = onOtpChange,
+                    label = { Text("OTP") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    "Please fill in all details for registration. The OTP and Primary Contact ID are provided by the Caregiver.",
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
-        }
+        confirmButton = { TextButton(onClick = onConfirm) { Text("Register") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
 }

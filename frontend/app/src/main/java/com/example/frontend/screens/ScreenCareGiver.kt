@@ -3,277 +3,397 @@ package com.example.frontend.screens
 import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.frontend.api.AuthSession
 import com.example.frontend.api.RetrofitInstance
 import kotlinx.coroutines.launch
 
-@Composable
-fun TokenDialog(
-    token: String,
-    onCopy: () -> Unit, // Called when copy is successful
-    onCancel: () -> Unit
-) {
-    val clipboardManager = LocalClipboardManager.current
 
-    AlertDialog(
-        onDismissRequest = onCancel,
-        title = { Text("Caregiver Token") },
-        text = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = token,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.weight(1f)
-                )
-                IconButton(onClick = {
-                    clipboardManager.setText(androidx.compose.ui.text.buildAnnotatedString { append(token) })
-                    onCopy() // Notify parent that copy happened
-                }) {
-                    Icon(Icons.Filled.ContentCopy, contentDescription = "Copy Token") // Corrected Icon
-                }
-            }
-        },
-        confirmButton = {}, // No explicit confirm button, actions are copy or cancel
-        dismissButton = {
-            TextButton(onClick = onCancel) { Text("Close") }
-        }
-    )
-}
-
-@Composable
-fun OtpDialog(
-    primaryContact: String?,
-    otp: String?,
-    onCopyPrimaryContact: () -> Unit, // Specific copy for primary contact
-    onCopyOtp: () -> Unit,           // Specific copy for OTP
-    onCancel: () -> Unit
-) {
-    val clipboardManager = LocalClipboardManager.current
-
-    AlertDialog(
-        onDismissRequest = onCancel,
-        title = { Text("Patient Registration Info") },
-        text = {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                    Text("Primary Contact: ${primaryContact ?: "N/A"}", modifier = Modifier.weight(1f))
-                    IconButton(onClick = {
-                        clipboardManager.setText(androidx.compose.ui.text.buildAnnotatedString { append(primaryContact ?: "") })
-                        onCopyPrimaryContact()
-                    }) {
-                        Icon(Icons.Filled.ContentCopy, contentDescription = "Copy Primary Contact") // Corrected Icon
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                    Text("OTP: ${otp ?: "N/A"}", modifier = Modifier.weight(1f))
-                    IconButton(onClick = {
-                        clipboardManager.setText(androidx.compose.ui.text.buildAnnotatedString { append(otp ?: "") })
-                        onCopyOtp()
-                    }) {
-                        Icon(Icons.Filled.ContentCopy, contentDescription = "Copy OTP") // Corrected Icon
-                    }
-                }
-            }
-        },
-        confirmButton = {},
-        dismissButton = {
-            TextButton(onClick = onCancel) { Text("Close") }
-        }
-    )
-}
+private const val TAG = "ScreenCareGiver" // Tag for logging
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ScreenCareGiver() {
-    val coroutineScope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    var otp by remember { mutableStateOf<String?>(null) }
-    var primaryContact by remember { mutableStateOf<String?>(null) }
+fun ScreenCareGiver(
+    caregiverDetails: Screen.DashboardCareGiver, // This comes from your navigation
+    onNavigateToChat: () -> Unit
+) {
     var isLoading by remember { mutableStateOf(false) }
     var errorMsg by remember { mutableStateOf<String?>(null) }
 
-    var showTokenDialog by remember { mutableStateOf(false) }
-    var showOtpDialog by remember { mutableStateOf(false) }
+    // For the OTP/code generated for a new patient
+    var newPatientOtp by remember { mutableStateOf<String?>(null) }
+    var showNewPatientOtpDialog by remember { mutableStateOf(false) }
 
-    var caregiverName by remember { mutableStateOf("Loading...") }
-    var caregiverDob by remember { mutableStateOf("Loading...") }
-    var caregiverGender by remember { mutableStateOf("Loading...") }
+    // For displaying the caregiver's own access token
+    var showCaregiverTokenDialog by remember { mutableStateOf(false) }
 
-    // Use the response field from AuthSession as the token
-    val currentToken = AuthSession.token
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+    val clipboardManager = LocalClipboardManager.current
 
-    fun fetchCaregiverDetails() {
-        val token = AuthSession.token ?: run {
-            errorMsg = "Authentication token is missing. Please log in again."
-            Log.e("DashboardCaregiver", "fetchCaregiverDetails: Auth token is null")
+    // This is the caregiver's own authentication token, passed via caregiverDetails
+    val caregiverAuthToken = caregiverDetails.token
+    Log.d(TAG, "Caregiver Auth Token initialized: $caregiverAuthToken")
+
+
+    fun getNewPatientRegistrationCode() {
+        Log.d(TAG, "getNewPatientRegistrationCode called.")
+        if (caregiverAuthToken.isEmpty()) {
+            Log.e(TAG, "Caregiver authentication token is missing or empty.")
+            coroutineScope.launch { snackbarHostState.showSnackbar("Caregiver authentication token is missing.") }
             return
         }
+        Log.d(TAG, "Caregiver Auth Token to be used: Bearer $caregiverAuthToken")
+
         coroutineScope.launch {
             isLoading = true
             errorMsg = null
+            newPatientOtp = null // Reset previous OTP
+            Log.d(TAG, "Coroutine launched for API call. isLoading=true, newPatientOtp=null")
             try {
-                Log.d("DashboardCaregiver", "Fetching caregiver details...")
-                val response = RetrofitInstance.dementiaAPI.getCaregiverDetails("Bearer $token")
-                if (response.isSuccessful && response.body() != null) {
-                    val details = response.body()!!
-                    caregiverName = details.name
-                    caregiverDob = details.dob
-                    caregiverGender = details.gender
-                    Log.d("DashboardCaregiver", "Caregiver details fetched: $details")
-                } else {
-                    val errorBody = response.errorBody()?.string()
-                    Log.e("DashboardCaregiver", "Failed to fetch caregiver details: ${response.code()} - $errorBody")
-                    errorMsg = "Failed to fetch caregiver details: ${response.message()}"
-                }
-            } catch (e: Exception) {
-                Log.e("DashboardCaregiver", "Exception fetching caregiver details", e)
-                errorMsg = "An unexpected error occurred while fetching details."
-            } finally {
-                isLoading = false
-            }
-        }
-    }
+                Log.d(TAG, "Attempting API call to RetrofitInstance.dementiaAPI.getOtp")
+                val response = RetrofitInstance.dementiaAPI.getOtp("Bearer $caregiverAuthToken")
+                Log.d(TAG, "API call finished. Response code: ${response.code()}, isSuccessful: ${response.isSuccessful}")
 
-    fun getPatientCode() {
-        val token = AuthSession.token ?: run {
-            errorMsg = "Authentication token is missing. Please log in again."
-            Log.e("DashboardCaregiver", "getPatientCode: Auth token is null")
-            return
-        }
-        coroutineScope.launch {
-            isLoading = true
-            errorMsg = null
-            try {
-                Log.d("DashboardCaregiver", "Fetching OTP and Primary Contact...")
-                val response = RetrofitInstance.dementiaAPI.getOtp("Bearer $token")
                 if (response.isSuccessful && response.body() != null) {
                     val responseBody = response.body()!!
-                    otp = responseBody.otp
-                    primaryContact = responseBody.primaryContact
-                    Log.d("DashboardCaregiver", "Received OTP: ${otp}, Primary Contact: $primaryContact")
-                    if (otp != null || primaryContact != null) {
-                        showOtpDialog = true // Show dialog only if data is available
+                    Log.d(TAG, "API Response Successful. Body: $responseBody")
+                    newPatientOtp = responseBody.otp
+                    Log.d(TAG, "Extracted OTP from response: $newPatientOtp")
+
+                    if (newPatientOtp != null) {
+                        Log.d(TAG, "OTP is not null. Setting showNewPatientOtpDialog = true")
+                        showNewPatientOtpDialog = true
                     } else {
-                        errorMsg = "Received empty OTP/Primary Contact."
-                        Log.w("DashboardCaregiver", "OTP or Primary Contact is null in response body")
+                        errorMsg = "Received empty registration code from server."
+                        Log.w(TAG, "Registration OTP is null in response body. Error: $errorMsg")
+                        snackbarHostState.showSnackbar("Received empty registration code.")
                     }
                 } else {
-                    val errorBody = response.errorBody()?.string()
-                    Log.e("DashboardCaregiver", "Failed to get code: ${response.code()} - $errorBody")
-                    errorMsg = "Failed to generate code: ${response.message()}"
+                    val errorBody = response.errorBody()?.string() ?: "No error body"
+                    Log.e(TAG, "API call failed or response body is null. Code: ${response.code()}, Message: ${response.message()}, Error body: $errorBody")
+                    errorMsg = "Failed to generate registration code: ${response.message()} (Code: ${response.code()})"
+                    snackbarHostState.showSnackbar("Failed to generate registration code. ${response.message()}")
                 }
             } catch (e: Exception) {
-                Log.e("DashboardCaregiver", "Exception when getting code", e)
-                errorMsg = "An unexpected error occurred while generating code."
+                Log.e(TAG, "Exception during API call or processing response", e)
+                errorMsg = "An unexpected error occurred: ${e.message}"
+                snackbarHostState.showSnackbar("An error occurred while fetching registration code.")
             } finally {
                 isLoading = false
+                Log.d(TAG, "API call coroutine finished. isLoading=false")
             }
         }
-    }
-
-    LaunchedEffect(Unit) {
-        fetchCaregiverDetails()
     }
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(title = { Text("Caregiver Dashboard") })
+            CenterAlignedTopAppBar(
+                title = { Text("Caregiver Dashboard") },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            )
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
-    ) { paddingValues ->
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(innerPadding)
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            Text("Welcome, Caregiver!", style = MaterialTheme.typography.headlineMedium)
-            Spacer(modifier = Modifier.height(16.dp))
-            Card(
+            CaregiverInfoCard(caregiverDetails)
+
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Name: $caregiverName", style = MaterialTheme.typography.bodyLarge)
-                    Text("DOB: $caregiverDob", style = MaterialTheme.typography.bodyLarge)
-                    Text("Gender: $caregiverGender", style = MaterialTheme.typography.bodyLarge)
+                Button(
+                    onClick = onNavigateToChat,
+                    modifier = Modifier.fillMaxWidth(0.8f)
+                ) {
+                    Icon(Icons.Filled.Chat, contentDescription = "Chat Icon", modifier = Modifier.size(ButtonDefaults.IconSize))
+                    Spacer(modifier = Modifier.size(ButtonDefaults.IconSpacing))
+                    Text("Help & Support Chat")
                 }
-            }
-            Spacer(modifier = Modifier.height(24.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Button(onClick = {
-                    if (currentToken.isNullOrEmpty()) {
-                        coroutineScope.launch { snackbarHostState.showSnackbar("Token not available.") }
-                    } else {
-                        showTokenDialog = true
+
+                // Button to display Caregiver's own Access Token
+                Button(
+                    onClick = {
+                        Log.d(TAG, "'Show My Access Token' button clicked.")
+                        if (caregiverAuthToken.isEmpty()) {
+                            Log.w(TAG, "Caregiver Auth Token is empty when trying to show dialog.")
+                            coroutineScope.launch { snackbarHostState.showSnackbar("Access Token not available.") }
+                        } else {
+                            Log.d(TAG, "Setting showCaregiverTokenDialog = true")
+                            showCaregiverTokenDialog = true
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(0.8f)
+                ) {
+                    Icon(
+                        Icons.Filled.VpnKey, // Icon for caregiver's own token
+                        contentDescription = "Show My Access Token Icon",
+                        modifier = Modifier.size(ButtonDefaults.IconSize)
+                    )
+                    Spacer(modifier = Modifier.size(ButtonDefaults.IconSpacing))
+                    Text("Show My Access Token")
+                }
+
+                // Button to get and show OTP for a New Patient
+                Button(
+                    onClick = {
+                        Log.d(TAG, "'Get Code for New Patient' button clicked.")
+                        getNewPatientRegistrationCode()
+                    },
+                    modifier = Modifier.fillMaxWidth(0.8f),
+                    enabled = !isLoading
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) { // Icons in a row
+                        Icon(
+                            Icons.Filled.PersonAdd,
+                            contentDescription = "New Patient Icon",
+                            modifier = Modifier.size(ButtonDefaults.IconSize)
+                        )
+                        Spacer(modifier = Modifier.size(ButtonDefaults.IconSpacing))
+                        Icon(
+                            Icons.Filled.Pin, // Icon for OTP/Code
+                            contentDescription = "Registration Code Icon",
+                            modifier = Modifier.size(ButtonDefaults.IconSize)
+                        )
                     }
-                }) {
-                    Text("Show Token")
-                }
-                Button(onClick = { getPatientCode() }) { // OTP dialog is shown inside getPatientCode if successful
-                    Text("Get Patient Code")
+                    Spacer(modifier = Modifier.size(ButtonDefaults.IconSpacing))
+                    Text("Get Code for New Patient")
                 }
             }
-            Spacer(modifier = Modifier.height(24.dp))
 
             if (isLoading) {
+                Log.d(TAG, "Displaying CircularProgressIndicator because isLoading is true.")
+                Spacer(modifier = Modifier.height(16.dp))
                 CircularProgressIndicator()
             }
 
             errorMsg?.let {
+                Log.d(TAG, "Displaying error message: $it")
                 Spacer(modifier = Modifier.height(16.dp))
-                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    text = it,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
             }
         }
 
-        if (showTokenDialog) {
-            TokenDialog(
-                token = currentToken ?: "Token not available",
+        Log.d(TAG, "ScreenCareGiver recomposing. showNewPatientOtpDialog: $showNewPatientOtpDialog, newPatientOtp: $newPatientOtp")
+
+        // Dialog to display the Caregiver's own Access Token
+        if (showCaregiverTokenDialog) {
+            Log.d(TAG, "Rendering CaregiverAccessTokenDialog. Token: $caregiverAuthToken")
+            CaregiverAccessTokenDialog( // Renamed Dialog
+                token = caregiverAuthToken,
                 onCopy = {
-                    coroutineScope.launch { snackbarHostState.showSnackbar("Token copied to clipboard!") }
-                    showTokenDialog = false
+                    Log.d(TAG, "Copy clicked in CaregiverAccessTokenDialog.")
+                    clipboardManager.setText(AnnotatedString(caregiverAuthToken))
+                    coroutineScope.launch { snackbarHostState.showSnackbar("Access Token copied!") }
+                    showCaregiverTokenDialog = false
                 },
                 onCancel = {
-                    coroutineScope.launch { snackbarHostState.showSnackbar("Token dialog closed.") }
-                    showTokenDialog = false
+                    Log.d(TAG, "Cancel clicked in CaregiverAccessTokenDialog.")
+                    showCaregiverTokenDialog = false
                 }
             )
         }
 
-        if (showOtpDialog) { // Condition to show OtpDialog
-            OtpDialog(
-                primaryContact = primaryContact,
-                otp = otp,
-                onCopyPrimaryContact = {
-                    coroutineScope.launch { snackbarHostState.showSnackbar("Primary Contact copied!") }
-                    // Optionally close dialog: showOtpDialog = false
-                },
-                onCopyOtp = {
-                    coroutineScope.launch { snackbarHostState.showSnackbar("OTP copied!") }
-                    // Optionally close dialog: showOtpDialog = false
+        // Dialog to display the OTP for a new patient registration
+        if (showNewPatientOtpDialog) {
+            Log.d(TAG, "Rendering NewPatientRegistrationCodeDialog. OTP: $newPatientOtp")
+            NewPatientRegistrationCodeDialog( // Renamed Dialog
+                otp = newPatientOtp ?: "Code not available",
+                onCopy = {
+                    Log.d(TAG, "Copy clicked in NewPatientRegistrationCodeDialog.")
+                    newPatientOtp?.let {
+                        clipboardManager.setText(AnnotatedString(it))
+                        coroutineScope.launch { snackbarHostState.showSnackbar("Registration code copied!") }
+                    }
+                    showNewPatientOtpDialog = false
                 },
                 onCancel = {
-                    coroutineScope.launch { snackbarHostState.showSnackbar("Patient code dialog closed.") }
-                    showOtpDialog = false
+                    Log.d(TAG, "Cancel clicked in NewPatientRegistrationCodeDialog.")
+                    showNewPatientOtpDialog = false
                 }
             )
         }
     }
+}
+
+@Composable
+fun CaregiverInfoCard(caregiverDetails: Screen.DashboardCareGiver) {
+    var isUidVisible by remember { mutableStateOf(false) }
+    // Log.d(TAG, "CaregiverInfoCard recomposing. UID visible: $isUidVisible") // Optional: if you need to debug this card
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "My Information",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            Divider()
+
+            InfoRow(label = "Name", icon = Icons.Filled.AccountCircle, value = caregiverDetails.name)
+            InfoRow(label = "Email", icon = Icons.Filled.Email, value = caregiverDetails.email)
+            InfoRow(label = "Date of Birth", icon = Icons.Filled.CalendarToday, value = caregiverDetails.dob)
+            InfoRow(label = "Gender", icon = Icons.Filled.PersonPin, value = formatGender(caregiverDetails.gender))
+            // InfoRow(label = "My Token", icon = Icons.Filled.VpnKey, value = caregiverDetails.token) // Example if you want to show it here
+
+            Divider()
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    InfoRow(
+                        label = "Unique ID (UID)",
+                        icon = Icons.Filled.Fingerprint,
+                        value = if (isUidVisible) caregiverDetails.uid else "••••••••••••••••"
+                    )
+                }
+                IconButton(onClick = { isUidVisible = !isUidVisible }) {
+                    Icon(
+                        if (isUidVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                        contentDescription = "Toggle UID Visibility"
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun InfoRow(label: String, icon: ImageVector, value: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = "$label Icon",
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(24.dp)
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Column {
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+            )
+            Text(
+                value,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
+fun formatGender(genderCode: String): String {
+    return when (genderCode.uppercase()) {
+        "M" -> "Male"
+        "F" -> "Female"
+        "O", "OTHER" -> "Other"
+        else -> genderCode
+    }
+}
+
+// Dialog for displaying the Caregiver's own Access Token
+@Composable
+fun CaregiverAccessTokenDialog(token: String, onCopy: () -> Unit, onCancel: () -> Unit) {
+    // Log.d(TAG, "CaregiverAccessTokenDialog recomposing.") // Optional
+    AlertDialog(
+        onDismissRequest = onCancel,
+        title = { Text("Your Access Token") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    "This is your personal access token for API authentication. Keep it secure.",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        token,
+                        modifier = Modifier.weight(1f).padding(end = 8.dp),
+                        maxLines = 3,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    IconButton(onClick = onCopy, modifier = Modifier.size(40.dp)) {
+                        Icon(Icons.Filled.ContentCopy, "Copy Token")
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onCancel) {
+                Text("Close")
+            }
+        }
+    )
+}
+
+// Dialog for displaying the OTP for New Patient Registration
+@Composable
+fun NewPatientRegistrationCodeDialog(otp: String, onCopy: () -> Unit, onCancel: () -> Unit) {
+    Log.d(TAG, "NewPatientRegistrationCodeDialog composable is being executed (recomposing). OTP: $otp")
+    AlertDialog(
+        onDismissRequest = onCancel,
+        title = { Text("New Patient Registration Code") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    "Share this One-Time Code with the new patient for their registration process.",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        otp,
+                        modifier = Modifier.weight(1f).padding(end = 8.dp),
+                        style = MaterialTheme.typography.headlineSmall, // Make code prominent
+                        fontWeight = FontWeight.Bold
+                    )
+                    IconButton(onClick = onCopy, modifier = Modifier.size(40.dp)) {
+                        Icon(Icons.Filled.ContentCopy, "Copy Code")
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onCancel) {
+                Text("Close")
+            }
+        }
+    )
 }

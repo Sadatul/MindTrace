@@ -2,6 +2,7 @@ package com.example.frontend.screens
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.toRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 
@@ -21,8 +22,24 @@ fun SetupNavGraph(navController: NavHostController) {
 
         composable<Screen.Register> {
             ScreenRegister(
-                onNavigateToDashboard = { role ->
-                    val destination = if (role == "patient") Screen.DashBoardPatient else Screen.DashboardCareGiver
+                onNavigateToDashboard = { role, name, email, dob, gender, uid, token ->
+                    val destination = if (role == "patient") {
+                        Screen.DashBoardPatient(
+                            name = name ?: "N/A",
+                            email = email?: "N/A",
+                            dob = dob ?: "N/A",
+                            gender = gender ?: "N/A",
+                        )
+                    } else {
+                        Screen.DashboardCareGiver(
+                            name = name ?: "N/A",
+                            email = email ?: "N/A",
+                            dob = dob ?: "N/A",
+                            gender = gender ?: "N/A",
+                            uid = uid ?: "N/A",
+                            token = token ?: "N/A"
+                        )
+                    }
                     navController.navigate(destination) {
                         popUpTo(Screen.Main) { inclusive = true }
                     }
@@ -31,12 +48,20 @@ fun SetupNavGraph(navController: NavHostController) {
         }
 
 
-        composable<Screen.DashBoardPatient> {
-            ScreenPatient(onNavigateToChat = { navController.navigate(Screen.Chat) })
+        composable<Screen.DashBoardPatient> { backStackEntry ->
+            val patientDetails = backStackEntry.toRoute<Screen.DashBoardPatient>()
+            ScreenPatient(
+                patientDetails = patientDetails,
+                onNavigateToChat = { navController.navigate(Screen.Chat) }
+            )
         }
 
-        composable<Screen.DashboardCareGiver> {
-            ScreenCareGiver()
+        composable<Screen.DashboardCareGiver> { backStackEntry ->
+            val caregiverDetails = backStackEntry.toRoute<Screen.DashboardCareGiver>()
+            ScreenCareGiver(
+                caregiverDetails = caregiverDetails,
+                onNavigateToChat = { navController.navigate(Screen.Chat) }
+            )
         }
 
         composable<Screen.Chat> {

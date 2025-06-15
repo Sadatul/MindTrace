@@ -14,16 +14,9 @@ object AuthSession {
 }
 
 data class AuthManagerResponse(
-    val response: String?,
-    val userType: String?
+    val status: String?
 )
 
-// New data class for caregiver details
-data class CaregiverDetailsResponse(
-    val name: String,
-    val dob: String,
-    val gender: String
-)
 
 data class PatientRegisterRequest(
     val name: String,
@@ -43,9 +36,19 @@ data class CaregiverRegisterResponse(
     val msg: String?
 )
 
+
+// Data Class for GetCaregiver API Response
+data class CaregiverProfileResponse(
+    val id: String?,
+    val name: String?,
+    val phone: String?,
+    val email: String?,
+    val image: String?  // URL string
+)
+
+
 data class OtpResponse(
-    val otp: String?,
-    val primaryContact: String? // Added based on usage in Dashboard
+    val otp: String?
 )
 
 interface DementiaAPI {
@@ -74,9 +77,10 @@ interface DementiaAPI {
         @Header("Authorization") bearerToken: String
     ): Response<OtpResponse>
 
-    // New endpoint for caregiver details
-    @GET("/v1/caregiver/details") // Example path, adjust to your actual API
-    suspend fun getCaregiverDetails(
-        @Header("Authorization") bearerToken: String
-    ): Response<CaregiverDetailsResponse>
+    // New endpoint for GetCaregiver
+    @GET("/v1/user/caregivers/{id}")
+    suspend fun getCaregiverProfile(
+        @Header("Authorization") bearerToken: String,
+        @Path("id") caregiverId: String
+    ): Response<CaregiverProfileResponse>
 }
