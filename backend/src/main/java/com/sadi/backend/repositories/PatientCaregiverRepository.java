@@ -15,6 +15,9 @@ import java.util.UUID;
 public interface PatientCaregiverRepository extends JpaRepository<PatientCaregiver, UUID> {
     Optional<PatientCaregiver> findByPatientAndCaregiver(User patient, User caregiver);
 
-    @Query("select new com.sadi.backend.dtos.responses.CaregiversPatientsDTO(p.patient.id, p.patient.name, p.patient.gender, p.patient.profilePicture) from PatientCaregiver p where (p.caregiver.id = :caregiverId and (p.removedAt is null or :includeDeleted = true))")
+    @Query("select new com.sadi.backend.dtos.responses.CaregiversPatientsDTO(p.patient.id, p.patient.name, p.patient.gender, p.patient.profilePicture, p.removedAt) from PatientCaregiver p where (p.caregiver.id = :caregiverId and (p.removedAt is null or :includeDeleted = true))")
     List<CaregiversPatientsDTO> findByCaregiverId(String caregiverId, Boolean includeDeleted);
+
+    @Query("select new com.sadi.backend.dtos.responses.CaregiversPatientsDTO(p.caregiver.id, p.caregiver.name, p.caregiver.gender, p.caregiver.profilePicture, p.removedAt) from PatientCaregiver p where (p.patient.id = :patientId and (p.removedAt is null or :includeDeleted = true))")
+    List<CaregiversPatientsDTO> findByPatientId(String patientId, Boolean includeDeleted);
 }

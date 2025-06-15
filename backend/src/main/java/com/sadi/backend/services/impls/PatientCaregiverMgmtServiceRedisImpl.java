@@ -28,7 +28,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class PatientCaregiverMgmtServiceRedisImpl implements PatientCaregiverMgmtService {
-    private static final String OTP_KEY_PREFIX = "otp:patient:primaryContact:";
     private static final long OTP_EXPIRATION_MINUTES = 10;
 
     private final UserService userService;
@@ -37,22 +36,43 @@ public class PatientCaregiverMgmtServiceRedisImpl implements PatientCaregiverMgm
     private final EmailService emailService;
     private final PatientCaregiverRepository patientCaregiverRepository;
 
+
     @Override
-    public void sendOtpToPatientPrimaryContact(String patientId) {
-        User caregiver = getCurrentUser();
+    public void sendOtpToAddPatient(String patientId) {
+        processOtpRequest(patientId, SecurityUtils.getName(), OtpPurpose.ADD);
+    }
+
+    @Override
+    public void sendOtpToRemovePatient(String caregiverId) {
+        processOtpRequest(SecurityUtils.getName(), caregiverId, OtpPurpose.REMOVE);
+    }
+
+    private void processOtpRequest(String patientId, String caregiverId, OtpPurpose purpose) {
+        User caregiver = userService.getUser(caregiverId);
         PatientDetail patientDetail = userService.getPatientDetail(patientId, true);
         User patient = patientDetail.getUser();
         User primaryContact = patientDetail.getPrimaryContact();
 
-        checkIfAlreadyLinked(patient, caregiver);
+        if (purpose == OtpPurpose.ADD) {
+            checkIfAlreadyLinked(patient, caregiver);
+        } else {
+            checkIfNotAlreadyLinked(patient, caregiver);
+            if (primaryContact.getId().equals(caregiver.getId())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Primary contacts cannot be removed from their own patient list");
+            }
+        }
 
-        String otp = generateAndStoreOtp(patientId);
-        notifyPrimaryContactWithOtp(primaryContact, caregiver, patient, otp);
+        String otp = generateAndStoreOtp(patientId, caregiverId, purpose);
+
+        String message = purpose.getMessage(patient.getName(), caregiver.getName(), otp);
+        String subject = "OTP verification to " + (purpose == OtpPurpose.ADD ? "add" : "remove") + " patient";
+        notifyPrimaryContactWithOtp(primaryContact, subject, message);
     }
 
     @Override
     public UUID addPatientToCaregiver(String patientId, String otp) {
-        verifyOtp(patientId, otp);
+        verifyOtp(patientId, SecurityUtils.getName(), otp, OtpPurpose.ADD);
         User caregiver = getCurrentUser();
         User patient = userService.getUser(patientId);
 
@@ -71,17 +91,20 @@ public class PatientCaregiverMgmtServiceRedisImpl implements PatientCaregiverMgm
 
     @Override
     @Transactional
-    public void deletePatientFromCaregiver(String patientId) {
-        User caregiver = getCurrentUser();
+    public void deletePatientFromCaregiver(String patientId, String caregiverId) {
+        User caregiver = userService.getUser(caregiverId);
         PatientDetail patientDetail = userService.getPatientDetail(patientId, true);
         User patient = patientDetail.getUser();
         User primaryContact = patientDetail.getPrimaryContact();
 
+        PatientCaregiver relationship = getExistingRelationship(patient, caregiver);
+        if(relationship.getRemovedAt() != null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Patient not found in caregiver's list");
+        }
+
         if (primaryContact.getId().equals(caregiver.getId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Primary contacts cannot be removed from their own patient list");
         }
-
-        PatientCaregiver relationship = getExistingRelationship(patient, caregiver);
         relationship.setRemovedAt(Instant.now());
 
         notifyPrimaryContactOfRemoval(primaryContact, caregiver, patient);
@@ -90,6 +113,11 @@ public class PatientCaregiverMgmtServiceRedisImpl implements PatientCaregiverMgm
     @Override
     public List<CaregiversPatientsDTO> getAllCaregiversPatients(Boolean includeDeleted) {
         return patientCaregiverRepository.findByCaregiverId(SecurityUtils.getName(), includeDeleted);
+    }
+
+    @Override
+    public List<CaregiversPatientsDTO> getAllPatientsCaregiver(Boolean includeDeleted) {
+        return patientCaregiverRepository.findByPatientId(SecurityUtils.getName(), includeDeleted);
     }
 
     // ----------------- Private Helpers ------------------
@@ -106,15 +134,24 @@ public class PatientCaregiverMgmtServiceRedisImpl implements PatientCaregiverMgm
                 });
     }
 
-    private String generateAndStoreOtp(String patientId) {
+    private void checkIfNotAlreadyLinked(User patient, User caregiver) {
+        patientCaregiverRepository.findByPatientAndCaregiver(patient, caregiver)
+                .filter(r -> r.getRemovedAt() != null)
+                .ifPresent(r -> {
+                    throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Patient not found in caregiver's list");
+                });
+    }
+
+    private String generateAndStoreOtp(String patientId, String caregiverId, OtpPurpose purpose) {
         String otp = CodeGenerator.generateOtp();
-        String key = OTP_KEY_PREFIX + patientId;
+        String key = purpose.getKeyPrefix() + patientId + ":" + caregiverId;
         redisTemplate.opsForValue().set(key, otp, Duration.ofMinutes(OTP_EXPIRATION_MINUTES));
         return otp;
     }
 
-    private void verifyOtp(String patientId, String otp) {
-        String key = OTP_KEY_PREFIX + patientId;
+    @Override
+    public void verifyOtp(String patientId, String caregiverId, String otp, OtpPurpose purpose) {
+        String key = purpose.getKeyPrefix() + patientId + ":" + caregiverId;
         Object storedOtp = redisTemplate.opsForValue().get(key);
         if (storedOtp == null || !storedOtp.equals(otp)) {
             throw new ResponseStatusException(HttpStatus.REQUEST_TIMEOUT, "Invalid or expired OTP");
@@ -127,16 +164,11 @@ public class PatientCaregiverMgmtServiceRedisImpl implements PatientCaregiverMgm
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Patient not found in caregiver's list"));
     }
 
-    private void notifyPrimaryContactWithOtp(User primaryContact, User caregiver, User patient, String otp) {
-        String message = String.format("""
-                %s is requesting to add %s as his patient.
-                Please verify the request by sending the OTP: %s
-                """, caregiver.getName(), patient.getName(), otp);
-
+    private void notifyPrimaryContactWithOtp(User primaryContact, String emailSubject, String message) {
         if (primaryContact.getTelegramChatId() != null) {
             telegramServiceRedisImpl.sendMessage(primaryContact.getTelegramChatId(), message);
         } else {
-            emailService.sendOtpEmail(primaryContact.getEmail(), otp);
+            emailService.sendSimpleEmail(primaryContact.getEmail(), emailSubject, message);
         }
     }
 
