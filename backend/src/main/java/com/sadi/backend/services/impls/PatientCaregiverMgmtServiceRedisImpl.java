@@ -136,8 +136,8 @@ public class PatientCaregiverMgmtServiceRedisImpl implements PatientCaregiverMgm
 
     private void checkIfNotAlreadyLinked(User patient, User caregiver) {
         patientCaregiverRepository.findByPatientAndCaregiver(patient, caregiver)
-                .filter(r -> r.getRemovedAt() != null)
-                .ifPresent(r -> {
+                .filter(r -> r.getRemovedAt() == null)
+                .ifPresentOrElse(r -> {}, () -> {
                     throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Patient not found in caregiver's list");
                 });
     }

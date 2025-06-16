@@ -4,11 +4,15 @@ import com.sadi.backend.dtos.requests.CreateLogRequest;
 import com.sadi.backend.dtos.requests.UpdateLogRequest;
 import com.sadi.backend.dtos.responses.LogFullResponse;
 import com.sadi.backend.entities.Log;
+import com.sadi.backend.enums.LogType;
+import com.sadi.backend.services.UserService;
 import com.sadi.backend.services.abstractions.LogService;
 import com.sadi.backend.utils.SecurityUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.*;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -16,6 +20,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -25,6 +30,7 @@ import java.util.UUID;
 public class PatientLogController {
 
     private final LogService logService;
+    private final UserService userService;
 
     @PostMapping
     ResponseEntity<Void> creatLog(
@@ -59,7 +65,35 @@ public class PatientLogController {
     ResponseEntity<LogFullResponse> getLog(@PathVariable UUID id) {
         log.debug("Received get log request: {}", id);
         Log lg = logService.getLog(id);
+        String userId = SecurityUtils.getName();
+        if(!lg.getUser().getId().equals(userId)) {
+            userService.verifyCaregiver(lg.getUser().getId(), userId);
+        }
         return  ResponseEntity.ok(new LogFullResponse(lg.getId(), lg.getType(), lg.getDescription(),
                 lg.getCreatedAt()));
+    }
+
+    @GetMapping
+    public ResponseEntity<PagedModel<LogFullResponse>> getLogs(
+            @RequestParam(required = false) String userId,
+            @RequestParam(required = false) Instant start,
+            @RequestParam(required = false) Instant end,
+            @RequestParam(required = false) LogType type,
+            @RequestParam(required = false, defaultValue = "DESC") Sort.Direction direction,
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @RequestParam(required = false, defaultValue = "20") Integer size
+            ) {
+        log.debug("Get logs based on following params - start: {}, end: {}, type: {}, sort: {}, page: {}, size: {}",
+                start, end, type, direction, page, size);
+        if(userId == null)
+            userId = SecurityUtils.getName();
+        else{
+            userService.verifyCaregiver(userId, SecurityUtils.getName());
+        }
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, Log.LogSortCategory.CREATED_AT.getValue()));
+        Page<Log> logPage = logService.getLogs(userId, type, start, end, pageable);
+        List<LogFullResponse> results = logPage.getContent().stream().map(LogFullResponse::getLogFullResponseFromLog).toList();
+        Page<LogFullResponse> pagedResult = new PageImpl<>(results, pageable, logPage.getTotalElements());
+        return ResponseEntity.ok(new PagedModel<>(pagedResult));
     }
 }

@@ -4,6 +4,8 @@ import com.sadi.backend.dtos.LogDTO;
 import com.sadi.backend.dtos.requests.UpdateLogRequest;
 import com.sadi.backend.entities.Log;
 import com.sadi.backend.enums.LogType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.Instant;
 import java.util.List;
@@ -18,4 +20,5 @@ public interface LogService {
     void verifyOwner(Log log, String userId);
     Log getLog(UUID id);
     void updateLog(UUID id, UpdateLogRequest req);
+    Page<Log> getLogs(String userId, LogType type, Instant start, Instant end, Pageable pageable);
 }
