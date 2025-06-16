@@ -26,6 +26,7 @@ import com.example.frontend.api.AuthManagerResponse // Ensure this matches your 
 import com.example.frontend.api.CaregiverRegisterRequest
 import com.example.frontend.api.PatientRegisterRequest
 import com.example.frontend.api.RetrofitInstance
+import com.example.frontend.api.getIdToken
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
@@ -138,9 +139,28 @@ fun ScreenRegister(
                             }
                             "exists" -> {
                                 Log.i(TAG, "Backend: Existing user detected.")
-                                //onNavigateToDashboard("patient", firebaseDisplayName, firebaseEmail, patientDob, patientGender, null)
-                                onNavigateToDashboard("caregiver", firebaseDisplayName, firebaseEmail, caregiverDob, caregiverGender, firebaseUserUID, firebaseIdToken)
+                                val token = RetrofitInstance.dementiaAPI.getIdToken()
+                                Log.d(TAG, " ID Token (first 30 chars): ${token.take(30)}...")
+                                val userBody = RetrofitInstance.dementiaAPI.getUserInfo("Bearer $token")
+                                Log.d(TAG, "User Info Response: ${userBody.body()}")
+                                val role = userBody.body()?.role
+                                Log.d(TAG, "User role from backend: $role")
 
+                                val userName = userBody.body()?.name
+                                val userEmail = userBody.body()?.email
+                                val userDob = userBody.body()?.dob
+                                val userGender = userBody.body()?.gender
+                                val userId = userBody.body()?.id
+
+                                if(role == "CAREGIVER") {
+                                    onNavigateToDashboard(role, userName, userEmail, userDob, userGender, userId, firebaseIdToken)
+                                }else if(role == "PATIENT") {
+                                    onNavigateToDashboard(role, userName, userEmail, userDob, userGender, userId, firebaseIdToken)
+                                } else {
+                                    errorMsg = "Unknown role returned from backend: $role. Check logs."
+                                    Log.e(TAG, "Unknown role from backend: $role")
+                                    clearAllDialogs()
+                                }
                             }
                             else -> {
                                 errorMsg = "Backend returned unknown status: ${parsedBody.status}. Check logs."
@@ -329,7 +349,8 @@ fun ScreenRegister(
                 if (response.isSuccessful && response.code() == 201) {
                     Log.i(TAG, "Caregiver registered successfully")
                     clearAllDialogs()
-                    onNavigateToDashboard("caregiver", caregiverName, caregiverEmail, caregiverDob, caregiverGender, userUidForRegistration, tokenForRegistration)
+                    val token = RetrofitInstance.dementiaAPI.getIdToken(true)
+                    onNavigateToDashboard("caregiver", caregiverName, caregiverEmail, caregiverDob, caregiverGender, userUidForRegistration, token)
                 } else {
                     registrationApiFailed = true
                     val errorBody = response.errorBody()?.string() ?: "Unknown error"
@@ -423,7 +444,8 @@ fun ScreenRegister(
                 if (response.isSuccessful && response.code() == 201) {
                     Log.i(TAG, "Patient registered successfully")
                     clearAllDialogs()
-                    onNavigateToDashboard("patient", patientName, patientEmail, patientDob, patientGender, userUidForRegistration,tokenForRegistration)
+                    val token = RetrofitInstance.dementiaAPI.getIdToken(true)
+                    onNavigateToDashboard("patient", patientName, patientEmail, patientDob, patientGender, userUidForRegistration,token)
                 } else {
                     registrationApiFailed = true
                     val errorBody = response.errorBody()?.string() ?: "Unknown error"
