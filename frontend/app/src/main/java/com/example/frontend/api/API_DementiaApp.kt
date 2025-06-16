@@ -2,6 +2,8 @@ package com.example.frontend.api
 
 import com.example.frontend.api.models.RequestChat
 import com.example.frontend.api.models.ResponseChat
+import com.example.frontend.screens.NavigationManager
+import com.example.frontend.screens.Screen
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import kotlinx.coroutines.tasks.await
@@ -88,26 +90,33 @@ interface DementiaAPI {
             @Header("Authorization") firebaseIdToken: String,
             @Body request: RequestChat
     ): Response<ResponseBody>
+
 }
 
-suspend fun getIdToken(toLogin: () -> Unit): String? {
+suspend fun getIdTokenWithFallback(fallback: () -> Unit): String? {
     val currentUser = FirebaseAuth.getInstance().currentUser
     if (currentUser == null) {
-        toLogin()
+        fallback()
         return null
     }
 
     return try {
         val result = currentUser.getIdToken(false).await()
         result.token ?: run {
-            toLogin()
+            fallback()
             null
         }
     } catch (e: FirebaseAuthInvalidUserException) {
-        toLogin()
+        fallback()
         null
     } catch (e: Exception) {
-        toLogin()
+        fallback()
         null
     }
+}
+
+suspend fun DementiaAPI.getIdToken(): String {
+    return getIdTokenWithFallback {
+        NavigationManager.getNavController().navigate(Screen.Main)
+    }!!
 }

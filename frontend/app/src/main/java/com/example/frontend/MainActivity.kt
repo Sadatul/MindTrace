@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
+import com.example.frontend.screens.NavigationManager
 import com.example.frontend.screens.SetupNavGraph
 import com.example.frontend.ui.theme.FrontendTheme
 
@@ -26,6 +27,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val navController = rememberNavController()
+            NavigationManager.setNavController(navController)
 
             FrontendTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->

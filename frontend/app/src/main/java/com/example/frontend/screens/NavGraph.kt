@@ -64,9 +64,7 @@ fun SetupNavGraph(navController: NavHostController) {
         }
 
         composable<Screen.Chat> {
-            ChatScreen(toLogin = {
-                navController.navigate(Screen.Main)
-            })
+            ChatScreen()
         }
     }
 }
