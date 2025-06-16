@@ -1,5 +1,6 @@
 package com.sadi.backend.entities;
 
+import com.sadi.backend.dtos.BaseSortCategory;
 import com.sadi.backend.enums.LogType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -53,5 +54,12 @@ public class Log {
         metadata.put("createdAt", createdAt.toString());
         metadata.put("type", type.toString());
         return metadata;
+    }
+
+    @Getter
+    @RequiredArgsConstructor
+    public enum LogSortCategory implements BaseSortCategory {
+        CREATED_AT("createdAt");
+        private final String value;
     }
 }
