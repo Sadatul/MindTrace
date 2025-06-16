@@ -320,12 +320,14 @@ fun ScreenRegister(
             var registrationApiFailed = false // Flag to control dialog visibility on API failure
 
             try {
+                Log.d(TAG, "Attempting")
                 val response = RetrofitInstance.dementiaAPI.registerCaregiver(
                     "Bearer $tokenForRegistration", request
                 )
+                Log.d(TAG,"HEllO")
                 Log.d(TAG, "Caregiver Register RAW Response Code: ${response.code()}")
                 if (response.isSuccessful && response.code() == 201) {
-                    Log.i(TAG, "Caregiver registered successfully: ${response.body()?.msg}")
+                    Log.i(TAG, "Caregiver registered successfully")
                     clearAllDialogs()
                     onNavigateToDashboard("caregiver", caregiverName, caregiverEmail, caregiverDob, caregiverGender, userUidForRegistration, tokenForRegistration)
                 } else {
@@ -419,7 +421,7 @@ fun ScreenRegister(
                 )
                 Log.d(TAG, "Patient Register RAW Response Code: ${response.code()}")
                 if (response.isSuccessful && response.code() == 201) {
-                    Log.i(TAG, "Patient registered successfully: ${response.body()?.msg}")
+                    Log.i(TAG, "Patient registered successfully")
                     clearAllDialogs()
                     onNavigateToDashboard("patient", patientName, patientEmail, patientDob, patientGender, userUidForRegistration,tokenForRegistration)
                 } else {
