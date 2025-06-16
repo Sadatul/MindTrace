@@ -23,14 +23,14 @@ fun SetupNavGraph(navController: NavHostController) {
             ScreenRegister(
                     onNavigateToDashboard = { role, name, email, dob, gender, uid, token ->
                         val destination =
-                                if (role == "patient") {
+                                if (role == "PATIENT") {
                                     Screen.DashBoardPatient(
                                             name = name ?: "N/A",
                                             email = email ?: "N/A",
                                             dob = dob ?: "N/A",
-                                            gender = gender ?: "N/A",
+                                            gender = gender ?: "N/A"
                                     )
-                                } else {
+                                } else if( role == "CAREGIVER") {
                                     Screen.DashboardCareGiver(
                                             name = name ?: "N/A",
                                             email = email ?: "N/A",
@@ -39,6 +39,8 @@ fun SetupNavGraph(navController: NavHostController) {
                                             uid = uid ?: "N/A",
                                             token = token ?: "N/A"
                                     )
+                                } else {
+                                    throw IllegalArgumentException("Unknown role: $role")
                                 }
                         navController.navigate(destination) {
                             popUpTo(Screen.Main) { inclusive = true }
