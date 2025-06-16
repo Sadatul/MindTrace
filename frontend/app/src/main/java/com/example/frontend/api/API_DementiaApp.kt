@@ -14,81 +14,96 @@ import retrofit2.http.*
 // Placeholder to prevent build errors from existing code
 data class HealthResponse(val status: String)
 
-object AuthSession {
-    var token: String? = null
-    var userType: String? = null
-}
-
 data class AuthManagerResponse(val status: String?)
 
 data class PatientRegisterRequest(
-        val name: String,
-        val dob: String, // YYYY-MM-DD
-        val gender: String, // M, F, etc.
-        val primaryContact: String, // Corrected name based on previous context
-        val otp: String // Corrected name based on previous context
+    val name: String,
+    val dob: String, // YYYY-MM-DD
+    val gender: String, // M, F, etc.
+    val primaryContact: String, // Corrected name based on previous context
+    val otp: String // Corrected name based on previous context
 )
 
 data class CaregiverRegisterRequest(
-        val name: String,
-        val dob: String, // YYYY-MM-DD
-        val gender: String // M, F, etc.
+    val name: String,
+    val dob: String, // YYYY-MM-DD
+    val gender: String // M, F, etc.
 )
 
 
 // Data Class for GetCaregiver API Response
 data class CaregiverProfileResponse(
-        val id: String?,
-        val name: String?,
-        val phone: String?,
-        val email: String?,
-        val image: String? // URL string
+    val id: String?,
+    val name: String?,
+    val phone: String?,
+    val email: String?,
+    val image: String? // URL string
 )
 
 data class OtpResponse(val otp: String?)
 
+data class PrimaryContact(
+    val id: String,
+    val name: String,
+    val gender: String,
+    val profilePicture: String?
+)
+
+data class UserInfoResponse(
+    val id: String,
+    val name: String,
+    val email: String,
+    val role: String,
+    val gender: String,
+    val dob: String,
+    val profilePicture: String?,
+    val primaryContact: PrimaryContact?,
+    val createdAt: String,
+    val telegramChatId: String?
+)
+
 interface DementiaAPI {
-    @GET("/actuator/health") suspend fun getHealth(): Response<HealthResponse>
+    @GET("/actuator/health")
+    suspend fun getHealth(): Response<HealthResponse>
 
     @POST("/v1/auth")
     suspend fun postAuth(
-            @Header("Authorization") bearerToken: String
+        @Header("Authorization") bearerToken: String
     ): Response<AuthManagerResponse>
 
     @POST("/v1/auth/register/caregiver")
     suspend fun registerCaregiver(
-            @Header("Authorization") bearerToken: String,
-            @Body request: CaregiverRegisterRequest
+        @Header("Authorization") bearerToken: String,
+        @Body request: CaregiverRegisterRequest
     ): Response<ResponseBody>
 
     @POST("/v1/auth/register/patient")
     suspend fun registerPatient(
-            @Header("Authorization") bearerToken: String,
-            @Body request: PatientRegisterRequest
+        @Header("Authorization") bearerToken: String,
+        @Body request: PatientRegisterRequest
     ): Response<ResponseBody> // Assuming same response type
 
     @GET("/v1/auth/register/otp")
     suspend fun getOtp(@Header("Authorization") bearerToken: String): Response<OtpResponse>
 
-    // New endpoint for GetCaregiver
-    @GET("/v1/user/caregivers/{id}")
-    suspend fun getCaregiverProfile(
-            @Header("Authorization") bearerToken: String,
-            @Path("id") caregiverId: String
-    ): Response<CaregiverProfileResponse>
-
     @GET("/v1/chat")
     suspend fun getChatHistory(
-            @Header("Authorization") firebaseIdToken: String,
-            @Query("page") page: Int,
-            @Query("size") size: Int
+        @Header("Authorization") firebaseIdToken: String,
+        @Query("page") page: Int,
+        @Query("size") size: Int
     ): Response<ResponseChat>
 
     @POST("/v1/chat")
     suspend fun sendChatMessage(
-            @Header("Authorization") firebaseIdToken: String,
-            @Body request: RequestChat
+        @Header("Authorization") firebaseIdToken: String,
+        @Body request: RequestChat
     ): Response<ResponseBody>
+
+    @GET("/v1/users")
+    suspend fun getUserInfo(
+        @Header("Authorization") firebaseIdToken: String,
+        @Query("userId") userId: String? = null
+    ): Response<UserInfoResponse>
 
 }
 
