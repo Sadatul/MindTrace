@@ -38,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.example.frontend.api.RetrofitInstance
+import com.example.frontend.api.getIdToken
 import com.example.frontend.api.models.RequestChat
 import com.example.frontend.screens.components.ChatBubble
 import com.example.frontend.screens.models.ChatMessage
@@ -46,7 +47,7 @@ import java.time.Instant
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun ChatScreen(token: String) {
+fun ChatScreen(toLogin: () -> Unit) {
     var messages by remember { mutableStateOf(listOf<ChatMessage>()) }
     var inputText by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
@@ -60,7 +61,7 @@ fun ChatScreen(token: String) {
 
     // Load initial messages
     LaunchedEffect(Unit) {
-        loadMessages(token, 0, pageSize) { newMessages, hasMore ->
+        loadMessages(toLogin, 0, pageSize) { newMessages, hasMore ->
             messages = newMessages
             hasMorePages = hasMore
             currentPage = 0
@@ -89,7 +90,7 @@ fun ChatScreen(token: String) {
                 isLoadingMore = true
                 val nextPage = currentPage + 1
 
-                loadMessages(token, nextPage, pageSize) { newMessages, hasMore ->
+                loadMessages(toLogin, nextPage, pageSize) { newMessages, hasMore ->
                     if (newMessages.isNotEmpty()) {
                         // Add older messages to the end of the list (since reverseLayout=true)
                         messages = messages + newMessages
@@ -177,6 +178,8 @@ fun ChatScreen(token: String) {
                             listState.animateScrollToItem(0)
 
                             try {
+                                val token = getIdToken(toLogin)!!
+
                                 val response = RetrofitInstance.dementiaAPI.sendChatMessage(
                                     "Bearer $token",
                                     RequestChat(userMessage)
@@ -227,12 +230,13 @@ fun ChatScreen(token: String) {
 }
 
 private suspend fun loadMessages(
-    token: String,
+    toLogin: () -> Unit,
     page: Int,
     size: Int,
     onComplete: (List<ChatMessage>, Boolean) -> Unit
 ) {
     try {
+        val token = getIdToken(toLogin)!!
         val response = RetrofitInstance.dementiaAPI.getChatHistory("Bearer $token", page, size)
         if (response.isSuccessful) {
             response.body()?.let { chatResponse ->
