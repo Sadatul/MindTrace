@@ -2,6 +2,9 @@ package com.example.frontend.api
 
 import com.example.frontend.api.models.RequestChat
 import com.example.frontend.api.models.ResponseChat
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import kotlinx.coroutines.tasks.await
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.*
@@ -85,4 +88,26 @@ interface DementiaAPI {
             @Header("Authorization") firebaseIdToken: String,
             @Body request: RequestChat
     ): Response<ResponseBody>
+}
+
+suspend fun getIdToken(toLogin: () -> Unit): String? {
+    val currentUser = FirebaseAuth.getInstance().currentUser
+    if (currentUser == null) {
+        toLogin()
+        return null
+    }
+
+    return try {
+        val result = currentUser.getIdToken(false).await()
+        result.token ?: run {
+            toLogin()
+            null
+        }
+    } catch (e: FirebaseAuthInvalidUserException) {
+        toLogin()
+        null
+    } catch (e: Exception) {
+        toLogin()
+        null
+    }
 }
