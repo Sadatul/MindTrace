@@ -350,7 +350,7 @@ fun ScreenRegister(
                     Log.i(TAG, "Caregiver registered successfully")
                     clearAllDialogs()
                     val token = RetrofitInstance.dementiaAPI.getIdToken(true)
-                    onNavigateToDashboard("caregiver", caregiverName, caregiverEmail, caregiverDob, caregiverGender, userUidForRegistration, token)
+                    onNavigateToDashboard("CAREGIVER", caregiverName, caregiverEmail, caregiverDob, caregiverGender, userUidForRegistration, token)
                 } else {
                     registrationApiFailed = true
                     val errorBody = response.errorBody()?.string() ?: "Unknown error"
@@ -445,7 +445,7 @@ fun ScreenRegister(
                     Log.i(TAG, "Patient registered successfully")
                     clearAllDialogs()
                     val token = RetrofitInstance.dementiaAPI.getIdToken(true)
-                    onNavigateToDashboard("patient", patientName, patientEmail, patientDob, patientGender, userUidForRegistration,token)
+                    onNavigateToDashboard("PATIENT", patientName, patientEmail, patientDob, patientGender, userUidForRegistration,token)
                 } else {
                     registrationApiFailed = true
                     val errorBody = response.errorBody()?.string() ?: "Unknown error"
