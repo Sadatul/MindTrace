@@ -93,7 +93,7 @@ interface DementiaAPI {
 
 }
 
-suspend fun getIdTokenWithFallback(fallback: () -> Unit): String? {
+suspend fun getIdTokenWithFallback(forceRefresh: Boolean = false, fallback: () -> Unit): String? {
     val currentUser = FirebaseAuth.getInstance().currentUser
     if (currentUser == null) {
         fallback()
@@ -101,7 +101,7 @@ suspend fun getIdTokenWithFallback(fallback: () -> Unit): String? {
     }
 
     return try {
-        val result = currentUser.getIdToken(false).await()
+        val result = currentUser.getIdToken(forceRefresh).await()
         result.token ?: run {
             fallback()
             null
@@ -115,8 +115,8 @@ suspend fun getIdTokenWithFallback(fallback: () -> Unit): String? {
     }
 }
 
-suspend fun DementiaAPI.getIdToken(): String {
-    return getIdTokenWithFallback {
+suspend fun DementiaAPI.getIdToken(forceRefresh: Boolean = false): String {
+    return getIdTokenWithFallback(forceRefresh) {
         NavigationManager.getNavController().navigate(Screen.Main)
     }!!
 }
