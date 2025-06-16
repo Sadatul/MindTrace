@@ -54,7 +54,8 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.6.7") // Extended Material Icons
 
     // Testing libraries
-    testImplementation(libs.junit) androidTestImplementation(libs.androidx.junit)
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom)) // Compose BOM for testing
     androidTestImplementation(libs.androidx.ui.test.junit4)

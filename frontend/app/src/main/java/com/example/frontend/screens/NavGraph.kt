@@ -1,18 +1,21 @@
 package com.example.frontend.screens
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SetupNavGraph(navController: NavHostController) {
     NavHost(navController = navController, startDestination = Screen.Main) {
         composable<Screen.Main> {
             MainScreen(
-                    toRegisterScreen = { navController.navigate(Screen.Register) },
-                    toChatScreen = { token -> navController.navigate(Screen.Chat(token)) }
+                    toRegisterCaregiverScreen = { navController.navigate(Screen.Register) },
+                    toChatScreen = { navController.navigate(Screen.Chat) }
             )
         }
 
@@ -60,9 +63,10 @@ fun SetupNavGraph(navController: NavHostController) {
             )
         }
 
-        composable<Screen.Chat> { backStackEntry ->
-            val (token) = backStackEntry.toRoute<Screen.Chat>()
-            ChatScreen(token)
+        composable<Screen.Chat> {
+            ChatScreen(toLogin = {
+                navController.navigate(Screen.Main)
+            })
         }
     }
 }
