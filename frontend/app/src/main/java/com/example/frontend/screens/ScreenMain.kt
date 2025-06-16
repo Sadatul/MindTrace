@@ -13,10 +13,9 @@ import androidx.compose.runtime.setValue
 import com.example.frontend.api.RetrofitInstance
 
 @Composable
-fun MainScreen(toChatScreen: (token: String) -> Unit, toRegisterCaregiverScreen: () -> Unit) {
+fun MainScreen(toChatScreen: () -> Unit, toRegisterCaregiverScreen: () -> Unit) {
 
     var serverStatus by remember { mutableStateOf("<Loading...>") }
-    var token by remember { mutableStateOf("") }
 
     LaunchedEffect(key1 = null) {
         val body = RetrofitInstance.dementiaAPI.getHealth().body()
@@ -27,10 +26,9 @@ fun MainScreen(toChatScreen: (token: String) -> Unit, toRegisterCaregiverScreen:
     Column {
         Text("Server is $serverStatus")
 
-        TextField(value = token, onValueChange = { token = it }, label = { Text("Firebase token") })
-        Button(onClick = { toChatScreen(token) }) { Text("Chat screen") }
+        Button(onClick = { toChatScreen() }) { Text("Chat screen") }
 
-        Button(onClick = toRegisterScreen) { Text("Register screen") }
+        Button(onClick = toRegisterCaregiverScreen) { Text("Register screen") }
     }
 }
 
