@@ -35,7 +35,6 @@ data class CaregiverRegisterRequest(
         val gender: String // M, F, etc.
 )
 
-data class CaregiverRegisterResponse(val msg: String?)
 
 // Data Class for GetCaregiver API Response
 data class CaregiverProfileResponse(
@@ -60,13 +59,13 @@ interface DementiaAPI {
     suspend fun registerCaregiver(
             @Header("Authorization") bearerToken: String,
             @Body request: CaregiverRegisterRequest
-    ): Response<CaregiverRegisterResponse>
+    ): Response<ResponseBody>
 
     @POST("/v1/auth/register/patient")
     suspend fun registerPatient(
             @Header("Authorization") bearerToken: String,
             @Body request: PatientRegisterRequest
-    ): Response<CaregiverRegisterResponse> // Assuming same response type
+    ): Response<ResponseBody> // Assuming same response type
 
     @GET("/v1/auth/register/otp")
     suspend fun getOtp(@Header("Authorization") bearerToken: String): Response<OtpResponse>
