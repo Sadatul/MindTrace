@@ -10,4 +10,8 @@ object SelfUserInfoCache {
     fun setUserInfo(userInfo: UserInfo) {
         this.userInfo = userInfo
     }
+
+    fun signOutUser() {
+        userInfo = null
+    }
 }

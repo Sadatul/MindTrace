@@ -1,7 +1,6 @@
 package com.example.frontend.api
 
 import android.util.Log
-import androidx.compose.ui.platform.LocalGraphicsContext
 import com.example.frontend.api.models.RequestChat
 import com.example.frontend.api.models.ResponseChat
 import com.example.frontend.screens.NavigationManager
@@ -11,7 +10,11 @@ import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import kotlinx.coroutines.tasks.await
 import okhttp3.ResponseBody
 import retrofit2.Response
-import retrofit2.http.*
+import retrofit2.http.Body
+import retrofit2.http.GET
+import retrofit2.http.Header
+import retrofit2.http.POST
+import retrofit2.http.Query
 
 // Placeholder to prevent build errors from existing code
 data class HealthResponse(val status: String)
@@ -131,17 +134,18 @@ suspend fun getIdTokenWithFallback(forceRefresh: Boolean = false, fallback: () -
     }
 }
 
-suspend fun DementiaAPI.getIdToken(forceRefresh: Boolean = false): String {
+suspend fun DementiaAPI.getIdToken(forceRefresh: Boolean = false, autoRedirect: Boolean = true): String? {
     return getIdTokenWithFallback(forceRefresh) {
-        redirectToLogin()
-    }!!
+        if (autoRedirect) redirectToLogin()
+    }
 }
 
-suspend fun DementiaAPI.getSelfUserInfo(): UserInfo? {
+suspend fun DementiaAPI.getSelfUserInfo(autoRedirect: Boolean = true): UserInfo? {
     val cachedUserInfo = SelfUserInfoCache.getUserInfo()
     if (cachedUserInfo != null) return cachedUserInfo
 
-    val token: String = getIdToken()
+    val token: String = getIdToken(autoRedirect = autoRedirect) ?: return null
+
     val response = getUserInfo("Bearer $token")
     if (response.isSuccessful) {
         val body = response.body()
@@ -150,9 +154,15 @@ suspend fun DementiaAPI.getSelfUserInfo(): UserInfo? {
         }
         return body
     } else {
-        redirectToLogin()
+        if (autoRedirect) redirectToLogin()
         return null
     }
+}
+
+fun DementiaAPI.signOutUser() {
+    SelfUserInfoCache.signOutUser()
+    FirebaseAuth.getInstance().signOut()
+    redirectToLogin()
 }
 
 fun redirectToLogin() {
