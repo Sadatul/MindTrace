@@ -1,6 +1,7 @@
 package com.example.frontend.screens
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -81,7 +82,7 @@ fun SetupNavGraph(navController: NavHostController) {
 }
 
 suspend fun getStartDestination(): Screen {
-    val userInfo = RetrofitInstance.dementiaAPI.getSelfUserInfo()
+    val userInfo = RetrofitInstance.dementiaAPI.getSelfUserInfo(autoRedirect = false)
     return if (userInfo == null) Screen.Register
     else if (userInfo.role == "PATIENT") Screen.DashBoardPatient
     else Screen.DashboardCareGiver
