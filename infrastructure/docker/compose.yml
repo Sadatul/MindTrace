@@ -34,13 +34,28 @@ services:
       retries: 5
     networks:
       - host_network
-      
+  watchtower:
+    image: containrrr/watchtower
+    command:
+      - "--label-enable"
+      - "--interval"
+      - "30"
+      - "--rolling-restart"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ~/.docker/config.json:/config.json:ro
+    environment:
+      - REPO_USER=Sadatul
+      - REPO_PASS=${GIT_REGISTRY_TOKEN}
+    networks:
+      - host_network
   backend:
     depends_on:
       db:
         condition: service_healthy
-    image: ghcr.io/sadatul/mindtrace_backend:0.0.3-snapshot
+    image: ghcr.io/sadatul/mindtrace_backend:latest
     labels:
+      - "com.centurylinklabs.watchtower.enable=true"
       - "traefik.enable=true"
       - "traefik.http.routers.backend-http.rule=Host(`mindtrace.pinklifeline.xyz`)"
       - "traefik.http.routers.backend-http.entrypoints=web"
