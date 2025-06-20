@@ -42,16 +42,20 @@ services:
     image: ghcr.io/sadatul/mindtrace_backend:0.0.3-snapshot
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`mindtrace.pinklifeline.xyz`)"
-      - "traefik.http.routers.backend.entrypoints=web"
-      - "traefik.http.services.backend.loadbalancer.server.port=8080"
+      - "traefik.http.routers.backend-http.rule=Host(`mindtrace.pinklifeline.xyz`)"
+      - "traefik.http.routers.backend-http.entrypoints=web"
       - "traefik.http.routers.backend-http.middlewares=redirect-to-https"
-      - "traefik.http.routers.backend-https.rule=Host(`mindtrace.pinklifeline.xyz`)"
-      - "traefik.http.routers.backend-https.entrypoints=websecure"
+
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
+
+      - "traefik.http.routers.backend.rule=Host(`mindtrace.pinklifeline.xyz`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls=true"
       - "traefik.http.routers.backend.tls.certresolver=myresolver"
-    container_name: backend
+
+      - "traefik.http.services.backend.loadbalancer.server.port=8080"
+
     environment:
       - DB_URL=db:5432/software
       - DB_USERNAME=software
