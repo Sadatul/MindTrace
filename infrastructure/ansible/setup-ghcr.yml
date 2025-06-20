@@ -1,0 +1,16 @@
+- name: Authenticate Docker to GHCR
+  hosts: azure_vm
+  become: yes
+
+  vars:
+    github_user: "{{ lookup('env', 'GITHUB_USER') }}"
+    github_pat: "{{ lookup('env', 'GITHUB_PAT') }}"
+
+  tasks:
+    - name: Docker login to GHCR
+      ansible.builtin.shell: |
+        echo "{{ github_pat }}" | docker login ghcr.io -u {{ github_user }} --password-stdin
+      args:
+        executable: /bin/bash
+      environment:
+        DOCKER_CONFIG: /root/.docker

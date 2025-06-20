@@ -1,0 +1,53 @@
+---
+- name: Secure SSH Setup with New User on Azure VM
+  hosts: azure_vm
+  become: yes
+
+  vars:
+    docker_user: azureuser
+
+  tasks:
+    - name: Update SSHD config to secure SSH
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        state: present
+        backrefs: yes
+      loop:
+        - { regexp: '^#?PasswordAuthentication\s+.*', line: 'PasswordAuthentication no' }
+        - { regexp: '^#?PermitRootLogin\s+.*', line: 'PermitRootLogin no' }
+        - { regexp: '^#?UsePAM\s+.*', line: 'UsePAM no' }
+      notify: Restart SSH
+    - name: Install required packages
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+        state: present
+        update_cache: true
+    - name: Add Docker’s official GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+    - name: Add Docker repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu focal stable
+        state: present
+    - name: Install Docker
+      apt:
+        name: docker-ce
+        state: latest
+        update_cache: true
+    - name: Add user to docker group
+      user:
+        name: "{{ docker_user }}"
+        groups: docker
+        append: yes
+  handlers:
+    - name: Restart SSH
+      ansible.builtin.service:
+        name: ssh
+        state: restarted    
