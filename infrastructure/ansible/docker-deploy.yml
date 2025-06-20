@@ -1,0 +1,47 @@
+- name: Deploy Docker Stack
+  hosts: azure_vm
+  become: yes
+  vars_files:
+    - group_vars/all/vault.yml
+
+  vars:
+    git_repo_owner: Sadatul
+    git_repo_name: software_devolopment_project
+    git_branch: main
+    repo_path: /home/{{ ansible_user }}/docker
+
+  tasks:
+    - name: Ensure docker directory exists
+      file:
+        path: "{{ repo_path }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+
+    - name: Sparse checkout docker directory from private repo
+      shell: |
+        cd {{ repo_path }}
+        rm -rf .git
+        git init
+        git remote add origin https://{{ git_repo_owner }}:{{ git_token }}@github.com/{{ git_repo_owner }}/{{ git_repo_name }}.git
+        git config core.sparseCheckout true
+        echo "infrastructure/docker/" > .git/info/sparse-checkout
+        git pull origin {{ git_branch }}
+      args:
+        chdir: "{{ repo_path }}"
+
+    - name: Upload Docker secrets to .env
+      copy:
+        dest: "{{ repo_path }}/infrastructure/docker/.env"
+        content: |
+          {% for key, value in docker_secrets.items() %}
+          {{ key }}={{ value }}
+          {% endfor %}
+        mode: '0600'
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+
+    - name: Run docker compose up
+      shell: docker compose up -d --remove-orphans
+      args:
+        chdir: "{{ repo_path }}/infrastructure/docker/"
