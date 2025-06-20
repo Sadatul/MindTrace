@@ -2,66 +2,75 @@ package com.example.frontend.screens
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.toRoute
+import com.example.frontend.api.RetrofitInstance
+import com.example.frontend.api.getSelfUserInfo
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SetupNavGraph(navController: NavHostController) {
-    NavHost(navController = navController, startDestination = Screen.Main) {
+    val startDestination by produceState<Screen?>(initialValue = null) {
+        value = getStartDestination()
+    }
+
+    if (startDestination == null) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    NavHost(navController = navController, startDestination = startDestination!!) {
         composable<Screen.Main> {
             MainScreen(
-                    toRegisterCaregiverScreen = { navController.navigate(Screen.Register) },
-                    toChatScreen = { navController.navigate(Screen.Chat) }
+                toRegisterCaregiverScreen = { navController.navigate(Screen.Register) },
+                toChatScreen = { navController.navigate(Screen.Chat) }
             )
         }
 
         composable<Screen.Register> {
             ScreenRegister(
-                    onNavigateToDashboard = { role, name, email, dob, gender, uid, token ->
-                        val destination =
-                                if (role == "PATIENT") {
-                                    Screen.DashBoardPatient(
-                                            name = name ?: "N/A",
-                                            email = email ?: "N/A",
-                                            dob = dob ?: "N/A",
-                                            gender = gender ?: "N/A"
-                                    )
-                                } else if( role == "CAREGIVER") {
-                                    Screen.DashboardCareGiver(
-                                            name = name ?: "N/A",
-                                            email = email ?: "N/A",
-                                            dob = dob ?: "N/A",
-                                            gender = gender ?: "N/A",
-                                            uid = uid ?: "N/A",
-                                            token = token ?: "N/A"
-                                    )
-                                } else {
-                                    throw IllegalArgumentException("Unknown role: $role")
-                                }
-                        navController.navigate(destination) {
-                            popUpTo(Screen.Main) { inclusive = true }
+                onNavigateToDashboard = { role ->
+                    val destination =
+                        when (role) {
+                            "PATIENT" -> {
+                                Screen.DashBoardPatient
+                            }
+
+                            "CAREGIVER" -> {
+                                Screen.DashboardCareGiver
+                            }
+
+                            else -> {
+                                throw IllegalArgumentException("Unknown role: $role")
+                            }
                         }
+                    navController.navigate(destination) {
+                        popUpTo(Screen.Main) { inclusive = true }
                     }
+                }
             )
         }
 
-        composable<Screen.DashBoardPatient> { backStackEntry ->
-            val patientDetails = backStackEntry.toRoute<Screen.DashBoardPatient>()
+        composable<Screen.DashBoardPatient> {
             ScreenPatient(
-                    patientDetails = patientDetails,
-                    onNavigateToChat = { navController.navigate(Screen.Chat) }
+                onNavigateToChat = { navController.navigate(Screen.Chat) }
             )
         }
 
-        composable<Screen.DashboardCareGiver> { backStackEntry ->
-            val caregiverDetails = backStackEntry.toRoute<Screen.DashboardCareGiver>()
+        composable<Screen.DashboardCareGiver> {
             ScreenCareGiver(
-                    caregiverDetails = caregiverDetails,
-                    onNavigateToChat = { navController.navigate(Screen.Chat) }
+                onNavigateToChat = { navController.navigate(Screen.Chat) }
             )
         }
 
@@ -69,4 +78,11 @@ fun SetupNavGraph(navController: NavHostController) {
             ChatScreen()
         }
     }
+}
+
+suspend fun getStartDestination(): Screen {
+    val userInfo = RetrofitInstance.dementiaAPI.getSelfUserInfo()
+    return if (userInfo == null) Screen.Register
+    else if (userInfo.role == "PATIENT") Screen.DashBoardPatient
+    else Screen.DashboardCareGiver
 }
