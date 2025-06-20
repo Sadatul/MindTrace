@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ReportProblem
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -42,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import com.example.frontend.api.RetrofitInstance
 import com.example.frontend.api.UserInfo
 import com.example.frontend.api.getSelfUserInfo
+import com.example.frontend.api.signOutUser
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -95,9 +97,16 @@ fun ScreenPatient(
                 )
             }
 
+            Button(onClick = {
+                RetrofitInstance.dementiaAPI.signOutUser()
+            }) {
+                Text("Sign Out")
+            }
+
             if (!errorMsg.isNullOrBlank()) {
                 ErrorDisplay(errorMsg)
             }
+
         }
     }
 }
