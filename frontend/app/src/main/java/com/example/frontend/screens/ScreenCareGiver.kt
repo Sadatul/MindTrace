@@ -19,6 +19,7 @@ import com.example.frontend.api.RetrofitInstance
 import com.example.frontend.api.UserInfo
 import com.example.frontend.api.getIdToken
 import com.example.frontend.api.getSelfUserInfo
+import com.example.frontend.api.signOutUser
 import kotlinx.coroutines.launch
 
 
@@ -180,6 +181,12 @@ fun ScreenCareGiver(
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
             }
+        }
+
+        Button(onClick = {
+            RetrofitInstance.dementiaAPI.signOutUser()
+        }) {
+            Text("Sign Out")
         }
 
         Log.d(TAG, "ScreenCareGiver recomposing. showNewPatientOtpDialog: $showNewPatientOtpDialog, newPatientOtp: $newPatientOtp")
