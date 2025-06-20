@@ -16,6 +16,9 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.frontend.api.RetrofitInstance
+import com.example.frontend.api.UserInfo
+import com.example.frontend.api.getIdToken
+import com.example.frontend.api.getSelfUserInfo
 import kotlinx.coroutines.launch
 
 
@@ -24,7 +27,6 @@ private const val TAG = "ScreenCareGiver" // Tag for logging
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScreenCareGiver(
-    caregiverDetails: Screen.DashboardCareGiver, // This comes from your navigation
     onNavigateToChat: () -> Unit
 ) {
     var isLoading by remember { mutableStateOf(false) }
@@ -34,26 +36,18 @@ fun ScreenCareGiver(
     var newPatientOtp by remember { mutableStateOf<String?>(null) }
     var showNewPatientOtpDialog by remember { mutableStateOf(false) }
 
-    // For displaying the caregiver's own access token
-    var showCaregiverTokenDialog by remember { mutableStateOf(false) }
-
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
 
-    // This is the caregiver's own authentication token, passed via caregiverDetails
-    val caregiverAuthToken = caregiverDetails.token
-    Log.d(TAG, "Caregiver Auth Token initialized: $caregiverAuthToken")
+    var userInfo: UserInfo? by remember { mutableStateOf(null) }
 
+    LaunchedEffect(null) {
+        userInfo = RetrofitInstance.dementiaAPI.getSelfUserInfo()
+    }
 
     fun getNewPatientRegistrationCode() {
         Log.d(TAG, "getNewPatientRegistrationCode called.")
-        if (caregiverAuthToken.isEmpty()) {
-            Log.e(TAG, "Caregiver authentication token is missing or empty.")
-            coroutineScope.launch { snackbarHostState.showSnackbar("Caregiver authentication token is missing.") }
-            return
-        }
-        Log.d(TAG, "Caregiver Auth Token to be used: Bearer $caregiverAuthToken")
 
         coroutineScope.launch {
             isLoading = true
@@ -61,6 +55,9 @@ fun ScreenCareGiver(
             newPatientOtp = null // Reset previous OTP
             Log.d(TAG, "Coroutine launched for API call. isLoading=true, newPatientOtp=null")
             try {
+
+                val caregiverAuthToken = RetrofitInstance.dementiaAPI.getIdToken()
+
                 Log.d(TAG, "Attempting API call to RetrofitInstance.dementiaAPI.getOtp")
                 val response = RetrofitInstance.dementiaAPI.getOtp("Bearer $caregiverAuthToken")
                 Log.d(TAG, "API call finished. Response code: ${response.code()}, isSuccessful: ${response.isSuccessful}")
@@ -116,7 +113,15 @@ fun ScreenCareGiver(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            CaregiverInfoCard(caregiverDetails)
+
+            if (userInfo != null) {
+                CaregiverInfoCard(
+                    name = userInfo!!.name,
+                    email = userInfo!!.email,
+                    gender = userInfo!!.gender,
+                    dob = userInfo!!.dob
+                )
+            }
 
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -130,29 +135,6 @@ fun ScreenCareGiver(
                     Icon(Icons.Filled.Chat, contentDescription = "Chat Icon", modifier = Modifier.size(ButtonDefaults.IconSize))
                     Spacer(modifier = Modifier.size(ButtonDefaults.IconSpacing))
                     Text("Help & Support Chat")
-                }
-
-                // Button to display Caregiver's own Access Token
-                Button(
-                    onClick = {
-                        Log.d(TAG, "'Show My Access Token' button clicked.")
-                        if (caregiverAuthToken.isEmpty()) {
-                            Log.w(TAG, "Caregiver Auth Token is empty when trying to show dialog.")
-                            coroutineScope.launch { snackbarHostState.showSnackbar("Access Token not available.") }
-                        } else {
-                            Log.d(TAG, "Setting showCaregiverTokenDialog = true")
-                            showCaregiverTokenDialog = true
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(0.8f)
-                ) {
-                    Icon(
-                        Icons.Filled.VpnKey, // Icon for caregiver's own token
-                        contentDescription = "Show My Access Token Icon",
-                        modifier = Modifier.size(ButtonDefaults.IconSize)
-                    )
-                    Spacer(modifier = Modifier.size(ButtonDefaults.IconSpacing))
-                    Text("Show My Access Token")
                 }
 
                 // Button to get and show OTP for a New Patient
@@ -202,24 +184,6 @@ fun ScreenCareGiver(
 
         Log.d(TAG, "ScreenCareGiver recomposing. showNewPatientOtpDialog: $showNewPatientOtpDialog, newPatientOtp: $newPatientOtp")
 
-        // Dialog to display the Caregiver's own Access Token
-        if (showCaregiverTokenDialog) {
-            Log.d(TAG, "Rendering CaregiverAccessTokenDialog. Token: $caregiverAuthToken")
-            CaregiverAccessTokenDialog( // Renamed Dialog
-                token = caregiverAuthToken,
-                onCopy = {
-                    Log.d(TAG, "Copy clicked in CaregiverAccessTokenDialog.")
-                    clipboardManager.setText(AnnotatedString(caregiverAuthToken))
-                    coroutineScope.launch { snackbarHostState.showSnackbar("Access Token copied!") }
-                    showCaregiverTokenDialog = false
-                },
-                onCancel = {
-                    Log.d(TAG, "Cancel clicked in CaregiverAccessTokenDialog.")
-                    showCaregiverTokenDialog = false
-                }
-            )
-        }
-
         // Dialog to display the OTP for a new patient registration
         if (showNewPatientOtpDialog) {
             Log.d(TAG, "Rendering NewPatientRegistrationCodeDialog. OTP: $newPatientOtp")
@@ -243,7 +207,7 @@ fun ScreenCareGiver(
 }
 
 @Composable
-fun CaregiverInfoCard(caregiverDetails: Screen.DashboardCareGiver) {
+fun CaregiverInfoCard(name: String, email: String, dob: String, gender: String) {
     var isUidVisible by remember { mutableStateOf(false) }
     // Log.d(TAG, "CaregiverInfoCard recomposing. UID visible: $isUidVisible") // Optional: if you need to debug this card
 
@@ -266,29 +230,13 @@ fun CaregiverInfoCard(caregiverDetails: Screen.DashboardCareGiver) {
             )
             Divider()
 
-            InfoRow(label = "Name", icon = Icons.Filled.AccountCircle, value = caregiverDetails.name)
-            InfoRow(label = "Email", icon = Icons.Filled.Email, value = caregiverDetails.email)
-            InfoRow(label = "Date of Birth", icon = Icons.Filled.CalendarToday, value = caregiverDetails.dob)
-            InfoRow(label = "Gender", icon = Icons.Filled.PersonPin, value = formatGender(caregiverDetails.gender))
+            InfoRow(label = "Name", icon = Icons.Filled.AccountCircle, value = name)
+            InfoRow(label = "Email", icon = Icons.Filled.Email, value = email)
+            InfoRow(label = "Date of Birth", icon = Icons.Filled.CalendarToday, value = dob)
+            InfoRow(label = "Gender", icon = Icons.Filled.PersonPin, value = formatGender(gender))
             // InfoRow(label = "My Token", icon = Icons.Filled.VpnKey, value = caregiverDetails.token) // Example if you want to show it here
 
             Divider()
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    InfoRow(
-                        label = "Unique ID (UID)",
-                        icon = Icons.Filled.Fingerprint,
-                        value = if (isUidVisible) caregiverDetails.uid else "••••••••••••••••"
-                    )
-                }
-                IconButton(onClick = { isUidVisible = !isUidVisible }) {
-                    Icon(
-                        if (isUidVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                        contentDescription = "Toggle UID Visibility"
-                    )
-                }
-            }
         }
     }
 }

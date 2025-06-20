@@ -1,6 +1,15 @@
 package com.example.frontend.screens
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.CalendarToday
@@ -8,21 +17,46 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ReportProblem
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FabPosition
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.frontend.api.RetrofitInstance
+import com.example.frontend.api.UserInfo
+import com.example.frontend.api.getSelfUserInfo
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScreenPatient(
-    patientDetails: Screen.DashBoardPatient, // This line requires Screen.DashBoardPatient to be defined and accessible
     errorMsg: String? = null,
     onNavigateToChat: () -> Unit = {}
 ) {
+
+    var userInfo: UserInfo? by remember { mutableStateOf(null) }
+
+    LaunchedEffect(null) {
+        userInfo = RetrofitInstance.dementiaAPI.getSelfUserInfo()
+    }
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -51,7 +85,15 @@ fun ScreenPatient(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            PatientInfoCard(patientDetails)
+
+            if (userInfo != null) {
+                PatientInfoCard(
+                    name = userInfo!!.name,
+                    email = userInfo!!.email,
+                    gender = userInfo!!.gender,
+                    dob = userInfo!!.dob
+                )
+            }
 
             if (!errorMsg.isNullOrBlank()) {
                 ErrorDisplay(errorMsg)
@@ -61,7 +103,7 @@ fun ScreenPatient(
 }
 
 @Composable
-fun PatientInfoCard(patientDetails: Screen.DashBoardPatient) {
+fun PatientInfoCard(name: String, email: String, gender: String, dob: String) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -101,7 +143,7 @@ fun PatientInfoCard(patientDetails: Screen.DashBoardPatient) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                     )
                     Text(
-                        patientDetails.name,
+                        name,
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium
                     )
@@ -127,7 +169,7 @@ fun PatientInfoCard(patientDetails: Screen.DashBoardPatient) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                     )
                     Text(
-                        patientDetails.email,
+                        email,
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium
                     )
@@ -153,7 +195,7 @@ fun PatientInfoCard(patientDetails: Screen.DashBoardPatient) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                     )
                     Text(
-                        patientDetails.dob,
+                        dob,
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium
                     )
@@ -180,11 +222,11 @@ fun PatientInfoCard(patientDetails: Screen.DashBoardPatient) {
                     )
                     Text(
                         // Inlined formatGender logic
-                        text = when (patientDetails.gender.uppercase()) {
+                        text = when (gender.uppercase()) {
                             "M" -> "Male"
                             "F" -> "Female"
                             "O", "OTHER" -> "Other"
-                            else -> patientDetails.gender // Fallback
+                            else -> gender // Fallback
                         },
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium

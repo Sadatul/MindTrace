@@ -6,10 +6,33 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,27 +45,27 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.frontend.R
-import com.example.frontend.api.AuthManagerResponse // Ensure this matches your data class (should have 'role' field)
+import com.example.frontend.api.AuthManagerResponse
 import com.example.frontend.api.CaregiverRegisterRequest
 import com.example.frontend.api.PatientRegisterRequest
 import com.example.frontend.api.RetrofitInstance
 import com.example.frontend.api.getIdToken
+import com.example.frontend.api.getSelfUserInfo
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
-import kotlinx.coroutines.launch
 import com.google.gson.Gson
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 private const val TAG = "ScreenRegister"
 
 @Composable
 fun ScreenRegister(
-    onNavigateToDashboard: (role: String, name: String?, email: String?, dob: String?, gender: String?, uid: String?, token: String?) -> Unit
+    onNavigateToDashboard: (role: String) -> Unit
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -138,29 +161,9 @@ fun ScreenRegister(
                                 showRegisterPrompt = true
                             }
                             "exists" -> {
-                                Log.i(TAG, "Backend: Existing user detected.")
-                                val token = RetrofitInstance.dementiaAPI.getIdToken()
-                                Log.d(TAG, " ID Token (first 30 chars): ${token.take(30)}...")
-                                val userBody = RetrofitInstance.dementiaAPI.getUserInfo("Bearer $token")
-                                Log.d(TAG, "User Info Response: ${userBody.body()}")
-                                val role = userBody.body()?.role
-                                Log.d(TAG, "User role from backend: $role")
-
-                                val userName = userBody.body()?.name
-                                val userEmail = userBody.body()?.email
-                                val userDob = userBody.body()?.dob
-                                val userGender = userBody.body()?.gender
-                                val userId = userBody.body()?.id
-
-                                if(role == "CAREGIVER") {
-                                    onNavigateToDashboard(role, userName, userEmail, userDob, userGender, userId, firebaseIdToken)
-                                }else if(role == "PATIENT") {
-                                    onNavigateToDashboard(role, userName, userEmail, userDob, userGender, userId, firebaseIdToken)
-                                } else {
-                                    errorMsg = "Unknown role returned from backend: $role. Check logs."
-                                    Log.e(TAG, "Unknown role from backend: $role")
-                                    clearAllDialogs()
-                                }
+                                val userBody =
+                                    RetrofitInstance.dementiaAPI.getSelfUserInfo() ?: return@launch
+                                onNavigateToDashboard(userBody.role)
                             }
                             else -> {
                                 errorMsg = "Backend returned unknown status: ${parsedBody.status}. Check logs."
@@ -350,7 +353,7 @@ fun ScreenRegister(
                     Log.i(TAG, "Caregiver registered successfully")
                     clearAllDialogs()
                     val token = RetrofitInstance.dementiaAPI.getIdToken(true)
-                    onNavigateToDashboard("CAREGIVER", caregiverName, caregiverEmail, caregiverDob, caregiverGender, userUidForRegistration, token)
+                    onNavigateToDashboard("CAREGIVER")
                 } else {
                     registrationApiFailed = true
                     val errorBody = response.errorBody()?.string() ?: "Unknown error"
@@ -445,7 +448,7 @@ fun ScreenRegister(
                     Log.i(TAG, "Patient registered successfully")
                     clearAllDialogs()
                     val token = RetrofitInstance.dementiaAPI.getIdToken(true)
-                    onNavigateToDashboard("PATIENT", patientName, patientEmail, patientDob, patientGender, userUidForRegistration,token)
+                    onNavigateToDashboard("PATIENT")
                 } else {
                     registrationApiFailed = true
                     val errorBody = response.errorBody()?.string() ?: "Unknown error"

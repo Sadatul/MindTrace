@@ -1,5 +1,7 @@
 package com.example.frontend.api
 
+import android.util.Log
+import androidx.compose.ui.platform.LocalGraphicsContext
 import com.example.frontend.api.models.RequestChat
 import com.example.frontend.api.models.ResponseChat
 import com.example.frontend.screens.NavigationManager
@@ -49,7 +51,7 @@ data class PrimaryContact(
     val profilePicture: String?
 )
 
-data class UserInfoResponse(
+data class UserInfo(
     val id: String,
     val name: String,
     val email: String,
@@ -103,7 +105,7 @@ interface DementiaAPI {
     suspend fun getUserInfo(
         @Header("Authorization") firebaseIdToken: String,
         @Query("userId") userId: String? = null
-    ): Response<UserInfoResponse>
+    ): Response<UserInfo>
 
 }
 
@@ -131,6 +133,28 @@ suspend fun getIdTokenWithFallback(forceRefresh: Boolean = false, fallback: () -
 
 suspend fun DementiaAPI.getIdToken(forceRefresh: Boolean = false): String {
     return getIdTokenWithFallback(forceRefresh) {
-        NavigationManager.getNavController().navigate(Screen.Main)
+        redirectToLogin()
     }!!
+}
+
+suspend fun DementiaAPI.getSelfUserInfo(): UserInfo? {
+    val cachedUserInfo = SelfUserInfoCache.getUserInfo()
+    if (cachedUserInfo != null) return cachedUserInfo
+
+    val token: String = getIdToken()
+    val response = getUserInfo("Bearer $token")
+    if (response.isSuccessful) {
+        val body = response.body()
+        if (body != null) {
+            SelfUserInfoCache.setUserInfo(body)
+        }
+        return body
+    } else {
+        redirectToLogin()
+        return null
+    }
+}
+
+fun redirectToLogin() {
+    NavigationManager.getNavController().navigate(Screen.Register)
 }
