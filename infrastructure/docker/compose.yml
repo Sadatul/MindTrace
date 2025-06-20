@@ -5,13 +5,16 @@ services:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
-      - "--api.dashboard=true"
-      - "--api.insecure=true"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=sadatulislamsadi@gmail.com"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
     ports:
       - "80:80"
-      - "8080:8080"
+      - "443:443"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - letsencrypt:/letsencrypt
     networks:
       - host_network
       
@@ -39,9 +42,15 @@ services:
     image: ghcr.io/sadatul/mindtrace_backend:0.0.3-snapshot
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`localhost`) || Host(`mindtrace.pinklifeline.xyz`)"
+      - "traefik.http.routers.backend.rule=Host(`mindtrace.pinklifeline.xyz`)"
       - "traefik.http.routers.backend.entrypoints=web"
       - "traefik.http.services.backend.loadbalancer.server.port=8080"
+      - "traefik.http.routers.backend-http.middlewares=redirect-to-https"
+      - "traefik.http.routers.backend-https.rule=Host(`mindtrace.pinklifeline.xyz`)"
+      - "traefik.http.routers.backend-https.entrypoints=websecure"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
+      - "traefik.http.routers.backend.tls.certresolver=myresolver"
     container_name: backend
     environment:
       - DB_URL=db:5432/software
@@ -66,3 +75,4 @@ networks:
 
 volumes:
   postgres-data:
+  letsencrypt:
