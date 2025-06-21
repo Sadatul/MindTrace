@@ -22,21 +22,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.REGISTRY_TOKEN }}
 
-      - name: Set Docker Tags
-        id: set-tags
-        run: |
-          TAGS="ghcr.io/sadatul/mindtrace_backend:${{ github.ref_name }}"
-          if [[ "${{ github.ref_name }}" == *"RELEASE"* ]]; then
-            TAGS="$TAGS,ghcr.io/sadatul/mindtrace_backend:latest"
-          fi
-          echo "tags=$TAGS" >> $GITHUB_OUTPUT
-
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           push: true
           context: ./backend
-          tags: ${{ steps.set-tags.outputs.tags }}
+          tags: ghcr.io/sadatul/mindtrace_backend:${{ github.ref_name }}
           build-args: |
             profile=prod
           labels: |
