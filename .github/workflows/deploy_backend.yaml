@@ -45,6 +45,7 @@ jobs:
           cache-to: type=gha,mode=max
   deploy:
     runs-on: ubuntu-latest
+    if: contains(github.ref_name, 'RELEASE')
     needs:
       - build-and-push-image
     steps:
@@ -62,3 +63,6 @@ jobs:
         user: deployer
         ssh_key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
         env_file: ./envfile
+        registry_host: ghcr.io
+        registry_user: ${{ github.actor }}
+        registry_pass: ${{ secrets.REGISTRY_TOKEN }}
