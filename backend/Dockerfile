@@ -2,6 +2,7 @@ FROM maven:3.9.7-eclipse-temurin-21-alpine AS build
 WORKDIR /home/app
 
 COPY ./pom.xml /home/app/pom.xml
+COPY ./src/main/java/com/sadi/backend/configs/SecretsPropertySource.java /home/app/src/main/java/com/sadi/backend/configs/SecretsPropertySource.java
 COPY ./src/main/java/com/sadi/backend/BackendApplication.java /home/app/src/main/java/com/sadi/backend/BackendApplication.java
 RUN mvn -f /home/app/pom.xml clean package
 

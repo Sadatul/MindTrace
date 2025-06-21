@@ -1,0 +1,133 @@
+version: '3.8'
+
+services:
+  reverse-proxy:
+    image: traefik:v3.4
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.swarm=true"
+      - "--providers.swarm.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=sadatulislamsadi@gmail.com"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - letsencrypt:/letsencrypt
+    networks:
+      - host_network
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+  db:
+    image: postgres:17
+    environment:
+      - POSTGRES_USER=software
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
+      - POSTGRES_DB=software
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    secrets:
+      - db-password
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "software" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - host_network
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+  backend:
+    image: ghcr.io/sadatul/mindtrace_backend:${VERSION}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend-http.rule=Host(`mindtrace.pinklifeline.xyz`)"
+      - "traefik.http.routers.backend-http.entrypoints=web"
+      - "traefik.http.routers.backend-http.middlewares=redirect-to-https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
+      - "traefik.http.routers.backend.rule=Host(`mindtrace.pinklifeline.xyz`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls=true"
+      - "traefik.http.routers.backend.tls.certresolver=myresolver"
+      - "traefik.http.services.backend.loadbalancer.server.port=8080"
+
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - REDIS_USER=default
+      - REDIS_PORT=14237
+
+    secrets:
+      - db-url
+      - db-username
+      - db-password
+      - redis-host
+      - redis-password
+      - email-password
+      - azure-openai-endpoint
+      - azure-openai-key
+      - firebase-credential
+      - qdrant-api-key
+      - qdrant-host
+      - bot-token
+
+    networks:
+      - host_network
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+        order: start-first
+      rollback_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        delay: 30s
+        max_attempts: 3
+
+networks:
+  host_network:
+
+volumes:
+  postgres-data:
+  letsencrypt:
+
+secrets:
+  db-url:
+    external: true
+  db-username:
+    external: true
+  db-password:
+    external: true
+  redis-host:
+    external: true
+  redis-password:
+    external: true
+  email-password:
+    external: true
+  azure-openai-endpoint:
+    external: true
+  azure-openai-key:
+    external: true
+  firebase-credential:
+    external: true
+  qdrant-api-key:
+    external: true
+  qdrant-host:
+    external: true
+  bot-token:
+    external: true

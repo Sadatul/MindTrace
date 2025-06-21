@@ -41,11 +41,28 @@
         name: docker-ce
         state: latest
         update_cache: true
+
+    - name: Install pip3 and Docker SDK for Python
+      apt:
+        name: python3-pip
+        state: present
+        update_cache: yes
+
+    - name: Install docker module for Python
+      pip:
+        name: docker
+        executable: pip3
     - name: Add user to docker group
       user:
         name: "{{ docker_user }}"
         groups: docker
         append: yes
+
+    - name: Enable Docker Swarm (initialize manager)
+      community.docker.docker_swarm:
+        state: present
+        advertise_addr: "{{ ansible_default_ipv4.address }}"
+      when: inventory_hostname == groups['azure_vm'][0]
   handlers:
     - name: Restart SSH
       ansible.builtin.service:
