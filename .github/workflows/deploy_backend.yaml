@@ -10,11 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Set up JDK 21
-      uses: actions/setup-java@v4
-      with:
-        java-version: '21'
-        distribution: 'temurin'
     - name: Print Version Name
       run: echo ${{ github.ref_name }}
     - name: Set up Docker Buildx
@@ -35,8 +30,8 @@ jobs:
           profile=prod
         labels: |
           org.opencontainers.image.description=${{ github.event.release.body }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+        cache-from: type=gha,scope=mindtrace
+        cache-to: type=gha,mode=max,scope=mindtrace
   deploy:
     runs-on: ubuntu-latest
     if: contains(github.ref_name, 'RELEASE')
