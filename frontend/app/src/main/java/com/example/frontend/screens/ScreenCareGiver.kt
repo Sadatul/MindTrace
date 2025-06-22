@@ -77,8 +77,6 @@ fun ScreenCareGiver(
         } catch (e: Exception) {
             Log.e(TAG, "Error fetching user info", e)
             errorMsg = "Could not load user details." // Display this error in the UI
-            // Consider showing a snackbar too if it's a critical failure and UI is blank
-            // snackbarHostState.showSnackbar("Failed to load user details.")
         } finally {
             isLoading = false // Hide loading for user info
         }

@@ -121,8 +121,7 @@ fun SetupNavGraph(navController: NavHostController) {
                     showNewAccountDialog = true
                 }
             )
-        }
-        composable<Screen.Chat> {
+        }        composable<Screen.Chat> {
             ChatScreen(
                 onNavigateBack = {
                     navController.popBackStack()

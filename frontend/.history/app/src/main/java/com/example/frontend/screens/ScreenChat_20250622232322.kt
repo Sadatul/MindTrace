@@ -65,7 +65,7 @@ import com.example.frontend.api.getIdToken
 // import com.example.frontend.api.getIdToken // Already imported by RetrofitInstance.dementiaAPI.getIdToken()
 import com.example.frontend.api.models.RequestChat
 import com.example.frontend.screens.components.ChatBubble
-import com.example.frontend.screens.components.LastChatDialog
+import com.example.frontend.screens.components.DialogChatScreen
 import com.example.frontend.screens.models.ChatMessage
 import kotlinx.coroutines.launch
 import java.time.Instant

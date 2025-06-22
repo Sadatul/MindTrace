@@ -140,7 +140,7 @@ private fun formatTimestamp(utcTimestamp: String): String {
         val localDateTime = instant.atZone(ZoneId.systemDefault()).toLocalDateTime()
         DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
             .format(localDateTime)
-    } catch (_: Exception) {
+    } catch (e: Exception) {
         utcTimestamp
     }
 }

@@ -76,8 +76,7 @@ private const val TAG = "ScreenChat"
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
-    onNavigateBack: () -> Unit = {},
-    onCancelDialog: () -> Unit = {}
+    onNavigateBack: () -> Unit = {}
 ) {
     var messages by remember { mutableStateOf(listOf<ChatMessage>()) }
     var showLastChatDialog by remember { mutableStateOf(false) }
@@ -396,24 +395,14 @@ fun ChatScreen(
                                     }
                                 }
                             }
-                        },                        enabled = !isLoading && inputText.isNotBlank() && !isInitiallyLoading,
+                        },
+                        enabled = !isLoading && inputText.isNotBlank() && !isInitiallyLoading,
                         modifier = Modifier
                             .background(
-                                brush = if (!isLoading && inputText.isNotBlank() && !isInitiallyLoading) {
-                                    Brush.radialGradient(
-                                        colors = listOf(
-                                            colorResource(R.color.gradient_caregiver_start),
-                                            colorResource(R.color.gradient_caregiver_end)
-                                        )
-                                    )
-                                } else {
-                                    Brush.radialGradient(
-                                        colors = listOf(
-                                            colorResource(R.color.dark_surface_variant),
-                                            colorResource(R.color.dark_surface_variant)
-                                        )
-                                    )
-                                },
+                                color = if (!isLoading && inputText.isNotBlank() && !isInitiallyLoading)
+                                    colorResource(R.color.dark_primary)
+                                else
+                                    colorResource(R.color.dark_surface_variant),
                                 shape = CircleShape
                             )
                             .size(48.dp) // Standard FAB size
@@ -421,33 +410,12 @@ fun ChatScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Send,
                             contentDescription = "Send",
-                            tint = if (!isLoading && inputText.isNotBlank() && !isInitiallyLoading)
-                                colorResource(R.color.white)
-                            else
-                                colorResource(R.color.dark_on_surface).copy(alpha = 0.6f)
+                            tint = colorResource(R.color.dark_on_primary) // White or light color on primary
                         )
                     }
                 }
             }
         }
-    }
-      // Show Last Chat Dialog
-    if (showLastChatDialog) {
-        LastChatDialog(
-            onDismiss = { 
-                showLastChatDialog = false 
-                onCancelDialog() // Navigate back to dashboard
-            },
-            onViewLastChat = { 
-                showLastChatDialog = false
-                loadInitialMessages()
-            },
-            onStartNewChat = { 
-                showLastChatDialog = false
-                messages = emptyList()
-                isInitiallyLoading = false
-            }
-        )
     }
 }
 

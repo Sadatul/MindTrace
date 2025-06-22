@@ -354,46 +354,18 @@ fun PatientInfoCard(name: String, email: String, gender: String, dob: String, pr
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 
-                // Primary Contact Header with profile picture
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = "Primary Contact (Caregiver)",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = colorResource(R.color.dark_primary),
-                        modifier = Modifier.weight(1f)
-                    )
-                    
-                    // Caregiver profile picture
-                    if (primaryContact.profilePicture != null) {
-                        AsyncImage(
-                            model = primaryContact.profilePicture,
-                            contentDescription = "Caregiver Profile Picture",
-                            modifier = Modifier
-                                .size(getCaregiverProfilePictureSize())
-                                .clip(CircleShape),
-                            contentScale = ContentScale.Crop,
-                            placeholder = painterResource(R.drawable.ic_launcher_foreground),
-                            error = painterResource(R.drawable.ic_launcher_foreground)
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.AccountCircle,
-                            contentDescription = "Default Caregiver Profile",
-                            tint = colorResource(R.color.dark_primary),
-                            modifier = Modifier.size(getCaregiverProfilePictureSize())
-                        )
-                    }
-                }
+                Text(
+                    text = "Primary Caregiver",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = colorResource(R.color.dark_primary)
+                )
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 InfoRowContent(label = "Caregiver Name", value = primaryContact.name, icon = Icons.Filled.ContactPhone)
                 InfoRowContent(label = "Caregiver ID", value = primaryContact.id, icon = Icons.Filled.Badge)
                 InfoRowContent(
-                    label = "Gender",
+                    label = "Caregiver Gender", 
                     value = when (primaryContact.gender.uppercase()) {
                         "M" -> "Male"
                         "F" -> "Female"
@@ -478,18 +450,5 @@ private fun getProfilePictureSize(): Dp {
         screenWidth >= 400.dp -> 72.dp
         screenWidth >= 360.dp -> 64.dp
         else -> 56.dp
-    }
-}
-
-@Composable
-private fun getCaregiverProfilePictureSize(): Dp {
-    val configuration = LocalConfiguration.current
-    val screenWidth = configuration.screenWidthDp.dp
-
-    // Slightly smaller than patient profile picture for secondary display
-    return when {
-        screenWidth >= 400.dp -> 56.dp
-        screenWidth >= 360.dp -> 48.dp
-        else -> 40.dp
     }
 }
