@@ -31,7 +31,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -67,7 +66,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import coil.compose.AsyncImage
 import com.example.frontend.R
-import com.example.frontend.api.PrimaryContact
 import com.example.frontend.api.RetrofitInstance
 import com.example.frontend.api.UserInfo
 import com.example.frontend.api.getSelfUserInfo // Assuming this is a suspend extension function
@@ -243,14 +241,14 @@ fun ScreenPatient(
                 if (isLoading) {
                     Spacer(modifier = Modifier.weight(1f))
                     CircularProgressIndicator(color = colorResource(R.color.dark_primary))
-                    Spacer(modifier = Modifier.weight(1f))                } else if (userInfo != null) {
+                    Spacer(modifier = Modifier.weight(1f))
+                } else if (userInfo != null) {
                     PatientInfoCard(
                         name = userInfo!!.name,
                         email = userInfo!!.email,
                         gender = userInfo!!.gender,
                         dob = userInfo!!.dob,
-                        profilePicture = userInfo!!.profilePicture,
-                        primaryContact = userInfo!!.primaryContact
+                        profilePicture = userInfo!!.profilePicture
                     )
                     Spacer(modifier = Modifier.height(20.dp))
                 } else if (errorMsg.isNullOrBlank()) { // Only if no specific error message is passed from NavGraph
@@ -280,7 +278,7 @@ fun ScreenPatient(
 }
 
 @Composable
-fun PatientInfoCard(name: String, email: String, gender: String, dob: String, profilePicture: String?, primaryContact: PrimaryContact?) {
+fun PatientInfoCard(name: String, email: String, gender: String, dob: String, profilePicture: String?) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
@@ -344,65 +342,6 @@ fun PatientInfoCard(name: String, email: String, gender: String, dob: String, pr
                 },
                 icon = Icons.Filled.Person
             )
-            
-            // Primary Contact Information (Caregiver)
-            if (primaryContact != null) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Divider(
-                    color = colorResource(R.color.dark_primary).copy(alpha = 0.3f),
-                    thickness = 1.dp
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                // Primary Contact Header with profile picture
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = "Primary Contact (Caregiver)",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = colorResource(R.color.dark_primary),
-                        modifier = Modifier.weight(1f)
-                    )
-                    
-                    // Caregiver profile picture
-                    if (primaryContact.profilePicture != null) {
-                        AsyncImage(
-                            model = primaryContact.profilePicture,
-                            contentDescription = "Caregiver Profile Picture",
-                            modifier = Modifier
-                                .size(getCaregiverProfilePictureSize())
-                                .clip(CircleShape),
-                            contentScale = ContentScale.Crop,
-                            placeholder = painterResource(R.drawable.ic_launcher_foreground),
-                            error = painterResource(R.drawable.ic_launcher_foreground)
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.AccountCircle,
-                            contentDescription = "Default Caregiver Profile",
-                            tint = colorResource(R.color.dark_primary),
-                            modifier = Modifier.size(getCaregiverProfilePictureSize())
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                InfoRowContent(label = "Caregiver Name", value = primaryContact.name, icon = Icons.Filled.ContactPhone)
-                InfoRowContent(label = "Caregiver ID", value = primaryContact.id, icon = Icons.Filled.Badge)
-                InfoRowContent(
-                    label = "Gender",
-                    value = when (primaryContact.gender.uppercase()) {
-                        "M" -> "Male"
-                        "F" -> "Female"
-                        "O", "OTHER" -> "Other"
-                        else -> primaryContact.gender.ifBlank { "Not specified" }
-                    }, 
-                    icon = Icons.Filled.Person
-                )
-            }
         }
     }
 }
@@ -478,18 +417,5 @@ private fun getProfilePictureSize(): Dp {
         screenWidth >= 400.dp -> 72.dp
         screenWidth >= 360.dp -> 64.dp
         else -> 56.dp
-    }
-}
-
-@Composable
-private fun getCaregiverProfilePictureSize(): Dp {
-    val configuration = LocalConfiguration.current
-    val screenWidth = configuration.screenWidthDp.dp
-
-    // Slightly smaller than patient profile picture for secondary display
-    return when {
-        screenWidth >= 400.dp -> 56.dp
-        screenWidth >= 360.dp -> 48.dp
-        else -> 40.dp
     }
 }

@@ -351,8 +351,7 @@ fun PatientInfoCard(name: String, email: String, gender: String, dob: String, pr
                 Divider(
                     color = colorResource(R.color.dark_primary).copy(alpha = 0.3f),
                     thickness = 1.dp
-                )
-                Spacer(modifier = Modifier.height(12.dp))
+                )                Spacer(modifier = Modifier.height(12.dp))
                 
                 // Primary Contact Header with profile picture
                 Row(
@@ -393,7 +392,7 @@ fun PatientInfoCard(name: String, email: String, gender: String, dob: String, pr
                 InfoRowContent(label = "Caregiver Name", value = primaryContact.name, icon = Icons.Filled.ContactPhone)
                 InfoRowContent(label = "Caregiver ID", value = primaryContact.id, icon = Icons.Filled.Badge)
                 InfoRowContent(
-                    label = "Gender",
+                    label = "Caregiver Gender", 
                     value = when (primaryContact.gender.uppercase()) {
                         "M" -> "Male"
                         "F" -> "Female"

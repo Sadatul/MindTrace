@@ -351,8 +351,7 @@ fun PatientInfoCard(name: String, email: String, gender: String, dob: String, pr
                 Divider(
                     color = colorResource(R.color.dark_primary).copy(alpha = 0.3f),
                     thickness = 1.dp
-                )
-                Spacer(modifier = Modifier.height(12.dp))
+                )                Spacer(modifier = Modifier.height(12.dp))
                 
                 // Primary Contact Header with profile picture
                 Row(
@@ -393,7 +392,7 @@ fun PatientInfoCard(name: String, email: String, gender: String, dob: String, pr
                 InfoRowContent(label = "Caregiver Name", value = primaryContact.name, icon = Icons.Filled.ContactPhone)
                 InfoRowContent(label = "Caregiver ID", value = primaryContact.id, icon = Icons.Filled.Badge)
                 InfoRowContent(
-                    label = "Gender",
+                    label = "Caregiver Gender", 
                     value = when (primaryContact.gender.uppercase()) {
                         "M" -> "Male"
                         "F" -> "Female"
@@ -478,18 +477,5 @@ private fun getProfilePictureSize(): Dp {
         screenWidth >= 400.dp -> 72.dp
         screenWidth >= 360.dp -> 64.dp
         else -> 56.dp
-    }
-}
-
-@Composable
-private fun getCaregiverProfilePictureSize(): Dp {
-    val configuration = LocalConfiguration.current
-    val screenWidth = configuration.screenWidthDp.dp
-
-    // Slightly smaller than patient profile picture for secondary display
-    return when {
-        screenWidth >= 400.dp -> 56.dp
-        screenWidth >= 360.dp -> 48.dp
-        else -> 40.dp
     }
 }
