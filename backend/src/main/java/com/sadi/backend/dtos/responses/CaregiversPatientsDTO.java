@@ -9,6 +9,7 @@ public record CaregiversPatientsDTO(
         String name,
         Gender gender,
         String profilePicture,
+        Instant createdAt,
         Instant removedAt
 ) {
 
