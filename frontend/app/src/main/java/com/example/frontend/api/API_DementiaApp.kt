@@ -11,9 +11,11 @@ import kotlinx.coroutines.tasks.await
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 // Placeholder to prevent build errors from existing code
@@ -41,7 +43,8 @@ data class PrimaryContact(
     val id: String,
     val name: String,
     val gender: String,
-    val profilePicture: String?
+    val profilePicture: String?,
+    val createdAt: String
 )
 
 data class UserInfo(
@@ -55,6 +58,11 @@ data class UserInfo(
     val primaryContact: PrimaryContact?,
     val createdAt: String,
     val telegramChatId: String?
+)
+
+data class RequestPatientAdd(
+    val patientId: String,
+    val otp: String
 )
 
 interface DementiaAPI {
@@ -102,16 +110,50 @@ interface DementiaAPI {
 
 
     @GET("/v1/users/caregivers")
-    suspend fun getCaregiversWithToken(
+    suspend fun getCaregiversWithAuth(
         @Header("Authorization") firebaseIdToken: String,
         @Query("includeDeleted") includeDeleted: Boolean = false
     ): Response<List<PartnerInfo>>
 
     @GET("/v1/caregivers/patients")
-    suspend fun getPatientsWithToken(
+    suspend fun getPatientsWithAuth(
         @Header("Authorization") firebaseIdToken: String,
         @Query("includeDeleted") includeDeleted: Boolean = false
     ): Response<List<PartnerInfo>>
+
+
+    @GET("/v1/users/caregivers/{caregiverId}/otp")
+    suspend fun sendCaregiverRemovalOTPWithAuth(
+        @Header("Authorization") firebaseIdToken: String,
+        @Path("caregiverId") caregiverId: String
+    ): Response<ResponseBody>
+
+
+    @DELETE("/v1/users/caregivers/{caregiverId}")
+    suspend fun deleteCaregiverWithAuth(
+        @Header("Authorization") firebaseIdToken: String,
+        @Path("caregiverId") caregiverId: String,
+        @Query("otp") otp: String
+    ): Response<ResponseBody>
+
+
+    @GET("/v1/caregivers/patients/{id}/otp")
+    suspend fun sendPatientAddOTPWithAuth(
+        @Header("Authorization") firebaseIdToken: String,
+        @Path("id") patientId: String
+    ): Response<ResponseBody>
+
+    @POST("/v1/caregivers/patients")
+    suspend fun addPatientWithAuth(
+        @Header("Authorization") firebaseIdToken: String,
+        @Body requestPatientAdd: RequestPatientAdd
+    ): Response<ResponseBody>
+
+    @DELETE("/v1/caregivers/patients/{id}")
+    suspend fun removePatientWithAuth(
+        @Header("Authorization") firebaseIdToken: String,
+        @Path("id") patientId: String
+    ): Response<ResponseBody>
 }
 
 suspend fun getIdTokenWithFallback(forceRefresh: Boolean = false, fallback: () -> Unit): String? {
@@ -176,12 +218,41 @@ suspend fun DementiaAPI.getPartners(includeDeleted: Boolean = false): List<Partn
     val userInfo = getSelfUserInfo() ?: return listOf()
 
     return if (userInfo.role == "CAREGIVER") {
-        getPatientsWithToken(firebaseIdToken = "Bearer $token", includeDeleted).body() ?: listOf()
+        getPatientsWithAuth(firebaseIdToken = "Bearer $token", includeDeleted).body() ?: listOf()
     } else {
-        getCaregiversWithToken(firebaseIdToken = "Bearer $token", includeDeleted).body() ?: listOf()
+        getCaregiversWithAuth(firebaseIdToken = "Bearer $token", includeDeleted).body() ?: listOf()
     }
 }
 
+suspend fun DementiaAPI.sendCaregiverRemovalOTP(caregiverId: String): Boolean {
+    val token = getIdToken() ?: return false
+    val response = sendCaregiverRemovalOTPWithAuth(firebaseIdToken = "Bearer $token", caregiverId)
+    return response.isSuccessful
+}
+
+suspend fun DementiaAPI.deleteCaregiver(caregiverId: String, otp: String): Boolean {
+    val token = getIdToken() ?: return false
+    val response = deleteCaregiverWithAuth(firebaseIdToken = "Bearer $token", caregiverId, otp)
+    return response.isSuccessful
+}
+
+suspend fun DementiaAPI.sendPatientAddOTP(patientId: String): Boolean {
+    val token = getIdToken() ?: return false
+    val response = sendPatientAddOTPWithAuth(firebaseIdToken = "Bearer $token", patientId)
+    return response.isSuccessful
+}
+
+suspend fun DementiaAPI.addPatient(requestPatientAdd: RequestPatientAdd): Boolean {
+    val token = getIdToken() ?: return false
+    val response = addPatientWithAuth(firebaseIdToken = "Bearer $token", requestPatientAdd)
+    return response.isSuccessful
+}
+
+suspend fun DementiaAPI.removePatient(patientId: String): Boolean {
+    val token = getIdToken() ?: return false
+    val response = removePatientWithAuth(firebaseIdToken = "Bearer $token", patientId)
+    return response.isSuccessful
+}
 
 fun redirectToLogin() {
     NavigationManager.getNavController().navigate(Screen.Register)
