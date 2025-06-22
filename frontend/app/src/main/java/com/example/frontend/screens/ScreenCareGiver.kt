@@ -1,16 +1,59 @@
 package com.example.frontend.screens
 
+// import com.example.frontend.api.getSelfUserInfo // Already imported via UserInfo
 import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ExitToApp // Corrected import
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,7 +78,6 @@ import com.example.frontend.api.SelfUserInfoCache
 import com.example.frontend.api.UserInfo
 import com.example.frontend.api.getIdToken
 import com.example.frontend.api.getSelfUserInfo
-// import com.example.frontend.api.getSelfUserInfo // Already imported via UserInfo
 import kotlinx.coroutines.launch
 
 private const val TAG = "ScreenCareGiver"
@@ -93,10 +135,14 @@ fun ScreenCareGiver(
             Log.d(TAG, "Coroutine launched for API call. isFetchingOtp=true, newPatientOtp=null")
             try {
                 // Assuming getIdToken is a suspend function or handled correctly
-                val caregiverAuthToken = RetrofitInstance.dementiaAPI.getIdToken() // Ensure this is not null or handle it
+                val caregiverAuthToken =
+                    RetrofitInstance.dementiaAPI.getIdToken() // Ensure this is not null or handle it
                 Log.d(TAG, "Attempting API call to RetrofitInstance.dementiaAPI.getOtp")
                 val response = RetrofitInstance.dementiaAPI.getOtp("Bearer $caregiverAuthToken")
-                Log.d(TAG, "API call finished. Response code: ${response.code()}, isSuccessful: ${response.isSuccessful}")
+                Log.d(
+                    TAG,
+                    "API call finished. Response code: ${response.code()}, isSuccessful: ${response.isSuccessful}"
+                )
 
                 if (response.isSuccessful && response.body() != null) {
                     val responseBody = response.body()!!
@@ -109,13 +155,20 @@ fun ScreenCareGiver(
                     } else {
                         val specificError = "Received empty registration code from server."
                         errorMsg = specificError // Set error message for UI display
-                        Log.w(TAG, "Registration OTP is null in response body. Error: $specificError")
+                        Log.w(
+                            TAG,
+                            "Registration OTP is null in response body. Error: $specificError"
+                        )
                         snackbarHostState.showSnackbar(specificError)
                     }
                 } else {
                     val errorBody = response.errorBody()?.string() ?: "No error body"
-                    Log.e(TAG, "API call failed. Code: ${response.code()}, Message: ${response.message()}, Error body: $errorBody")
-                    val specificError = "Failed to get code: ${response.message()} (Code: ${response.code()})"
+                    Log.e(
+                        TAG,
+                        "API call failed. Code: ${response.code()}, Message: ${response.message()}, Error body: $errorBody"
+                    )
+                    val specificError =
+                        "Failed to get code: ${response.message()} (Code: ${response.code()})"
                     errorMsg = specificError // Set error message for UI display
                     snackbarHostState.showSnackbar("Failed to generate code: ${response.message()}")
                 }
@@ -141,7 +194,8 @@ fun ScreenCareGiver(
                         color = colorResource(R.color.dark_on_surface),
                         fontWeight = FontWeight.Bold
                     )
-                }, actions = {                    Box {
+                }, actions = {
+                    Box {
                         IconButton(onClick = { showProfileMenu = true }) {
                             Icon(
                                 imageVector = Icons.Default.MoreVert,
@@ -251,11 +305,21 @@ fun ScreenCareGiver(
                         ),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Row(modifier = Modifier.padding(16.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Filled.ErrorOutline, contentDescription = "Error", tint = colorResource(id = R.color.error_red))
+                        Row(
+                            modifier = Modifier
+                                .padding(16.dp)
+                                .fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Filled.ErrorOutline,
+                                contentDescription = "Error",
+                                tint = colorResource(id = R.color.error_red)
+                            )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = errorMsg ?: "Could not load user details.", // Fallback just in case
+                                text = errorMsg
+                                    ?: "Could not load user details.", // Fallback just in case
                                 color = colorResource(R.color.error_red),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium,
@@ -280,7 +344,10 @@ fun ScreenCareGiver(
                             contentColor = colorResource(R.color.white)
                         ),
                         shape = RoundedCornerShape(20.dp),
-                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp, pressedElevation = 12.dp)
+                        elevation = ButtonDefaults.buttonElevation(
+                            defaultElevation = 8.dp,
+                            pressedElevation = 12.dp
+                        )
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -322,11 +389,17 @@ fun ScreenCareGiver(
                         colors = ButtonDefaults.buttonColors(
                             containerColor = colorResource(R.color.card_caregiver),
                             contentColor = colorResource(R.color.white),
-                            disabledContainerColor = colorResource(R.color.dark_surface_variant).copy(alpha = 0.5f),
+                            disabledContainerColor = colorResource(R.color.dark_surface_variant).copy(
+                                alpha = 0.5f
+                            ),
                             disabledContentColor = colorResource(R.color.dark_on_surface).copy(alpha = 0.5f)
                         ),
                         shape = RoundedCornerShape(20.dp),
-                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp, pressedElevation = 12.dp, disabledElevation = 2.dp)
+                        elevation = ButtonDefaults.buttonElevation(
+                            defaultElevation = 8.dp,
+                            pressedElevation = 12.dp,
+                            disabledElevation = 2.dp
+                        )
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -341,7 +414,9 @@ fun ScreenCareGiver(
                                 Icon( // Single icon for simplicity
                                     Icons.Filled.PersonAdd,
                                     contentDescription = null,
-                                    modifier = Modifier.size(16.dp).align(Alignment.CenterVertically), // Center icon in surface
+                                    modifier = Modifier
+                                        .size(16.dp)
+                                        .align(Alignment.CenterVertically), // Center icon in surface
                                     tint = colorResource(R.color.white)
                                 )
                             }
@@ -364,7 +439,7 @@ fun ScreenCareGiver(
                 }
 
                 // Display error messages specifically from OTP generation or other non-initial load errors
-                if (!isFetchingOtp && errorMsg != null && !(isLoading && userInfo == null) ) {
+                if (!isFetchingOtp && errorMsg != null && !(isLoading && userInfo == null)) {
                     Log.d(TAG, "Displaying error message: $errorMsg")
                     Spacer(modifier = Modifier.height(16.dp))
                     Card(
@@ -374,8 +449,17 @@ fun ScreenCareGiver(
                         ),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Row(modifier = Modifier.padding(16.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Filled.ErrorOutline, contentDescription = "Error", tint = colorResource(id = R.color.error_red))
+                        Row(
+                            modifier = Modifier
+                                .padding(16.dp)
+                                .fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Filled.ErrorOutline,
+                                contentDescription = "Error",
+                                tint = colorResource(id = R.color.error_red)
+                            )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = errorMsg!!, // errorMsg is confirmed not null here
@@ -389,7 +473,10 @@ fun ScreenCareGiver(
             }
         }
 
-        Log.d(TAG, "ScreenCareGiver recomposing. showNewPatientOtpDialog: $showNewPatientOtpDialog, newPatientOtp: $newPatientOtp")
+        Log.d(
+            TAG,
+            "ScreenCareGiver recomposing. showNewPatientOtpDialog: $showNewPatientOtpDialog, newPatientOtp: $newPatientOtp"
+        )
 
         if (showNewPatientOtpDialog) {
             Log.d(TAG, "Rendering ShowOTP Dialog. OTP: $newPatientOtp")
@@ -427,7 +514,9 @@ fun CaregiverInfoCard(
         shape = RoundedCornerShape(16.dp)
     ) {
         Column(
-            modifier = Modifier.padding(20.dp).fillMaxWidth(),
+            modifier = Modifier
+                .padding(20.dp)
+                .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Row(
@@ -463,10 +552,34 @@ fun CaregiverInfoCard(
             }
 
             Spacer(modifier = Modifier.height(8.dp))
-            InfoRow("Name", Icons.Filled.AccountCircle, name, colorResource(R.color.dark_primary), colorResource(R.color.dark_on_surface))
-            InfoRow("Email", Icons.Filled.Email, email, colorResource(R.color.dark_primary), colorResource(R.color.dark_on_surface))
-            InfoRow("Date of Birth", Icons.Filled.CalendarToday, dob, colorResource(R.color.dark_primary), colorResource(R.color.dark_on_surface))
-            InfoRow("Gender", Icons.Filled.Person, formatGender(gender), colorResource(R.color.dark_primary), colorResource(R.color.dark_on_surface))
+            InfoRow(
+                "Name",
+                Icons.Filled.AccountCircle,
+                name,
+                colorResource(R.color.dark_primary),
+                colorResource(R.color.dark_on_surface)
+            )
+            InfoRow(
+                "Email",
+                Icons.Filled.Email,
+                email,
+                colorResource(R.color.dark_primary),
+                colorResource(R.color.dark_on_surface)
+            )
+            InfoRow(
+                "Date of Birth",
+                Icons.Filled.CalendarToday,
+                dob,
+                colorResource(R.color.dark_primary),
+                colorResource(R.color.dark_on_surface)
+            )
+            InfoRow(
+                "Gender",
+                Icons.Filled.Person,
+                formatGender(gender),
+                colorResource(R.color.dark_primary),
+                colorResource(R.color.dark_on_surface)
+            )
         }
     }
 }
@@ -477,8 +590,17 @@ fun InfoRow(label: String, icon: ImageVector, value: String, iconColor: Color, t
         Icon(icon, "$label Icon", tint = iconColor, modifier = Modifier.size(24.dp))
         Spacer(modifier = Modifier.width(16.dp))
         Column {
-            Text(label, style = MaterialTheme.typography.labelSmall, color = textColor.copy(alpha = 0.7f))
-            Text(value, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium, color = textColor)
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                color = textColor.copy(alpha = 0.7f)
+            )
+            Text(
+                value,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = textColor
+            )
         }
     }
 }
@@ -497,7 +619,13 @@ fun ShowOTP(otp: String, onCopy: () -> Unit, onCancel: () -> Unit) {
     Log.d(TAG, "ShowOTP Dialog recomposing. OTP: $otp")
     AlertDialog(
         onDismissRequest = onCancel,
-        title = { Text("New Patient Registration Code", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface) },
+        title = {
+            Text(
+                "New Patient Registration Code",
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
@@ -522,7 +650,11 @@ fun ShowOTP(otp: String, onCopy: () -> Unit, onCancel: () -> Unit) {
                             color = MaterialTheme.colorScheme.primary
                         )
                         IconButton(onClick = onCopy, modifier = Modifier.size(48.dp)) {
-                            Icon(Icons.Filled.ContentCopy, "Copy Code", tint = MaterialTheme.colorScheme.primary)
+                            Icon(
+                                Icons.Filled.ContentCopy,
+                                "Copy Code",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
                         }
                     }
                 }
