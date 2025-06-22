@@ -76,8 +76,7 @@ private const val TAG = "ScreenChat"
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
-    onNavigateBack: () -> Unit = {},
-    onCancelDialog: () -> Unit = {}
+    onNavigateBack: () -> Unit = {}
 ) {
     var messages by remember { mutableStateOf(listOf<ChatMessage>()) }
     var showLastChatDialog by remember { mutableStateOf(false) }
@@ -431,12 +430,15 @@ fun ChatScreen(
             }
         }
     }
-      // Show Last Chat Dialog
+    
+    // Show Last Chat Dialog
     if (showLastChatDialog) {
         LastChatDialog(
             onDismiss = { 
                 showLastChatDialog = false 
-                onCancelDialog() // Navigate back to dashboard
+                // Start with empty chat if dismissed
+                messages = emptyList()
+                isInitiallyLoading = false
             },
             onViewLastChat = { 
                 showLastChatDialog = false

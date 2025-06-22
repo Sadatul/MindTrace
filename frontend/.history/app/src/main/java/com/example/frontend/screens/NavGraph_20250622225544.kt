@@ -74,8 +74,7 @@ fun SetupNavGraph(navController: NavHostController) {
         return
     }
 
-    NavHost(navController = navController, startDestination = startDestination!!) {
-        composable<Screen.Main> {
+    NavHost(navController = navController, startDestination = startDestination!!) {        composable<Screen.Main> {
             MainScreen(
                 toRegisterCaregiverScreen = { navController.navigate(Screen.Register) },
                 toChatScreen = { navController.navigate(Screen.Chat) }
@@ -121,13 +120,9 @@ fun SetupNavGraph(navController: NavHostController) {
                     showNewAccountDialog = true
                 }
             )
-        }
-        composable<Screen.Chat> {
+        }        composable<Screen.Chat> {
             ChatScreen(
                 onNavigateBack = {
-                    navController.popBackStack()
-                },
-                onCancelDialog = {
                     navController.popBackStack()
                 }
             )
