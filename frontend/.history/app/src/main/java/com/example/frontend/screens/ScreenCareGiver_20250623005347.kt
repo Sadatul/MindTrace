@@ -327,8 +327,7 @@ fun ScreenCareGiver(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Button(
+                ) {                    Button(
                         onClick = onNavigateToChat,
                         modifier = Modifier
                             .fillMaxWidth(0.85f)
@@ -369,8 +368,7 @@ fun ScreenCareGiver(
                                 style = MaterialTheme.typography.titleMedium
                             )
                         }
-                    }
-                    Button(
+                    }                    Button(
                         onClick = onNavigateToPatients,
                         modifier = Modifier
                             .fillMaxWidth(0.85f)
@@ -562,7 +560,7 @@ fun CaregiverInfoCard(
                     text = "My Information",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    color = colorResource(R.color.info_blue), // Brighter blue for visibility
+                    color = colorResource(R.color.gradient_caregiver_start),
                     modifier = Modifier.weight(1f)
                 )
                 if (profilePicture != null) {
@@ -590,28 +588,28 @@ fun CaregiverInfoCard(
                 "Name",
                 Icons.Filled.AccountCircle,
                 name,
-                colorResource(R.color.info_blue), // Brighter blue for visibility
+                colorResource(R.color.dark_primary),
                 colorResource(R.color.dark_on_surface)
             )
             InfoRow(
                 "Email",
                 Icons.Filled.Email,
                 email,
-                colorResource(R.color.info_blue), // Brighter blue for visibility
+                colorResource(R.color.dark_primary),
                 colorResource(R.color.dark_on_surface)
             )
             InfoRow(
                 "Date of Birth",
                 Icons.Filled.CalendarToday,
                 dob,
-                colorResource(R.color.info_blue), // Brighter blue for visibility
+                colorResource(R.color.dark_primary),
                 colorResource(R.color.dark_on_surface)
             )
             InfoRow(
                 "Gender",
                 Icons.Filled.Person,
                 formatGender(gender),
-                colorResource(R.color.info_blue), // Brighter blue for visibility
+                colorResource(R.color.dark_primary),
                 colorResource(R.color.dark_on_surface)
             )
         }
@@ -629,12 +627,12 @@ fun InfoRow(label: String, icon: ImageVector, value: String, iconColor: Color, t
         Surface(
             modifier = Modifier.size(40.dp),
             shape = CircleShape,
-            color = iconColor.copy(alpha = 0.18f) // Lighter, more visible blue background
+            color = colorResource(R.color.gradient_caregiver_start).copy(alpha = 0.15f)
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = "$label Icon",
-                tint = iconColor, // Brighter blue
+                tint = colorResource(R.color.gradient_caregiver_start),
                 modifier = Modifier
                     .padding(8.dp)
                     .size(24.dp)

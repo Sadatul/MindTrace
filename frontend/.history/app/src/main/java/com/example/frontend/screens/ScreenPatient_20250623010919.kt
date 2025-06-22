@@ -253,7 +253,6 @@ fun ScreenPatient(
                         }
                     }
                 )
-            }
         }, floatingActionButtonPosition = FabPosition.Center
     ) { innerPadding ->
         Box(

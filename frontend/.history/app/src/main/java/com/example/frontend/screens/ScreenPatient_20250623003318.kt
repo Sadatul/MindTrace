@@ -174,87 +174,73 @@ fun ScreenPatient(
                     containerColor = colorResource(R.color.dark_surface),
                     titleContentColor = colorResource(R.color.dark_on_surface)
                 )
-            )
-        },
+            )        },
         floatingActionButton = {
+            val configuration = LocalConfiguration.current
+            val isLargeScreen = configuration.screenWidthDp > 360
+            
             Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), // Ensure FABS don't overflow small screens
-                horizontalArrangement = Arrangement.SpaceEvenly, // Distribute space
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // My Caregivers Button
                 ExtendedFloatingActionButton(
-                    onClick = onNavigateToCaregivers,
-                    containerColor = colorResource(R.color.gradient_patient_start),
-                    contentColor = colorResource(R.color.white),
-                    elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 8.dp),
-                    modifier = Modifier
-                        .height(56.dp)
-                        .weight(1f),
-                    expanded = LocalConfiguration.current.screenWidthDp > 360,
-                    text = {
+                    onClick = { onNavigateToCaregivers() },
+                    modifier = Modifier.height(56.dp).weight(1f),
+                    expanded = isLargeScreen,
+                    colors = FloatingActionButtonDefaults.extendedFloatingActionButtonColors(
+                        containerColor = colorResource(R.color.gradient_patient_start),
+                        contentColor = colorResource(R.color.white)
+                    ),
+                    elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.People,
+                        contentDescription = null,
+                        tint = colorResource(R.color.white),
+                        modifier = Modifier.size(20.dp)
+                    )
+                    if (isLargeScreen) {
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             "My Caregivers",
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.titleMedium
                         )
-                    },
-                    icon = {
-                        Surface(
-                            modifier = Modifier.size(24.dp),
-                            shape = CircleShape,
-                            color = colorResource(R.color.white).copy(alpha = 0.2f)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.People,
-                                contentDescription = null,
-                                tint = colorResource(R.color.white),
-                                modifier = Modifier
-                                    .padding(4.dp)
-                                    .size(16.dp)
-                            )
-                        }
                     }
-                )
+                }
 
                 Spacer(modifier = Modifier.width(16.dp))
 
                 // Get Help Button
                 ExtendedFloatingActionButton(
                     onClick = onNavigateToChat,
-                    containerColor = colorResource(R.color.gradient_patient_start),
-                    contentColor = colorResource(R.color.white),
-                    elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 8.dp),
-                    modifier = Modifier
-                        .height(56.dp)
-                        .weight(1f),
-                    expanded = LocalConfiguration.current.screenWidthDp > 360,
-                    text = {
+                    modifier = Modifier.height(56.dp).weight(1f),
+                    expanded = isLargeScreen,
+                    colors = FloatingActionButtonDefaults.extendedFloatingActionButtonColors(
+                        containerColor = colorResource(R.color.gradient_patient_start),
+                        contentColor = colorResource(R.color.white)
+                    ),
+                    elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.HelpOutline,
+                        contentDescription = null,
+                        tint = colorResource(R.color.white),
+                        modifier = Modifier.size(20.dp)
+                    )
+                    if (isLargeScreen) {
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             "Get Help",
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.titleMedium
                         )
-                    },
-                    icon = {
-                        Surface(
-                            modifier = Modifier.size(24.dp),
-                            shape = CircleShape,
-                            color = colorResource(R.color.white).copy(alpha = 0.2f)
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.HelpOutline,
-                                contentDescription = null,
-                                tint = colorResource(R.color.white),
-                                modifier = Modifier
-                                    .padding(4.dp)
-                                    .size(16.dp)
-                            )
-                        }
                     }
-                )
+                }
             }
-        }, floatingActionButtonPosition = FabPosition.Center
+        },floatingActionButtonPosition = FabPosition.Center
     ) { innerPadding ->
         Box(
             modifier = Modifier

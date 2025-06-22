@@ -1,5 +1,6 @@
 package com.example.frontend.screens
 
+// import androidx.compose.runtime.rememberCoroutineScope // Not used, can be removed
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -31,7 +32,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -84,6 +85,8 @@ fun ScreenPatient(
 ) {
     var userInfo: UserInfo? by remember { mutableStateOf(null) }
     var isLoading by remember { mutableStateOf(true) }
+    // rememberCoroutineScope() // This was not used
+
     var showProfileMenu by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -92,10 +95,14 @@ fun ScreenPatient(
             userInfo = RetrofitInstance.dementiaAPI.getSelfUserInfo()
         } catch (e: Exception) {
             Log.e(TAG, "Error fetching user info", e)
+            // Optionally, update an error state that ScreenPatient can display
+            // For example, if you add another state:
+            // internalErrorMsg = "Failed to load user data."
         } finally {
             isLoading = false
         }
     }
+
     Scaffold(
         containerColor = colorResource(R.color.dark_background),
         topBar = {
@@ -106,9 +113,7 @@ fun ScreenPatient(
                         color = colorResource(R.color.dark_on_surface),
                         fontWeight = FontWeight.Bold
                     )
-                }, actions = {
-                    Box {
-                        IconButton(
+                }, actions = {                    Box {                        IconButton(
                             onClick = { showProfileMenu = true }) {
                             Icon(
                                 imageVector = Icons.Default.MoreVert,
@@ -177,84 +182,44 @@ fun ScreenPatient(
             )
         },
         floatingActionButton = {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), // Ensure FABS don't overflow small screens
-                horizontalArrangement = Arrangement.SpaceEvenly, // Distribute space
-                verticalAlignment = Alignment.CenterVertically
+            ExtendedFloatingActionButton(
+                onClick = onNavigateToChat,
+                modifier = Modifier.padding(16.dp),
+                containerColor = colorResource(R.color.card_patient),
+                contentColor = colorResource(R.color.white),
+                shape = RoundedCornerShape(24.dp),
+                elevation = FloatingActionButtonDefaults.elevation(
+                    defaultElevation = 12.dp,
+                    pressedElevation = 16.dp
+                )
             ) {
-                // My Caregivers Button
-                ExtendedFloatingActionButton(
-                    onClick = onNavigateToCaregivers,
-                    containerColor = colorResource(R.color.gradient_patient_start),
-                    contentColor = colorResource(R.color.white),
-                    elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 8.dp),
-                    modifier = Modifier
-                        .height(56.dp)
-                        .weight(1f),
-                    expanded = LocalConfiguration.current.screenWidthDp > 360,
-                    text = {
-                        Text(
-                            "My Caregivers",
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.titleMedium
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        modifier = Modifier.size(24.dp),
+                        shape = CircleShape,
+                        color = colorResource(R.color.white).copy(alpha = 0.2f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.HelpOutline,
+                            contentDescription = null,
+                            tint = colorResource(R.color.white),
+                            modifier = Modifier
+                                .padding(4.dp)
+                                .size(16.dp)
                         )
-                    },
-                    icon = {
-                        Surface(
-                            modifier = Modifier.size(24.dp),
-                            shape = CircleShape,
-                            color = colorResource(R.color.white).copy(alpha = 0.2f)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.People,
-                                contentDescription = null,
-                                tint = colorResource(R.color.white),
-                                modifier = Modifier
-                                    .padding(4.dp)
-                                    .size(16.dp)
-                            )
-                        }
                     }
-                )
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                // Get Help Button
-                ExtendedFloatingActionButton(
-                    onClick = onNavigateToChat,
-                    containerColor = colorResource(R.color.gradient_patient_start),
-                    contentColor = colorResource(R.color.white),
-                    elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 8.dp),
-                    modifier = Modifier
-                        .height(56.dp)
-                        .weight(1f),
-                    expanded = LocalConfiguration.current.screenWidthDp > 360,
-                    text = {
-                        Text(
-                            "Get Help",
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                    },
-                    icon = {
-                        Surface(
-                            modifier = Modifier.size(24.dp),
-                            shape = CircleShape,
-                            color = colorResource(R.color.white).copy(alpha = 0.2f)
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.HelpOutline,
-                                contentDescription = null,
-                                tint = colorResource(R.color.white),
-                                modifier = Modifier
-                                    .padding(4.dp)
-                                    .size(16.dp)
-                            )
-                        }
-                    }
-                )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        "Get Help",
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
             }
-        }, floatingActionButtonPosition = FabPosition.Center
+        },
+        floatingActionButtonPosition = FabPosition.Center
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -279,8 +244,7 @@ fun ScreenPatient(
                 if (isLoading) {
                     Spacer(modifier = Modifier.weight(1f))
                     CircularProgressIndicator(color = colorResource(R.color.dark_primary))
-                    Spacer(modifier = Modifier.weight(1f))
-                } else if (userInfo != null) {
+                    Spacer(modifier = Modifier.weight(1f))                } else if (userInfo != null) {
                     PatientInfoCard(
                         name = userInfo!!.name,
                         email = userInfo!!.email,
@@ -352,8 +316,8 @@ fun PatientInfoCard(name: String, email: String, gender: String, dob: String, pr
                             .size(getProfilePictureSize())
                             .clip(CircleShape),
                         contentScale = ContentScale.Crop,
-                        placeholder = painterResource(R.drawable.ic_launcher_foreground), // Replace with your placeholder
-                        error = painterResource(R.drawable.ic_launcher_foreground)     // Replace with your error placeholder
+                        placeholder = painterResource(R.drawable.ic_launcher_foreground),
+                        error = painterResource(R.drawable.ic_launcher_foreground)
                     )
                 } else {
                     Icon(
@@ -363,6 +327,7 @@ fun PatientInfoCard(name: String, email: String, gender: String, dob: String, pr
                         modifier = Modifier.size(getProfilePictureSize())
                     )
                 }
+                // --- REMOVED DUPLICATE AND ERRONEOUS ICON SECTION FROM HERE ---
             }
 
             Spacer(modifier = Modifier.height(8.dp)) // Spacing after header row
@@ -380,16 +345,16 @@ fun PatientInfoCard(name: String, email: String, gender: String, dob: String, pr
                 },
                 icon = Icons.Filled.Person
             )
-
+            
             // Primary Contact Information (Caregiver)
             if (primaryContact != null) {
                 Spacer(modifier = Modifier.height(12.dp))
-                HorizontalDivider(
+                Divider(
                     color = colorResource(R.color.dark_primary).copy(alpha = 0.3f),
                     thickness = 1.dp
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-
+                
                 // Primary Contact Header with profile picture
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -402,7 +367,7 @@ fun PatientInfoCard(name: String, email: String, gender: String, dob: String, pr
                         color = colorResource(R.color.dark_primary),
                         modifier = Modifier.weight(1f)
                     )
-
+                    
                     // Caregiver profile picture
                     if (primaryContact.profilePicture != null) {
                         AsyncImage(
@@ -412,8 +377,8 @@ fun PatientInfoCard(name: String, email: String, gender: String, dob: String, pr
                                 .size(getCaregiverProfilePictureSize())
                                 .clip(CircleShape),
                             contentScale = ContentScale.Crop,
-                            placeholder = painterResource(R.drawable.ic_launcher_foreground), // Replace
-                            error = painterResource(R.drawable.ic_launcher_foreground)     // Replace
+                            placeholder = painterResource(R.drawable.ic_launcher_foreground),
+                            error = painterResource(R.drawable.ic_launcher_foreground)
                         )
                     } else {
                         Icon(
@@ -425,7 +390,7 @@ fun PatientInfoCard(name: String, email: String, gender: String, dob: String, pr
                     }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-
+                
                 InfoRowContent(label = "Caregiver Name", value = primaryContact.name, icon = Icons.Filled.ContactPhone)
                 InfoRowContent(label = "Caregiver ID", value = primaryContact.id, icon = Icons.Filled.Badge)
                 InfoRowContent(
@@ -435,7 +400,7 @@ fun PatientInfoCard(name: String, email: String, gender: String, dob: String, pr
                         "F" -> "Female"
                         "O", "OTHER" -> "Other"
                         else -> primaryContact.gender.ifBlank { "Not specified" }
-                    },
+                    }, 
                     icon = Icons.Filled.Person
                 )
             }

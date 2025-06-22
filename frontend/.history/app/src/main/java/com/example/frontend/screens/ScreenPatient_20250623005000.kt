@@ -169,8 +169,7 @@ fun ScreenPatient(
                             )
                         }
                     }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                },                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = colorResource(R.color.dark_surface),
                     titleContentColor = colorResource(R.color.dark_on_surface)
                 )
@@ -178,20 +177,13 @@ fun ScreenPatient(
         },
         floatingActionButton = {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), // Ensure FABS don't overflow small screens
-                horizontalArrangement = Arrangement.SpaceEvenly, // Distribute space
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // My Caregivers Button
                 ExtendedFloatingActionButton(
-                    onClick = onNavigateToCaregivers,
-                    containerColor = colorResource(R.color.gradient_patient_start),
-                    contentColor = colorResource(R.color.white),
-                    elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 8.dp),
-                    modifier = Modifier
-                        .height(56.dp)
-                        .weight(1f),
-                    expanded = LocalConfiguration.current.screenWidthDp > 360,
                     text = {
                         Text(
                             "My Caregivers",
@@ -199,8 +191,7 @@ fun ScreenPatient(
                             style = MaterialTheme.typography.titleMedium
                         )
                     },
-                    icon = {
-                        Surface(
+                    icon = {                        Surface(
                             modifier = Modifier.size(24.dp),
                             shape = CircleShape,
                             color = colorResource(R.color.white).copy(alpha = 0.2f)
@@ -214,21 +205,19 @@ fun ScreenPatient(
                                     .size(16.dp)
                             )
                         }
-                    }
-                )
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                // Get Help Button
-                ExtendedFloatingActionButton(
-                    onClick = onNavigateToChat,
+                    },                    onClick = { onNavigateToCaregivers() },
                     containerColor = colorResource(R.color.gradient_patient_start),
                     contentColor = colorResource(R.color.white),
                     elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 8.dp),
                     modifier = Modifier
                         .height(56.dp)
                         .weight(1f),
-                    expanded = LocalConfiguration.current.screenWidthDp > 360,
+                    expanded = LocalConfiguration.current.screenWidthDp > 360
+                )
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                ExtendedFloatingActionButton(
                     text = {
                         Text(
                             "Get Help",
@@ -236,8 +225,7 @@ fun ScreenPatient(
                             style = MaterialTheme.typography.titleMedium
                         )
                     },
-                    icon = {
-                        Surface(
+                    icon = {                        Surface(
                             modifier = Modifier.size(24.dp),
                             shape = CircleShape,
                             color = colorResource(R.color.white).copy(alpha = 0.2f)
@@ -251,7 +239,14 @@ fun ScreenPatient(
                                     .size(16.dp)
                             )
                         }
-                    }
+                    },                    onClick = onNavigateToChat,
+                    containerColor = colorResource(R.color.gradient_patient_start),
+                    contentColor = colorResource(R.color.white),
+                    elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 12.dp),
+                    modifier = Modifier
+                        .height(56.dp)
+                        .weight(1f),
+                    expanded = LocalConfiguration.current.screenWidthDp > 360
                 )
             }
         }, floatingActionButtonPosition = FabPosition.Center
@@ -317,33 +312,30 @@ fun ScreenPatient(
 }
 
 @Composable
-fun PatientInfoCard(name: String, email: String, gender: String, dob: String, profilePicture: String?, primaryContact: PrimaryContact?) {
-    Card(
+fun PatientInfoCard(name: String, email: String, gender: String, dob: String, profilePicture: String?, primaryContact: PrimaryContact?) {    Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = colorResource(R.color.dark_surface_variant)
+            containerColor = colorResource(R.color.dark_surface_variant).copy(alpha = 0.95f)
         ),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(
+        shape = RoundedCornerShape(20.dp)
+    ) {        Column(
             modifier = Modifier
-                .padding(20.dp)
+                .padding(24.dp)
                 .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Header with profile picture
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
+            ) {                Text(
                     text = "Patient Information",
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    color = colorResource(R.color.dark_primary),
-                    modifier = Modifier.weight(1f) // Takes available space, pushing picture to the end
-                )                // Profile picture in the card
+                    color = colorResource(R.color.gradient_patient_start),
+                    modifier = Modifier.weight(1f)
+                )// Profile picture in the card
                 if (profilePicture != null) {
                     AsyncImage(
                         model = profilePicture,
@@ -355,11 +347,10 @@ fun PatientInfoCard(name: String, email: String, gender: String, dob: String, pr
                         placeholder = painterResource(R.drawable.ic_launcher_foreground), // Replace with your placeholder
                         error = painterResource(R.drawable.ic_launcher_foreground)     // Replace with your error placeholder
                     )
-                } else {
-                    Icon(
+                } else {                    Icon(
                         imageVector = Icons.Default.AccountCircle,
                         contentDescription = "Default Profile",
-                        tint = colorResource(R.color.dark_primary),
+                        tint = colorResource(R.color.gradient_patient_start).copy(alpha = 0.8f),
                         modifier = Modifier.size(getProfilePictureSize())
                     )
                 }
@@ -385,8 +376,8 @@ fun PatientInfoCard(name: String, email: String, gender: String, dob: String, pr
             if (primaryContact != null) {
                 Spacer(modifier = Modifier.height(12.dp))
                 HorizontalDivider(
-                    color = colorResource(R.color.dark_primary).copy(alpha = 0.3f),
-                    thickness = 1.dp
+                    color = colorResource(R.color.gradient_patient_start).copy(alpha = 0.4f),
+                    thickness = 1.5.dp
                 )
                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -394,12 +385,11 @@ fun PatientInfoCard(name: String, email: String, gender: String, dob: String, pr
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
+                ) {                    Text(
                         text = "Primary Contact (Caregiver)",
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = colorResource(R.color.dark_primary),
+                        color = colorResource(R.color.gradient_caregiver_start),
                         modifier = Modifier.weight(1f)
                     )
 
@@ -415,11 +405,10 @@ fun PatientInfoCard(name: String, email: String, gender: String, dob: String, pr
                             placeholder = painterResource(R.drawable.ic_launcher_foreground), // Replace
                             error = painterResource(R.drawable.ic_launcher_foreground)     // Replace
                         )
-                    } else {
-                        Icon(
+                    } else {                        Icon(
                             imageVector = Icons.Default.AccountCircle,
                             contentDescription = "Default Caregiver Profile",
-                            tint = colorResource(R.color.dark_primary),
+                            tint = colorResource(R.color.gradient_caregiver_start).copy(alpha = 0.8f),
                             modifier = Modifier.size(getCaregiverProfilePictureSize())
                         )
                     }
@@ -447,25 +436,36 @@ fun PatientInfoCard(name: String, email: String, gender: String, dob: String, pr
 private fun InfoRowContent(label: String, value: String, icon: ImageVector) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = "$label Icon",
-            tint = colorResource(R.color.dark_primary),
-            modifier = Modifier.size(24.dp)
-        )
+        Surface(
+            modifier = Modifier.size(40.dp),
+            shape = CircleShape,
+            color = colorResource(R.color.gradient_patient_start).copy(alpha = 0.15f)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = "$label Icon",
+                tint = colorResource(R.color.gradient_patient_start),
+                modifier = Modifier
+                    .padding(8.dp)
+                    .size(24.dp)
+            )
+        }
         Spacer(modifier = Modifier.width(16.dp))
         Column {
             Text(
                 label,
-                style = MaterialTheme.typography.labelSmall,
-                color = colorResource(R.color.dark_on_surface).copy(alpha = 0.7f)
+                style = MaterialTheme.typography.labelMedium,
+                color = colorResource(R.color.dark_on_surface).copy(alpha = 0.8f),
+                fontWeight = FontWeight.Medium
             )
             Text(
                 value,
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
+                fontWeight = FontWeight.SemiBold,
                 color = colorResource(R.color.dark_on_surface)
             )
         }
@@ -477,27 +477,35 @@ fun ErrorDisplay(errorMsg: String) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = colorResource(R.color.error_red).copy(alpha = 0.1f) // Softer error background
+            containerColor = colorResource(R.color.error_red).copy(alpha = 0.15f)
         ),
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Row(
             modifier = Modifier
-                .padding(16.dp)
+                .padding(20.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start
         ) {
-            Icon(
-                Icons.Filled.ReportProblem,
-                contentDescription = "Error",
-                tint = colorResource(R.color.error_red)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
+            Surface(
+                modifier = Modifier.size(40.dp),
+                shape = CircleShape,
+                color = colorResource(R.color.error_red).copy(alpha = 0.2f)
+            ) {
+                Icon(
+                    Icons.Filled.ReportProblem,
+                    contentDescription = "Error",
+                    tint = colorResource(R.color.error_red),
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
             Text(
                 text = errorMsg,
-                color = colorResource(R.color.error_red), // Ensure text color is clearly visible
-                style = MaterialTheme.typography.bodyMedium,
+                color = colorResource(R.color.error_red),
+                style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium
             )
         }

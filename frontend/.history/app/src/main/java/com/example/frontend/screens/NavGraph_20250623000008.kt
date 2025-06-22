@@ -99,7 +99,6 @@ fun SetupNavGraph(navController: NavHostController) {
         composable<Screen.DashBoardPatient> {
             ScreenPatient(
                 onNavigateToChat = { navController.navigate(Screen.Chat) },
-                onNavigateToCaregivers = { navController.navigate(Screen.MyCaregivers) },
                 onSignOut = {
                     RetrofitInstance.dementiaAPI.signOutUser()
                     showCloseAppDialog = true
@@ -113,7 +112,6 @@ fun SetupNavGraph(navController: NavHostController) {
         composable<Screen.DashboardCareGiver> {
             ScreenCareGiver(
                 onNavigateToChat = { navController.navigate(Screen.Chat) },
-                onNavigateToPatients = { navController.navigate(Screen.MyPatients) },
                 onSignOut = {
                     RetrofitInstance.dementiaAPI.signOutUser()
                     showCloseAppDialog = true
@@ -123,8 +121,7 @@ fun SetupNavGraph(navController: NavHostController) {
                     showNewAccountDialog = true
                 }
             )
-        }
-        composable<Screen.Chat> {
+        }        composable<Screen.Chat> {
             ChatScreen(
                 onNavigateBack = {
                     navController.popBackStack()
