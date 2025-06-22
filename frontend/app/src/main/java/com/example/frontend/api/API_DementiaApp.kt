@@ -1,5 +1,6 @@
 package com.example.frontend.api
 
+import com.example.frontend.api.models.PartnerInfo
 import com.example.frontend.api.models.RequestChat
 import com.example.frontend.api.models.ResponseChat
 import com.example.frontend.screens.NavigationManager
@@ -99,6 +100,18 @@ interface DementiaAPI {
         @Query("userId") userId: String? = null
     ): Response<UserInfo>
 
+
+    @GET("/v1/users/caregivers")
+    suspend fun getCaregiversWithToken(
+        @Header("Authorization") firebaseIdToken: String,
+        @Query("includeDeleted") includeDeleted: Boolean = false
+    ): Response<List<PartnerInfo>>
+
+    @GET("/v1/caregivers/patients")
+    suspend fun getPatientsWithToken(
+        @Header("Authorization") firebaseIdToken: String,
+        @Query("includeDeleted") includeDeleted: Boolean = false
+    ): Response<List<PartnerInfo>>
 }
 
 suspend fun getIdTokenWithFallback(forceRefresh: Boolean = false, fallback: () -> Unit): String? {
@@ -123,7 +136,10 @@ suspend fun getIdTokenWithFallback(forceRefresh: Boolean = false, fallback: () -
     }
 }
 
-suspend fun DementiaAPI.getIdToken(forceRefresh: Boolean = false, autoRedirect: Boolean = true): String? {
+suspend fun DementiaAPI.getIdToken(
+    forceRefresh: Boolean = false,
+    autoRedirect: Boolean = true
+): String? {
     return getIdTokenWithFallback(forceRefresh) {
         if (autoRedirect) redirectToLogin()
     }
@@ -153,6 +169,19 @@ fun DementiaAPI.signOutUser() {
     FirebaseAuth.getInstance().signOut()
     redirectToLogin()
 }
+
+
+suspend fun DementiaAPI.getPartners(includeDeleted: Boolean = false): List<PartnerInfo> {
+    val token: String = getIdToken() ?: return listOf()
+    val userInfo = getSelfUserInfo() ?: return listOf()
+
+    return if (userInfo.role == "CAREGIVER") {
+        getPatientsWithToken(firebaseIdToken = "Bearer $token", includeDeleted).body() ?: listOf()
+    } else {
+        getCaregiversWithToken(firebaseIdToken = "Bearer $token", includeDeleted).body() ?: listOf()
+    }
+}
+
 
 fun redirectToLogin() {
     NavigationManager.getNavController().navigate(Screen.Register)
