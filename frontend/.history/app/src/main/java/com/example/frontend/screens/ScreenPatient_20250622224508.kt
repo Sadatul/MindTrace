@@ -1,6 +1,5 @@
 package com.example.frontend.screens
 
-// import androidx.compose.runtime.rememberCoroutineScope // Not used, can be removed
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -51,6 +50,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+// import androidx.compose.runtime.rememberCoroutineScope // Not used, can be removed
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,19 +58,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalConfiguration // Correct import
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.Dp // Correct import
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import coil.compose.AsyncImage
 import com.example.frontend.R
-import com.example.frontend.api.PrimaryContact
 import com.example.frontend.api.RetrofitInstance
 import com.example.frontend.api.UserInfo
-import com.example.frontend.api.getSelfUserInfo
+import com.example.frontend.api.getSelfUserInfo // Assuming this is a suspend extension function
 
 private const val TAG = "ScreenPatient"
 
@@ -280,7 +279,7 @@ fun ScreenPatient(
 }
 
 @Composable
-fun PatientInfoCard(name: String, email: String, gender: String, dob: String, profilePicture: String?, primaryContact: PrimaryContact?) {
+fun PatientInfoCard(name: String, email: String, gender: String, dob: String, profilePicture: String?) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
@@ -344,65 +343,6 @@ fun PatientInfoCard(name: String, email: String, gender: String, dob: String, pr
                 },
                 icon = Icons.Filled.Person
             )
-            
-            // Primary Contact Information (Caregiver)
-            if (primaryContact != null) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Divider(
-                    color = colorResource(R.color.dark_primary).copy(alpha = 0.3f),
-                    thickness = 1.dp
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                // Primary Contact Header with profile picture
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = "Primary Contact (Caregiver)",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = colorResource(R.color.dark_primary),
-                        modifier = Modifier.weight(1f)
-                    )
-                    
-                    // Caregiver profile picture
-                    if (primaryContact.profilePicture != null) {
-                        AsyncImage(
-                            model = primaryContact.profilePicture,
-                            contentDescription = "Caregiver Profile Picture",
-                            modifier = Modifier
-                                .size(getCaregiverProfilePictureSize())
-                                .clip(CircleShape),
-                            contentScale = ContentScale.Crop,
-                            placeholder = painterResource(R.drawable.ic_launcher_foreground),
-                            error = painterResource(R.drawable.ic_launcher_foreground)
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.AccountCircle,
-                            contentDescription = "Default Caregiver Profile",
-                            tint = colorResource(R.color.dark_primary),
-                            modifier = Modifier.size(getCaregiverProfilePictureSize())
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                InfoRowContent(label = "Caregiver Name", value = primaryContact.name, icon = Icons.Filled.ContactPhone)
-                InfoRowContent(label = "Caregiver ID", value = primaryContact.id, icon = Icons.Filled.Badge)
-                InfoRowContent(
-                    label = "Gender",
-                    value = when (primaryContact.gender.uppercase()) {
-                        "M" -> "Male"
-                        "F" -> "Female"
-                        "O", "OTHER" -> "Other"
-                        else -> primaryContact.gender.ifBlank { "Not specified" }
-                    }, 
-                    icon = Icons.Filled.Person
-                )
-            }
         }
     }
 }
@@ -478,18 +418,5 @@ private fun getProfilePictureSize(): Dp {
         screenWidth >= 400.dp -> 72.dp
         screenWidth >= 360.dp -> 64.dp
         else -> 56.dp
-    }
-}
-
-@Composable
-private fun getCaregiverProfilePictureSize(): Dp {
-    val configuration = LocalConfiguration.current
-    val screenWidth = configuration.screenWidthDp.dp
-
-    // Slightly smaller than patient profile picture for secondary display
-    return when {
-        screenWidth >= 400.dp -> 56.dp
-        screenWidth >= 360.dp -> 48.dp
-        else -> 40.dp
     }
 }

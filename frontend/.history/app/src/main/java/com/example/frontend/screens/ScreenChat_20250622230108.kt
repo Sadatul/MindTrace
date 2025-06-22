@@ -76,8 +76,7 @@ private const val TAG = "ScreenChat"
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
-    onNavigateBack: () -> Unit = {},
-    onCancelDialog: () -> Unit = {}
+    onNavigateBack: () -> Unit = {}
 ) {
     var messages by remember { mutableStateOf(listOf<ChatMessage>()) }
     var showLastChatDialog by remember { mutableStateOf(false) }
@@ -281,44 +280,27 @@ fun ChatScreen(
                         .fillMaxWidth()
                         .padding(bottom = 8.dp), // Padding for keyboard spacing
                     verticalAlignment = Alignment.CenterVertically
-                ) {                    TextField(
+                ) {
+                    TextField(
                         value = inputText,
                         onValueChange = { inputText = it },
                         modifier = Modifier
                             .weight(1f)
-                            .clip(RoundedCornerShape(24.dp))
-                            .background(
-                                if (inputText.isNotBlank()) {
-                                    Brush.horizontalGradient(
-                                        colors = listOf(
-                                            colorResource(R.color.dark_surface_variant),
-                                            colorResource(R.color.gradient_patient_start).copy(alpha = 0.1f)
-                                        )
-                                    )
-                                } else {
-                                    Brush.horizontalGradient(
-                                        colors = listOf(
-                                            colorResource(R.color.dark_surface_variant),
-                                            colorResource(R.color.dark_surface_variant)
-                                        )
-                                    )
-                                }
-                            ),
+                            .clip(RoundedCornerShape(24.dp)),
                         placeholder = {
                             Text(
                                 "Type your message...",
-                                color = colorResource(R.color.dark_on_surface).copy(alpha = 0.6f),
-                                style = MaterialTheme.typography.bodyLarge
+                                color = colorResource(R.color.dark_on_surface).copy(alpha = 0.6f)
                             )
                         },
                         colors = TextFieldDefaults.colors(
-                            focusedContainerColor = colorResource(R.color.transparent),
-                            unfocusedContainerColor = colorResource(R.color.transparent),
+                            focusedContainerColor = colorResource(R.color.dark_surface_variant),
+                            unfocusedContainerColor = colorResource(R.color.dark_surface_variant),
                             focusedTextColor = colorResource(R.color.dark_on_surface),
                             unfocusedTextColor = colorResource(R.color.dark_on_surface),
-                            cursorColor = colorResource(R.color.gradient_caregiver_start),
-                            focusedIndicatorColor = colorResource(R.color.gradient_caregiver_start),
-                            unfocusedIndicatorColor = colorResource(R.color.dark_on_surface).copy(alpha = 0.3f)
+                            cursorColor = colorResource(R.color.dark_primary),
+                            focusedIndicatorColor = colorResource(R.color.dark_primary), // Or Color.Transparent
+                            unfocusedIndicatorColor = colorResource(R.color.dark_on_surface).copy(alpha = 0.3f) // Or Color.Transparent
                         ),
                         enabled = !isLoading && !isInitiallyLoading, // Disable while sending or initial loading
                         maxLines = 5 // Allow multiple lines but constrain height
@@ -396,24 +378,14 @@ fun ChatScreen(
                                     }
                                 }
                             }
-                        },                        enabled = !isLoading && inputText.isNotBlank() && !isInitiallyLoading,
+                        },
+                        enabled = !isLoading && inputText.isNotBlank() && !isInitiallyLoading,
                         modifier = Modifier
                             .background(
-                                brush = if (!isLoading && inputText.isNotBlank() && !isInitiallyLoading) {
-                                    Brush.radialGradient(
-                                        colors = listOf(
-                                            colorResource(R.color.gradient_caregiver_start),
-                                            colorResource(R.color.gradient_caregiver_end)
-                                        )
-                                    )
-                                } else {
-                                    Brush.radialGradient(
-                                        colors = listOf(
-                                            colorResource(R.color.dark_surface_variant),
-                                            colorResource(R.color.dark_surface_variant)
-                                        )
-                                    )
-                                },
+                                color = if (!isLoading && inputText.isNotBlank() && !isInitiallyLoading)
+                                    colorResource(R.color.dark_primary)
+                                else
+                                    colorResource(R.color.dark_surface_variant),
                                 shape = CircleShape
                             )
                             .size(48.dp) // Standard FAB size
@@ -421,33 +393,12 @@ fun ChatScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Send,
                             contentDescription = "Send",
-                            tint = if (!isLoading && inputText.isNotBlank() && !isInitiallyLoading)
-                                colorResource(R.color.white)
-                            else
-                                colorResource(R.color.dark_on_surface).copy(alpha = 0.6f)
+                            tint = colorResource(R.color.dark_on_primary) // White or light color on primary
                         )
                     }
                 }
             }
         }
-    }
-      // Show Last Chat Dialog
-    if (showLastChatDialog) {
-        LastChatDialog(
-            onDismiss = { 
-                showLastChatDialog = false 
-                onCancelDialog() // Navigate back to dashboard
-            },
-            onViewLastChat = { 
-                showLastChatDialog = false
-                loadInitialMessages()
-            },
-            onStartNewChat = { 
-                showLastChatDialog = false
-                messages = emptyList()
-                isInitiallyLoading = false
-            }
-        )
     }
 }
 
