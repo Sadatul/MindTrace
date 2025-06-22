@@ -1,5 +1,6 @@
 package com.example.frontend.screens
 
+// import androidx.compose.runtime.rememberCoroutineScope // Not used, can be removed
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -47,7 +48,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-// import androidx.compose.runtime.rememberCoroutineScope // Not used, can be removed
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,18 +55,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration // Correct import
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp // Correct import
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import coil.compose.AsyncImage
 import com.example.frontend.R
 import com.example.frontend.api.RetrofitInstance
 import com.example.frontend.api.UserInfo
-import com.example.frontend.api.getSelfUserInfo // Assuming this is a suspend extension function
+import com.example.frontend.api.getSelfUserInfo
 
 private const val TAG = "ScreenPatient"
 
