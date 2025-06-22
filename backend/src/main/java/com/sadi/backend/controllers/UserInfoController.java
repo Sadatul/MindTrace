@@ -36,7 +36,7 @@ public class UserInfoController {
             PatientDetail patientDetail = userService.getPatientDetail(userId, false);
             User primaryContact = patientDetail.getPrimaryContact();
             dto = new CaregiversPatientsDTO(primaryContact.getId(), primaryContact.getName(),
-                    primaryContact.getGender(), primaryContact.getProfilePicture(), null);
+                    primaryContact.getGender(), primaryContact.getProfilePicture(), primaryContact.getCreatedAt(), null);
         }
 
         UserInfoFullResponse response = new UserInfoFullResponse(user.getId(), user.getName(), user.getEmail(),
