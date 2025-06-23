@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import com.example.frontend.api.RetrofitInstance
 import com.example.frontend.api.UserInfo
 import com.example.frontend.api.getIdToken
+import com.example.frontend.api.sendPatientAddOTP
 import kotlinx.coroutines.launch
 
 @Composable
@@ -31,7 +32,7 @@ fun DialogAddPartner(
         AlertDialog(
             onDismissRequest = onDismiss,
             title = { Text("Not Supported") },
-            text = { Text("You cannot add caregivers directly. Please ask your primary contact (caregiver) to add a new caregiver for you.") },
+            text = { Text("You cannot add caregivers directly. Please ask the caregiver to add you as a patient") },
             confirmButton = {
                 Button(onClick = onDismiss) { Text("OK") }
             },
@@ -46,17 +47,23 @@ fun DialogAddPartner(
             title = { Text("Patient Details") },
             text = {
                 Column {
-                    Text("Name: ${'$'}{patientInfo!!.name}")
-                    Text("Gender: ${'$'}{patientInfo!!.gender}")
-                    Text("DOB: ${'$'}{patientInfo!!.dob}")
-                    Text("Email: ${'$'}{patientInfo!!.email}")
+                    Text("Name: ${patientInfo!!.name}")
+                    Text("Gender: ${patientInfo!!.gender}")
+                    Text("DOB: ${patientInfo!!.dob}")
+                    Text("Email: ${patientInfo!!.email}")
                 }
             },
             confirmButton = {
                 Button(onClick = {
                     showConfirmDialog = false
+
+                    coroutineScope.launch {
+                        RetrofitInstance.dementiaAPI.sendPatientAddOTP(patientId)
+                    }
+
                     onOtpRequested(patientId)
-                }) { Text("Yes, add ${'$'}{patientInfo!!.name}") }
+
+                }) { Text("Add Patient") }
             },
             dismissButton = {
                 Button(onClick = { showConfirmDialog = false }) { Text("Cancel") }
@@ -109,8 +116,8 @@ fun DialogAddPartner(
                             } else {
                                 patientInfoError = "Patient not found."
                             }
-                        } catch (_: Exception) {
-                            patientInfoError = "Error: ${'$'}{e.message}"
+                        } catch (e: Exception) {
+                            patientInfoError = "Error: ${e.message}"
                         } finally {
                             patientInfoLoading = false
                         }

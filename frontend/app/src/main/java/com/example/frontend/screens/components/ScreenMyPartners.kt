@@ -34,11 +34,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.frontend.R
+import com.example.frontend.api.RequestPatientAdd
 import com.example.frontend.api.RetrofitInstance
 import com.example.frontend.api.UserInfo
+import com.example.frontend.api.addPatient
 import com.example.frontend.api.deleteCaregiver
 import com.example.frontend.api.models.PartnerInfo
 import com.example.frontend.api.removePatient
+import com.example.frontend.api.sendCaregiverRemovalOTP
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -90,7 +93,7 @@ fun ScreenMyPartners(
 
     // Add dialog state for Add Partner
     var showAddPartnerDialog by remember { mutableStateOf(false) }
-    var addPatientIdForOtp by remember { mutableStateOf<String?>(null) }
+    var addPatientIdForOtp by remember { mutableStateOf<String>("") }
     var addLoading by remember { mutableStateOf(false) }
     var addError by remember { mutableStateOf<String?>(null) }
 
@@ -245,7 +248,21 @@ fun ScreenMyPartners(
                     partnerRole = role.singleRelationshipTitle,
                     onConfirm = {
                         showDeleteConfirmDialog = false
-                        showDeleteDialog = true
+                        if (role.singleRelationshipTitle == "Caregiver") {
+                            coroutineScope.launch {
+                                RetrofitInstance.dementiaAPI.sendCaregiverRemovalOTP(selectedPartner!!.id)
+                            }
+                            showDeleteDialog = true
+                        }
+                        else {
+                            coroutineScope.launch {
+                                val success = RetrofitInstance.dementiaAPI.removePatient(selectedPartner!!.id)
+
+                                if (success) {
+                                    // TODO delete patient from list
+                                }
+                            }
+                        }
                     },
                     onDismiss = {
                         showDeleteConfirmDialog = false
@@ -262,10 +279,8 @@ fun ScreenMyPartners(
                         coroutineScope.launch {
                             try {
                                 val api = RetrofitInstance.dementiaAPI
-                                val success = when (role) {
-                                    is PartnerScreenRole.Patient -> api.deleteCaregiver(selectedPartner!!.id, otp)
-                                    is PartnerScreenRole.Caregiver -> api.removePatient(selectedPartner!!.id)
-                                }
+                                val success = api.deleteCaregiver(selectedPartner!!.id, otp)
+
                                 if (success) {
                                     showDeleteDialog = false
                                     onPartnerDeleted?.invoke()
@@ -331,16 +346,21 @@ fun ScreenMyPartners(
                     }
                 )
             }
-            if (addPatientIdForOtp != null && role is PartnerScreenRole.Caregiver) {
+            if (addPatientIdForOtp != "" && role is PartnerScreenRole.Caregiver) {
                 DialogOTP(
-                    title = "Enter OTP to add patient",
+                    title = "Enter OTP to add patient (OTP was sent to primary contact)",
                     onConfirm = { otp ->
                         addLoading = true
                         addError = null
                         coroutineScope.launch {
                             try {
-                                // Call your addPatient API here with addPatientIdForOtp and otp
-                                addPatientIdForOtp = null
+                                val success = RetrofitInstance.dementiaAPI.addPatient(RequestPatientAdd(patientId = addPatientIdForOtp, otp))
+
+                                if (success) {
+                                    // TODO add the new patient here
+                                }
+
+                                addPatientIdForOtp = ""
                             } catch (_: Exception) {
                                 addError = "Failed to add patient"
                             } finally {
@@ -349,7 +369,7 @@ fun ScreenMyPartners(
                         }
                     },
                     onDismiss = {
-                        addPatientIdForOtp = null
+                        addPatientIdForOtp = ""
                         addLoading = false
                         addError = null
                     },
