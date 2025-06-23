@@ -96,7 +96,7 @@ fun ChatBubble(message: ChatMessage) {
                     .padding(16.dp)
             ) {
                 Text(
-                    text = message.text,
+                    text = if (message.isUser) message.text else message.text.substring(0, message.text.length - 4),
                     color = colorResource(R.color.white),
                     textAlign = TextAlign.Start,
                     fontWeight = FontWeight.Medium,
