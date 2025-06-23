@@ -1,0 +1,11 @@
+scrape_configs:
+  - job_name: 'backend'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['172.17.0.1:8080']
+  - job_name: 'node'
+    static_configs:
+      - targets: ['mindtrace_node-exporter:9100']  # Node exporter default port
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['mindtrace_cadvisor:8080']
