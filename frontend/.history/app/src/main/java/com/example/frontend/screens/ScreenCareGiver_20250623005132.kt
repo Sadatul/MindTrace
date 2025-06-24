@@ -334,13 +334,13 @@ fun ScreenCareGiver(
                             .fillMaxWidth(0.85f)
                             .height(56.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = colorResource(R.color.gradient_caregiver_start),
+                            containerColor = colorResource(R.color.dark_primary),
                             contentColor = colorResource(R.color.white)
                         ),
                         shape = RoundedCornerShape(20.dp),
                         elevation = ButtonDefaults.buttonElevation(
-                            defaultElevation = 12.dp,
-                            pressedElevation = 16.dp
+                            defaultElevation = 8.dp,
+                            pressedElevation = 12.dp
                         )
                     ) {
                         Row(
@@ -370,19 +370,20 @@ fun ScreenCareGiver(
                             )
                         }
                     }
+
                     Button(
                         onClick = onNavigateToPatients,
                         modifier = Modifier
                             .fillMaxWidth(0.85f)
                             .height(56.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = colorResource(R.color.gradient_caregiver_start),
+                            containerColor = colorResource(R.color.dark_primary),
                             contentColor = colorResource(R.color.white)
                         ),
                         shape = RoundedCornerShape(20.dp),
                         elevation = ButtonDefaults.buttonElevation(
-                            defaultElevation = 12.dp,
-                            pressedElevation = 16.dp
+                            defaultElevation = 8.dp,
+                            pressedElevation = 12.dp
                         )
                     ) {
                         Row(
@@ -421,19 +422,20 @@ fun ScreenCareGiver(
                         modifier = Modifier
                             .fillMaxWidth(0.85f)
                             .height(56.dp),
-                        enabled = !isFetchingOtp,                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colorResource(R.color.gradient_caregiver_start),
+                        enabled = !isFetchingOtp,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colorResource(R.color.dark_primary),
                             contentColor = colorResource(R.color.white),
-                            disabledContainerColor = colorResource(R.color.gradient_caregiver_start).copy(
+                            disabledContainerColor = colorResource(R.color.dark_primary).copy(
                                 alpha = 0.5f
                             ),
                             disabledContentColor = colorResource(R.color.white).copy(alpha = 0.7f)
                         ),
                         shape = RoundedCornerShape(20.dp),
                         elevation = ButtonDefaults.buttonElevation(
-                            defaultElevation = 12.dp,
-                            pressedElevation = 16.dp,
-                            disabledElevation = 4.dp
+                            defaultElevation = 8.dp,
+                            pressedElevation = 12.dp,
+                            disabledElevation = 2.dp
                         )
                     ) {
                         Row(
@@ -558,11 +560,12 @@ fun CaregiverInfoCard(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
-            ) {                Text(
+            ) {
+                Text(
                     text = "My Information",
-                    style = MaterialTheme.typography.headlineSmall,
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = colorResource(R.color.info_blue), // Brighter blue for visibility
+                    color = colorResource(R.color.dark_primary),
                     modifier = Modifier.weight(1f)
                 )
                 if (profilePicture != null) {
@@ -576,10 +579,11 @@ fun CaregiverInfoCard(
                         placeholder = painterResource(R.drawable.ic_launcher_foreground),
                         error = painterResource(R.drawable.ic_launcher_foreground)
                     )
-                } else {                    Icon(
+                } else {
+                    Icon(
                         imageVector = Icons.Default.AccountCircle,
                         contentDescription = "Default Profile",
-                        tint = colorResource(R.color.gradient_caregiver_start).copy(alpha = 0.8f),
+                        tint = colorResource(R.color.dark_primary),
                         modifier = Modifier.size(getCaregiverProfilePictureSize())
                     )
                 }
@@ -590,28 +594,28 @@ fun CaregiverInfoCard(
                 "Name",
                 Icons.Filled.AccountCircle,
                 name,
-                colorResource(R.color.info_blue), // Brighter blue for visibility
+                colorResource(R.color.dark_primary),
                 colorResource(R.color.dark_on_surface)
             )
             InfoRow(
                 "Email",
                 Icons.Filled.Email,
                 email,
-                colorResource(R.color.info_blue), // Brighter blue for visibility
+                colorResource(R.color.dark_primary),
                 colorResource(R.color.dark_on_surface)
             )
             InfoRow(
                 "Date of Birth",
                 Icons.Filled.CalendarToday,
                 dob,
-                colorResource(R.color.info_blue), // Brighter blue for visibility
+                colorResource(R.color.dark_primary),
                 colorResource(R.color.dark_on_surface)
             )
             InfoRow(
                 "Gender",
                 Icons.Filled.Person,
                 formatGender(gender),
-                colorResource(R.color.info_blue), // Brighter blue for visibility
+                colorResource(R.color.dark_primary),
                 colorResource(R.color.dark_on_surface)
             )
         }
@@ -620,38 +624,19 @@ fun CaregiverInfoCard(
 
 @Composable
 fun InfoRow(label: String, icon: ImageVector, value: String, iconColor: Color, textColor: Color) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-    ) {
-        Surface(
-            modifier = Modifier.size(40.dp),
-            shape = CircleShape,
-            color = iconColor.copy(alpha = 0.18f) // Lighter, more visible blue background
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = "$label Icon",
-                tint = iconColor, // Brighter blue
-                modifier = Modifier
-                    .padding(8.dp)
-                    .size(24.dp)
-            )
-        }
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+        Icon(icon, "$label Icon", tint = iconColor, modifier = Modifier.size(24.dp))
         Spacer(modifier = Modifier.width(16.dp))
         Column {
             Text(
                 label,
-                style = MaterialTheme.typography.labelMedium,
-                color = textColor.copy(alpha = 0.8f),
-                fontWeight = FontWeight.Medium
+                style = MaterialTheme.typography.labelSmall,
+                color = textColor.copy(alpha = 0.7f)
             )
             Text(
                 value,
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Medium,
                 color = textColor
             )
         }

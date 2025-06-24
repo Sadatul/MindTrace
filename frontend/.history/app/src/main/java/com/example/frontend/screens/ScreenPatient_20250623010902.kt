@@ -249,12 +249,12 @@ fun ScreenPatient(
                                 modifier = Modifier
                                     .padding(4.dp)
                                     .size(16.dp)
-                            )
-                        }
+                            )                        }
                     }
                 )
             }
-        }, floatingActionButtonPosition = FabPosition.Center
+        },
+        floatingActionButtonPosition = FabPosition.Center
     ) { innerPadding ->
         Box(
             modifier = Modifier

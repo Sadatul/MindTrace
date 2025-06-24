@@ -184,22 +184,17 @@ fun ScreenPatient(
             ) {
                 // My Caregivers Button
                 ExtendedFloatingActionButton(
-                    onClick = onNavigateToCaregivers,
+                    onClick = { onNavigateToCaregivers() },
                     containerColor = colorResource(R.color.gradient_patient_start),
                     contentColor = colorResource(R.color.white),
                     elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 8.dp),
-                    modifier = Modifier
-                        .height(56.dp)
-                        .weight(1f),
-                    expanded = LocalConfiguration.current.screenWidthDp > 360,
-                    text = {
-                        Text(
-                            "My Caregivers",
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                    },
-                    icon = {
+                    modifier = Modifier.height(56.dp).weight(1f), // Allow buttons to share space
+                    expanded = LocalConfiguration.current.screenWidthDp > 360 // Conditionally expand
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
                         Surface(
                             modifier = Modifier.size(24.dp),
                             shape = CircleShape,
@@ -214,10 +209,16 @@ fun ScreenPatient(
                                     .size(16.dp)
                             )
                         }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "My Caregivers",
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleMedium
+                        )
                     }
-                )
+                }
 
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(16.dp)) // Space between FABs
 
                 // Get Help Button
                 ExtendedFloatingActionButton(
@@ -225,23 +226,18 @@ fun ScreenPatient(
                     containerColor = colorResource(R.color.gradient_patient_start),
                     contentColor = colorResource(R.color.white),
                     elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 8.dp),
-                    modifier = Modifier
-                        .height(56.dp)
-                        .weight(1f),
-                    expanded = LocalConfiguration.current.screenWidthDp > 360,
-                    text = {
-                        Text(
-                            "Get Help",
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                    },
-                    icon = {
+                    modifier = Modifier.height(56.dp).weight(1f), // Allow buttons to share space
+                    expanded = LocalConfiguration.current.screenWidthDp > 360 // Conditionally expand
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
                         Surface(
                             modifier = Modifier.size(24.dp),
                             shape = CircleShape,
                             color = colorResource(R.color.white).copy(alpha = 0.2f)
-                        ) {
+                        ) { // This was the missing closing brace
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.HelpOutline,
                                 contentDescription = null,
@@ -250,9 +246,15 @@ fun ScreenPatient(
                                     .padding(4.dp)
                                     .size(16.dp)
                             )
-                        }
+                        } // Corrected: Added missing closing brace for Surface
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "Get Help",
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleMedium // Consistent style
+                        )
                     }
-                )
+                }
             }
         }, floatingActionButtonPosition = FabPosition.Center
     ) { innerPadding ->

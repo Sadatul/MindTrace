@@ -95,8 +95,7 @@ fun SetupNavGraph(navController: NavHostController) {
                     }
                 }
             )
-        }
-        composable<Screen.DashBoardPatient> {
+        }        composable<Screen.DashBoardPatient> {
             ScreenPatient(
                 onNavigateToChat = { navController.navigate(Screen.Chat) },
                 onNavigateToCaregivers = { navController.navigate(Screen.MyCaregivers) },
@@ -123,8 +122,7 @@ fun SetupNavGraph(navController: NavHostController) {
                     showNewAccountDialog = true
                 }
             )
-        }
-        composable<Screen.Chat> {
+        }composable<Screen.Chat> {
             ChatScreen(
                 onNavigateBack = {
                     navController.popBackStack()

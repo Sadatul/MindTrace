@@ -562,7 +562,7 @@ fun CaregiverInfoCard(
                     text = "My Information",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    color = colorResource(R.color.info_blue), // Brighter blue for visibility
+                    color = colorResource(R.color.gradient_caregiver_start),
                     modifier = Modifier.weight(1f)
                 )
                 if (profilePicture != null) {

@@ -1,5 +1,6 @@
 package com.example.frontend.screens
 
+// import com.example.frontend.api.getSelfUserInfo // Already imported via UserInfo
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -110,6 +111,7 @@ fun ScreenCareGiver(
         }
 
         try {
+            // Use the extension function directly if it's defined on DementiaApiService
             val freshUserInfo = RetrofitInstance.dementiaAPI.getSelfUserInfo()
             if (freshUserInfo != null) {
                 userInfo = freshUserInfo
@@ -117,21 +119,23 @@ fun ScreenCareGiver(
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error fetching user info", e)
-            errorMsg = "Could not load user details."
+            errorMsg = "Could not load user details." // Display this error in the UI
         } finally {
-            isLoading = false
+            isLoading = false // Hide loading for user info
         }
     }
 
     fun getNewPatientRegistrationCode() {
         Log.d(TAG, "getNewPatientRegistrationCode called.")
         coroutineScope.launch {
-            isFetchingOtp = true
-            errorMsg = null
+            isFetchingOtp = true // Use specific loading state for OTP
+            errorMsg = null // Clear previous errors specific to OTP
             newPatientOtp = null
             Log.d(TAG, "Coroutine launched for API call. isFetchingOtp=true, newPatientOtp=null")
             try {
-                val caregiverAuthToken = RetrofitInstance.dementiaAPI.getIdToken()
+                // Assuming getIdToken is a suspend function or handled correctly
+                val caregiverAuthToken =
+                    RetrofitInstance.dementiaAPI.getIdToken() // Ensure this is not null or handle it
                 Log.d(TAG, "Attempting API call to RetrofitInstance.dementiaAPI.getOtp")
                 val response = RetrofitInstance.dementiaAPI.getOtp("Bearer $caregiverAuthToken")
                 Log.d(
@@ -149,7 +153,7 @@ fun ScreenCareGiver(
                         showNewPatientOtpDialog = true
                     } else {
                         val specificError = "Received empty registration code from server."
-                        errorMsg = specificError
+                        errorMsg = specificError // Set error message for UI display
                         Log.w(
                             TAG,
                             "Registration OTP is null in response body. Error: $specificError"
@@ -164,16 +168,16 @@ fun ScreenCareGiver(
                     )
                     val specificError =
                         "Failed to get code: ${response.message()} (Code: ${response.code()})"
-                    errorMsg = specificError
+                    errorMsg = specificError // Set error message for UI display
                     snackbarHostState.showSnackbar("Failed to generate code: ${response.message()}")
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Exception during API call getOtp", e)
                 val specificError = "An error occurred: ${e.message}"
-                errorMsg = specificError
+                errorMsg = specificError // Set error message for UI display
                 snackbarHostState.showSnackbar("An error occurred while fetching the code.")
             } finally {
-                isFetchingOtp = false
+                isFetchingOtp = false // Hide OTP specific loading
                 Log.d(TAG, "API call coroutine finished. isFetchingOtp=false")
             }
         }
@@ -282,7 +286,7 @@ fun ScreenCareGiver(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                if (isLoading && userInfo == null) {
+                if (isLoading && userInfo == null) { // Show loading only for initial user info fetch
                     CircularProgressIndicator(color = colorResource(id = R.color.dark_primary))
                 } else if (userInfo != null) {
                     CaregiverInfoCard(
@@ -292,7 +296,7 @@ fun ScreenCareGiver(
                         dob = userInfo!!.dob,
                         profilePicture = userInfo!!.profilePicture
                     )
-                } else if (errorMsg != null) { // Show initial load error only if not loading user info
+                } else if (errorMsg != null) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
@@ -313,7 +317,8 @@ fun ScreenCareGiver(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = errorMsg ?: "Could not load user details.",
+                                text = errorMsg
+                                    ?: "Could not load user details.", // Fallback just in case
                                 color = colorResource(R.color.error_red),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium,
@@ -334,13 +339,13 @@ fun ScreenCareGiver(
                             .fillMaxWidth(0.85f)
                             .height(56.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = colorResource(R.color.gradient_caregiver_start),
+                            containerColor = colorResource(R.color.card_info),
                             contentColor = colorResource(R.color.white)
                         ),
                         shape = RoundedCornerShape(20.dp),
                         elevation = ButtonDefaults.buttonElevation(
-                            defaultElevation = 12.dp,
-                            pressedElevation = 16.dp
+                            defaultElevation = 8.dp,
+                            pressedElevation = 12.dp
                         )
                     ) {
                         Row(
@@ -351,7 +356,7 @@ fun ScreenCareGiver(
                             Surface(
                                 modifier = Modifier.size(28.dp),
                                 shape = CircleShape,
-                                color = colorResource(R.color.white).copy(alpha = 0.25f)
+                                color = colorResource(R.color.white).copy(alpha = 0.2f)
                             ) {
                                 Icon(
                                     Icons.Filled.Chat,
@@ -368,21 +373,21 @@ fun ScreenCareGiver(
                                 fontWeight = FontWeight.Bold,
                                 style = MaterialTheme.typography.titleMedium
                             )
-                        }
-                    }
+                        }                    }
+
                     Button(
                         onClick = onNavigateToPatients,
                         modifier = Modifier
                             .fillMaxWidth(0.85f)
                             .height(56.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = colorResource(R.color.gradient_caregiver_start),
+                            containerColor = colorResource(R.color.card_patient),
                             contentColor = colorResource(R.color.white)
                         ),
                         shape = RoundedCornerShape(20.dp),
                         elevation = ButtonDefaults.buttonElevation(
-                            defaultElevation = 12.dp,
-                            pressedElevation = 16.dp
+                            defaultElevation = 8.dp,
+                            pressedElevation = 12.dp
                         )
                     ) {
                         Row(
@@ -393,7 +398,7 @@ fun ScreenCareGiver(
                             Surface(
                                 modifier = Modifier.size(28.dp),
                                 shape = CircleShape,
-                                color = colorResource(R.color.white).copy(alpha = 0.25f)
+                                color = colorResource(R.color.white).copy(alpha = 0.2f)
                             ) {
                                 Icon(
                                     Icons.Default.People,
@@ -421,19 +426,20 @@ fun ScreenCareGiver(
                         modifier = Modifier
                             .fillMaxWidth(0.85f)
                             .height(56.dp),
-                        enabled = !isFetchingOtp,                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colorResource(R.color.gradient_caregiver_start),
+                        enabled = !isFetchingOtp, // Disable only when fetching OTP
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colorResource(R.color.card_caregiver),
                             contentColor = colorResource(R.color.white),
-                            disabledContainerColor = colorResource(R.color.gradient_caregiver_start).copy(
+                            disabledContainerColor = colorResource(R.color.dark_surface_variant).copy(
                                 alpha = 0.5f
                             ),
-                            disabledContentColor = colorResource(R.color.white).copy(alpha = 0.7f)
+                            disabledContentColor = colorResource(R.color.dark_on_surface).copy(alpha = 0.5f)
                         ),
                         shape = RoundedCornerShape(20.dp),
                         elevation = ButtonDefaults.buttonElevation(
-                            defaultElevation = 12.dp,
-                            pressedElevation = 16.dp,
-                            disabledElevation = 4.dp
+                            defaultElevation = 8.dp,
+                            pressedElevation = 12.dp,
+                            disabledElevation = 2.dp
                         )
                     ) {
                         Row(
@@ -442,16 +448,16 @@ fun ScreenCareGiver(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Surface(
-                                modifier = Modifier.size(28.dp), // Consistent icon surface size
+                                modifier = Modifier.size(28.dp),
                                 shape = CircleShape,
-                                color = colorResource(R.color.white).copy(alpha = 0.25f)
+                                color = colorResource(R.color.white).copy(alpha = 0.2f)
                             ) {
-                                Icon(
+                                Icon( // Single icon for simplicity
                                     Icons.Filled.PersonAdd,
                                     contentDescription = null,
                                     modifier = Modifier
-                                        .size(28.dp) // Consistent icon size with padding
-                                        .padding(5.dp),
+                                        .size(16.dp)
+                                        .align(Alignment.CenterVertically), // Center icon in surface
                                     tint = colorResource(R.color.white)
                                 )
                             }
@@ -473,11 +479,10 @@ fun ScreenCareGiver(
                     }
                 }
 
-                // Display error messages specifically from OTP generation
-                if (!isFetchingOtp && errorMsg != null && !(isLoading && userInfo == null) && showNewPatientOtpDialog == false) {
-                    // This condition ensures the error is from OTP and dialog isn't already up
-                    Log.d(TAG, "Displaying non-initial load error message: $errorMsg")
-                    Spacer(modifier = Modifier.height(16.dp)) // Add some space before this error
+                // Display error messages specifically from OTP generation or other non-initial load errors
+                if (!isFetchingOtp && errorMsg != null && !(isLoading && userInfo == null)) {
+                    Log.d(TAG, "Displaying error message: $errorMsg")
+                    Spacer(modifier = Modifier.height(16.dp))
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
@@ -514,21 +519,21 @@ fun ScreenCareGiver(
             "ScreenCareGiver recomposing. showNewPatientOtpDialog: $showNewPatientOtpDialog, newPatientOtp: $newPatientOtp"
         )
 
-        if (showNewPatientOtpDialog && newPatientOtp != null) { // Ensure OTP is not null before showing dialog
+        if (showNewPatientOtpDialog) {
             Log.d(TAG, "Rendering ShowOTP Dialog. OTP: $newPatientOtp")
             ShowOTP(
-                otp = newPatientOtp!!, // OTP is confirmed not null here
+                otp = newPatientOtp ?: "N/A",
                 onCopy = {
                     Log.d(TAG, "Copy clicked in ShowOTP Dialog.")
-                    clipboardManager.setText(AnnotatedString(newPatientOtp!!))
-                    coroutineScope.launch { snackbarHostState.showSnackbar("Registration code copied!") }
+                    newPatientOtp?.let {
+                        clipboardManager.setText(AnnotatedString(it))
+                        coroutineScope.launch { snackbarHostState.showSnackbar("Registration code copied!") }
+                    }
                     showNewPatientOtpDialog = false
-                    // errorMsg = null // Clear error message when OTP dialog is shown successfully
                 },
                 onCancel = {
                     Log.d(TAG, "Cancel/Close clicked in ShowOTP Dialog.")
                     showNewPatientOtpDialog = false
-                    // errorMsg = null // Clear error message on cancel as well, if appropriate
                 }
             )
         }
@@ -542,27 +547,28 @@ fun CaregiverInfoCard(
     dob: String,
     gender: String,
     profilePicture: String?
-) {    Card(
+) {
+    Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = colorResource(R.color.dark_surface_variant).copy(alpha = 0.95f)
-        ),
-        shape = RoundedCornerShape(20.dp)
-    ) {        Column(
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        colors = CardDefaults.cardColors(containerColor = colorResource(R.color.dark_surface_variant)),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
             modifier = Modifier
-                .padding(24.dp)
+                .padding(20.dp)
                 .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
-            ) {                Text(
+            ) {
+                Text(
                     text = "My Information",
-                    style = MaterialTheme.typography.headlineSmall,
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = colorResource(R.color.info_blue), // Brighter blue for visibility
+                    color = colorResource(R.color.dark_primary),
                     modifier = Modifier.weight(1f)
                 )
                 if (profilePicture != null) {
@@ -570,17 +576,18 @@ fun CaregiverInfoCard(
                         model = profilePicture,
                         contentDescription = "Profile Picture",
                         modifier = Modifier
-                            .size(getCaregiverProfilePictureSize())
+                            .size(getCaregiverProfilePictureSize()) // Corrected function call
                             .clip(CircleShape),
                         contentScale = ContentScale.Crop,
-                        placeholder = painterResource(R.drawable.ic_launcher_foreground),
-                        error = painterResource(R.drawable.ic_launcher_foreground)
+                        placeholder = painterResource(R.drawable.ic_launcher_foreground), // Replace with your actual placeholder
+                        error = painterResource(R.drawable.ic_launcher_foreground)       // Replace with your actual error image
                     )
-                } else {                    Icon(
+                } else {
+                    Icon(
                         imageVector = Icons.Default.AccountCircle,
                         contentDescription = "Default Profile",
-                        tint = colorResource(R.color.gradient_caregiver_start).copy(alpha = 0.8f),
-                        modifier = Modifier.size(getCaregiverProfilePictureSize())
+                        tint = colorResource(R.color.dark_primary),
+                        modifier = Modifier.size(getCaregiverProfilePictureSize()) // Corrected function call
                     )
                 }
             }
@@ -590,28 +597,28 @@ fun CaregiverInfoCard(
                 "Name",
                 Icons.Filled.AccountCircle,
                 name,
-                colorResource(R.color.info_blue), // Brighter blue for visibility
+                colorResource(R.color.dark_primary),
                 colorResource(R.color.dark_on_surface)
             )
             InfoRow(
                 "Email",
                 Icons.Filled.Email,
                 email,
-                colorResource(R.color.info_blue), // Brighter blue for visibility
+                colorResource(R.color.dark_primary),
                 colorResource(R.color.dark_on_surface)
             )
             InfoRow(
                 "Date of Birth",
                 Icons.Filled.CalendarToday,
                 dob,
-                colorResource(R.color.info_blue), // Brighter blue for visibility
+                colorResource(R.color.dark_primary),
                 colorResource(R.color.dark_on_surface)
             )
             InfoRow(
                 "Gender",
                 Icons.Filled.Person,
                 formatGender(gender),
-                colorResource(R.color.info_blue), // Brighter blue for visibility
+                colorResource(R.color.dark_primary),
                 colorResource(R.color.dark_on_surface)
             )
         }
@@ -620,38 +627,19 @@ fun CaregiverInfoCard(
 
 @Composable
 fun InfoRow(label: String, icon: ImageVector, value: String, iconColor: Color, textColor: Color) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-    ) {
-        Surface(
-            modifier = Modifier.size(40.dp),
-            shape = CircleShape,
-            color = iconColor.copy(alpha = 0.18f) // Lighter, more visible blue background
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = "$label Icon",
-                tint = iconColor, // Brighter blue
-                modifier = Modifier
-                    .padding(8.dp)
-                    .size(24.dp)
-            )
-        }
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+        Icon(icon, "$label Icon", tint = iconColor, modifier = Modifier.size(24.dp))
         Spacer(modifier = Modifier.width(16.dp))
         Column {
             Text(
                 label,
-                style = MaterialTheme.typography.labelMedium,
-                color = textColor.copy(alpha = 0.8f),
-                fontWeight = FontWeight.Medium
+                style = MaterialTheme.typography.labelSmall,
+                color = textColor.copy(alpha = 0.7f)
             )
             Text(
                 value,
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Medium,
                 color = textColor
             )
         }
@@ -676,7 +664,7 @@ fun ShowOTP(otp: String, onCopy: () -> Unit, onCancel: () -> Unit) {
             Text(
                 "New Patient Registration Code",
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface // Use theme colors
+                color = MaterialTheme.colorScheme.onSurface
             )
         },
         text = {
@@ -684,11 +672,11 @@ fun ShowOTP(otp: String, onCopy: () -> Unit, onCancel: () -> Unit) {
                 Text(
                     "Share this One-Time Code with the new patient for their registration process.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant // Use theme colors
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), // Use theme colors
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
@@ -700,13 +688,13 @@ fun ShowOTP(otp: String, onCopy: () -> Unit, onCancel: () -> Unit) {
                             modifier = Modifier.weight(1f),
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary // Use theme colors
+                            color = MaterialTheme.colorScheme.primary
                         )
                         IconButton(onClick = onCopy, modifier = Modifier.size(48.dp)) {
                             Icon(
                                 Icons.Filled.ContentCopy,
                                 "Copy Code",
-                                tint = MaterialTheme.colorScheme.primary // Use theme colors
+                                tint = MaterialTheme.colorScheme.primary
                             )
                         }
                     }
@@ -715,17 +703,18 @@ fun ShowOTP(otp: String, onCopy: () -> Unit, onCancel: () -> Unit) {
         },
         confirmButton = {
             TextButton(onClick = onCancel) {
-                Text("CLOSE", color = MaterialTheme.colorScheme.primary) // Use theme colors
+                Text("CLOSE", color = MaterialTheme.colorScheme.primary)
             }
         },
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.surface, // Explicitly set container color for AlertDialog
         titleContentColor = MaterialTheme.colorScheme.onSurface,
         textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
     )
 }
 
+// Helper function for responsive profile picture sizing specifically for Caregiver Card
 @Composable
-private fun getCaregiverProfilePictureSize(): Dp {
+private fun getCaregiverProfilePictureSize(): Dp { // Renamed and simplified
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
 

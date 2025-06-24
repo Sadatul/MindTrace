@@ -175,31 +175,28 @@ fun ScreenPatient(
                     titleContentColor = colorResource(R.color.dark_on_surface)
                 )
             )
-        },
-        floatingActionButton = {
+        },        floatingActionButton = {
+            val configuration = LocalConfiguration.current
+            val isLargeScreen = configuration.screenWidthDp > 360
+            
             Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), // Ensure FABS don't overflow small screens
-                horizontalArrangement = Arrangement.SpaceEvenly, // Distribute space
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // My Caregivers Button
                 ExtendedFloatingActionButton(
-                    onClick = onNavigateToCaregivers,
+                    onClick = { onNavigateToCaregivers() },
                     containerColor = colorResource(R.color.gradient_patient_start),
                     contentColor = colorResource(R.color.white),
                     elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 8.dp),
-                    modifier = Modifier
-                        .height(56.dp)
-                        .weight(1f),
-                    expanded = LocalConfiguration.current.screenWidthDp > 360,
-                    text = {
-                        Text(
-                            "My Caregivers",
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                    },
-                    icon = {
+                    modifier = Modifier.height(56.dp).weight(1f),
+                    expanded = isLargeScreen
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
                         Surface(
                             modifier = Modifier.size(24.dp),
                             shape = CircleShape,
@@ -214,8 +211,16 @@ fun ScreenPatient(
                                     .size(16.dp)
                             )
                         }
+                        if (isLargeScreen) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                "My Caregivers",
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        }
                     }
-                )
+                }
 
                 Spacer(modifier = Modifier.width(16.dp))
 
@@ -225,18 +230,13 @@ fun ScreenPatient(
                     containerColor = colorResource(R.color.gradient_patient_start),
                     contentColor = colorResource(R.color.white),
                     elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 8.dp),
-                    modifier = Modifier
-                        .height(56.dp)
-                        .weight(1f),
-                    expanded = LocalConfiguration.current.screenWidthDp > 360,
-                    text = {
-                        Text(
-                            "Get Help",
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                    },
-                    icon = {
+                    modifier = Modifier.height(56.dp).weight(1f),
+                    expanded = isLargeScreen
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
                         Surface(
                             modifier = Modifier.size(24.dp),
                             shape = CircleShape,
@@ -251,10 +251,18 @@ fun ScreenPatient(
                                     .size(16.dp)
                             )
                         }
+                        if (isLargeScreen) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                "Get Help",
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        }
                     }
-                )
+                }
             }
-        }, floatingActionButtonPosition = FabPosition.Center
+        },floatingActionButtonPosition = FabPosition.Center
     ) { innerPadding ->
         Box(
             modifier = Modifier

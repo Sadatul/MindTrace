@@ -178,20 +178,13 @@ fun ScreenPatient(
         },
         floatingActionButton = {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), // Ensure FABS don't overflow small screens
-                horizontalArrangement = Arrangement.SpaceEvenly, // Distribute space
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // My Caregivers Button
                 ExtendedFloatingActionButton(
-                    onClick = onNavigateToCaregivers,
-                    containerColor = colorResource(R.color.gradient_patient_start),
-                    contentColor = colorResource(R.color.white),
-                    elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 8.dp),
-                    modifier = Modifier
-                        .height(56.dp)
-                        .weight(1f),
-                    expanded = LocalConfiguration.current.screenWidthDp > 360,
                     text = {
                         Text(
                             "My Caregivers",
@@ -199,36 +192,33 @@ fun ScreenPatient(
                             style = MaterialTheme.typography.titleMedium
                         )
                     },
-                    icon = {
-                        Surface(
+                    icon = {                        Surface(
                             modifier = Modifier.size(24.dp),
                             shape = CircleShape,
-                            color = colorResource(R.color.white).copy(alpha = 0.2f)
+                            color = colorResource(R.color.white).copy(alpha = 0.25f)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.People,
                                 contentDescription = null,
                                 tint = colorResource(R.color.white),
                                 modifier = Modifier
-                                    .padding(4.dp)
-                                    .size(16.dp)
+                                    .padding(5.dp)
+                                    .size(14.dp)
                             )
                         }
-                    }
+                    },                    onClick = { onNavigateToCaregivers() },
+                    containerColor = colorResource(R.color.gradient_patient_start),
+                    contentColor = colorResource(R.color.white),
+                    elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 12.dp),
+                    modifier = Modifier
+                        .height(56.dp)
+                        .weight(1f),
+                    expanded = LocalConfiguration.current.screenWidthDp > 360
                 )
 
                 Spacer(modifier = Modifier.width(16.dp))
 
-                // Get Help Button
                 ExtendedFloatingActionButton(
-                    onClick = onNavigateToChat,
-                    containerColor = colorResource(R.color.gradient_patient_start),
-                    contentColor = colorResource(R.color.white),
-                    elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 8.dp),
-                    modifier = Modifier
-                        .height(56.dp)
-                        .weight(1f),
-                    expanded = LocalConfiguration.current.screenWidthDp > 360,
                     text = {
                         Text(
                             "Get Help",
@@ -251,7 +241,14 @@ fun ScreenPatient(
                                     .size(16.dp)
                             )
                         }
-                    }
+                    },                    onClick = onNavigateToChat,
+                    containerColor = colorResource(R.color.gradient_patient_start),
+                    contentColor = colorResource(R.color.white),
+                    elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 12.dp),
+                    modifier = Modifier
+                        .height(56.dp)
+                        .weight(1f),
+                    expanded = LocalConfiguration.current.screenWidthDp > 360
                 )
             }
         }, floatingActionButtonPosition = FabPosition.Center
