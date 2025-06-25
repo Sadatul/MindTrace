@@ -69,6 +69,9 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - REDIS_USER=default
       - REDIS_PORT=14237
+      - LOKI_URL=http://loki:3100/loki/api/v1/push
+      - name=app-mindtrace
+      - HOSTNAME=azurevm
     secrets:
       - db-url
       - db-username
@@ -114,7 +117,22 @@ services:
     deploy:
       placement:
         constraints: [node.role == manager]
-
+  loki:
+    image: grafana/loki:latest
+    command: -config.file=/etc/loki/loki-config.yaml
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki-data:/loki
+    configs:
+      - source: loki_config
+        target: /etc/loki/loki-config.yaml
+    networks:
+      - host_network
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
   grafana:
     image: grafana/grafana-oss:latest
     environment:
@@ -162,15 +180,19 @@ services:
 networks:
   host_network:
 
+configs:
+  prometheus_config:
+    external: true
+  loki_config:
+    external: true
+
 volumes:
   postgres-data:
   letsencrypt:
   grafana-data:
   prometheus_data:
+  loki-data:
 
-configs:
-  prometheus_config:
-    external: true
 
 secrets:
   db-url:
