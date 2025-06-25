@@ -2,6 +2,7 @@ package com.example.frontend.screens
 
 import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,10 +18,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.ContactPhone
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.MoreVert
@@ -178,84 +179,76 @@ fun ScreenPatient(
         },
         floatingActionButton = {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), // Ensure FABS don't overflow small screens
-                horizontalArrangement = Arrangement.SpaceEvenly, // Distribute space
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
             ) {
-                // My Caregivers Button
-                ExtendedFloatingActionButton(
-                    onClick = onNavigateToCaregivers,
-                    containerColor = colorResource(R.color.gradient_patient_start),
-                    contentColor = colorResource(R.color.white),
-                    elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 8.dp),
+                // My Caregivers Button (rectangle, matches chat button)
+                Surface(
+                    shape = RoundedCornerShape(24.dp),
+                    color = colorResource(R.color.gradient_patient_start),
+                    shadowElevation = 20.dp,
                     modifier = Modifier
-                        .height(56.dp)
-                        .weight(1f),
-                    expanded = LocalConfiguration.current.screenWidthDp > 360,
-                    text = {
-                        Text(
-                            "My Caregivers",
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.titleMedium
+                        .size(width = 120.dp, height = 110.dp)
+                        .clickable(onClick = onNavigateToCaregivers)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(vertical = 12.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.People,
+                            contentDescription = "My Caregivers",
+                            modifier = Modifier.size(54.dp),
+                            tint = colorResource(R.color.white)
                         )
-                    },
-                    icon = {
-                        Surface(
-                            modifier = Modifier.size(24.dp),
-                            shape = CircleShape,
-                            color = colorResource(R.color.white).copy(alpha = 0.2f)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.People,
-                                contentDescription = null,
-                                tint = colorResource(R.color.white),
-                                modifier = Modifier
-                                    .padding(4.dp)
-                                    .size(16.dp)
-                            )
-                        }
+                        Text(
+                            text = "My Caregivers",
+                            color = colorResource(R.color.white),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
                     }
-                )
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                // Get Help Button
-                ExtendedFloatingActionButton(
-                    onClick = onNavigateToChat,
-                    containerColor = colorResource(R.color.gradient_patient_start),
-                    contentColor = colorResource(R.color.white),
-                    elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 8.dp),
+                }
+                Spacer(modifier = Modifier.width(24.dp)) // Small gap between buttons
+                // ASK AI / Start Chat Button (rectangle, matches caregivers button)
+                Surface(
+                    shape = RoundedCornerShape(24.dp),
+                    color = colorResource(R.color.gradient_patient_start),
+                    shadowElevation = 20.dp,
                     modifier = Modifier
-                        .height(56.dp)
-                        .weight(1f),
-                    expanded = LocalConfiguration.current.screenWidthDp > 360,
-                    text = {
-                        Text(
-                            "Get Help",
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.titleMedium
+                        .size(width = 120.dp, height = 110.dp)
+                        .clickable(onClick = onNavigateToChat)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(vertical = 12.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Chat,
+                            contentDescription = "ASK AI",
+                            modifier = Modifier.size(54.dp),
+                            tint = colorResource(R.color.white)
                         )
-                    },
-                    icon = {
-                        Surface(
-                            modifier = Modifier.size(24.dp),
-                            shape = CircleShape,
-                            color = colorResource(R.color.white).copy(alpha = 0.2f)
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.HelpOutline,
-                                contentDescription = null,
-                                tint = colorResource(R.color.white),
-                                modifier = Modifier
-                                    .padding(4.dp)
-                                    .size(16.dp)
-                            )
-                        }
+                        Text(
+                            text = "ASK AI",
+                            color = colorResource(R.color.white),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
                     }
-                )
+                }
             }
         }, floatingActionButtonPosition = FabPosition.Center
-    ) { innerPadding ->
+    ) {
+        innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
