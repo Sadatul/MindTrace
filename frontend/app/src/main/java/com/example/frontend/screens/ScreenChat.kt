@@ -396,7 +396,8 @@ fun ChatScreen(
                                     }
                                 }
                             }
-                        },                        enabled = !isLoading && inputText.isNotBlank() && !isInitiallyLoading,
+                        },
+                        enabled = !isLoading && inputText.isNotBlank() && !isInitiallyLoading,
                         modifier = Modifier
                             .background(
                                 brush = if (!isLoading && inputText.isNotBlank() && !isInitiallyLoading) {
