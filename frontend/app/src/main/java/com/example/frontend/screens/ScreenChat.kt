@@ -8,7 +8,6 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -57,7 +56,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.colorResource
@@ -179,7 +177,8 @@ fun ChatScreen(
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleLarge
                     )
-                },                navigationIcon = {
+                },
+                navigationIcon = {
                     IconButton(
                         onClick = onNavigateBack,
                         modifier = Modifier.padding(start = 4.dp)
@@ -280,9 +279,25 @@ fun ChatScreen(
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
+                                            // Blinking 'AI is thinking' text, word by word
+                                            val infiniteTransition = rememberInfiniteTransition(label = "ai_thinking_words")
+                                            val wordIndex by infiniteTransition.animateFloat(
+                                                initialValue = 0f,
+                                                targetValue = 4f,
+                                                animationSpec = infiniteRepeatable(
+                                                    animation = tween(durationMillis = 1200, easing = LinearEasing),
+                                                    repeatMode = RepeatMode.Restart
+                                                ), label = "ai_thinking_words_anim"
+                                            )
+                                            val currentWord = when (wordIndex.toInt()) {
+                                                0 -> "AI"
+                                                1 -> "is"
+                                                2 -> "thinking"
+                                                else -> "AI is thinking"
+                                            }
                                             Text(
-                                                text = "AI is thinking",
-                                                style = MaterialTheme.typography.bodyMedium,
+                                                text = currentWord,
+                                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                                                 color = colorResource(id = R.color.dark_on_surface)
                                             )
                                             Spacer(modifier = Modifier.width(4.dp))
@@ -319,65 +334,6 @@ fun ChatScreen(
                 }
 
                 Spacer(modifier = Modifier.height(8.dp)) // Reduced space before input
-
-                // AI is thinking indicator - positioned directly above input
-                if (isLoading) {
-                    val infiniteTransition = rememberInfiniteTransition(label = "blink")
-                    val alpha by infiniteTransition.animateFloat(
-                        initialValue = 0f,
-                        targetValue = 1f,
-                        animationSpec = infiniteRepeatable(
-                            animation = keyframes {
-                                durationMillis = 1200
-                                0f at 0 with LinearEasing
-                                1f at 400 with LinearEasing
-                                1f at 800 with LinearEasing
-                                0f at 1200 with LinearEasing
-                            },
-                            repeatMode = RepeatMode.Restart
-                        ), label = "blink"
-                    )
-                    
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 4.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(
-                                    Color.Transparent
-                                )
-                                .padding(horizontal = 16.dp, vertical = 10.dp)
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Start
-                            ) {
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "AI is thinking...",
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White.copy(alpha = alpha)
-                                    ),
-                                    modifier = Modifier.graphicsLayer {
-                                        scaleX = 0.9f + (alpha * 0.1f)
-                                        scaleY = 0.9f + (alpha * 0.1f)
-                                    }
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                AnimatedDots(
-                                    dotSize = 14.dp,
-                                    color = Color.White.copy(alpha = alpha),
-                                    dotSpacing = 8.dp
-                                )
-                            }
-                        }
-                    }
-                }
-
 
                 // Input field and send button
                 Row(
