@@ -1,5 +1,7 @@
 package com.example.frontend.screens.components
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -32,8 +34,19 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun ChatBubble(message: ChatMessage) {
+fun ChatBubble(untrimmedMessage: ChatMessage) {
+    var message: ChatMessage = untrimmedMessage
+
+    if (!untrimmedMessage.isUser && untrimmedMessage.text.endsWith("null")) {
+        message = ChatMessage(
+            text = untrimmedMessage.text.dropLast(4),
+            isUser = false,
+            timestamp = untrimmedMessage.timestamp
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -99,7 +112,7 @@ fun ChatBubble(message: ChatMessage) {
                     .padding(16.dp)
             ) {
                 Text(
-                    text = if (message.isUser) message.text else message.text.substring(0, message.text.length - 4),
+                    text = message.text,
                     color = colorResource(R.color.white),
                     textAlign = TextAlign.Start,
                     fontWeight = FontWeight.Medium,
@@ -151,6 +164,7 @@ fun ChatBubble(message: ChatMessage) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 private fun formatTimestamp(utcTimestamp: String): String {
     return try {
         val instant = Instant.parse(utcTimestamp)

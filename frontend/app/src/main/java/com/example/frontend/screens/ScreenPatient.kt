@@ -382,7 +382,6 @@ fun PatientInfoCard(name: String, email: String, gender: String, dob: String, pr
                     thickness = 1.dp
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-
                 // Primary Contact Header with profile picture
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -395,7 +394,6 @@ fun PatientInfoCard(name: String, email: String, gender: String, dob: String, pr
                         color = colorResource(R.color.dark_primary),
                         modifier = Modifier.weight(1f)
                     )
-
                     // Caregiver profile picture
                     if (primaryContact.profilePicture != null) {
                         AsyncImage(
@@ -418,7 +416,6 @@ fun PatientInfoCard(name: String, email: String, gender: String, dob: String, pr
                     }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-
                 InfoRowContent(label = "Caregiver Name", value = primaryContact.name, icon = Icons.Filled.ContactPhone)
                 InfoRowContent(label = "Caregiver ID", value = primaryContact.id, icon = Icons.Filled.Badge)
                 InfoRowContent(
