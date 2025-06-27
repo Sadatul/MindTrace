@@ -59,10 +59,12 @@ fun DialogAddPartner(
                     showConfirmDialog = false
 
                     coroutineScope.launch {
-                        RetrofitInstance.dementiaAPI.sendPatientAddOTP(patientId)
+                        val success = RetrofitInstance.dementiaAPI.sendPatientAddOTP(patientId)
+                        if (success) {
+                            onOtpRequested(patientId)
+                        }
                     }
 
-                    onOtpRequested(patientId)
 
                 }) { Text("Add Patient") }
             },

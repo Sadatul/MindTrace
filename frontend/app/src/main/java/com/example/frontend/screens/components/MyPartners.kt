@@ -260,7 +260,7 @@ fun ScreenMyPartners(
                 val filteredPartners = if (showDeletedPartners) {
                     partnersState
                 } else {
-                    partnersState.filter { it.removeAt == null }
+                    partnersState.filter { it.removedAt == null }
                 }
 
                 // Display content based on loading state and partner list states
@@ -366,8 +366,7 @@ fun ScreenMyPartners(
                                 val success = api.deleteCaregiver(selectedPartner!!.id, otp)
                                 if (success) {
                                     // Refresh the partners list from backend
-                                    val updatedPartners = RetrofitInstance.dementiaAPI.getPartners(includeDeleted = true)
-                                    partnersState = updatedPartners
+                                    partnersState = RetrofitInstance.dementiaAPI.getPartners(includeDeleted = showDeletedPartners)
                                     showOtpDialog = false
                                     selectedPartner = null
                                 } else {
@@ -413,20 +412,7 @@ fun ScreenMyPartners(
                                     RequestPatientAdd(patientId = addPatientIdForOtp, otp = otp)
                                 )
                                 if (success) {
-                                    val updatedPartners = RetrofitInstance.dementiaAPI.getPartners(includeDeleted = true)
-                                    val newPartner = updatedPartners.find { it.id == addPatientIdForOtp }
-                                    partnersState = if (newPartner != null) {
-                                        partnersState + newPartner
-                                    } else {
-                                        partnersState + PartnerInfo(
-                                            id = addPatientIdForOtp,
-                                            name = "New Partner",
-                                            gender = "",
-                                            createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ENGLISH).format(Date()),
-                                            removeAt = null,
-                                            profilePicture = null
-                                        )
-                                    }
+                                    partnersState = RetrofitInstance.dementiaAPI.getPartners(includeDeleted = showDeletedPartners)
                                     addPatientIdForOtp = ""
                                 } else {
                                     addError = "Failed to add patient. Invalid OTP or patient not found."
@@ -535,7 +521,7 @@ fun PartnerCard(
     onDelete: () -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
-    val isDeleted = partner.removeAt != null
+    val isDeleted = partner.removedAt != null
 
     val cardBaseColor = if (isDeleted) Color(0xFF757575) else Color(0xFF64B5F6) // Grey for deleted, role color otherwise
     val contentOnCardColor = if (isDeleted) Color.White.copy(alpha = 0.8f) else Color.White // High contrast for readability
@@ -675,13 +661,13 @@ fun PartnerCard(
                 isDeleted = isDeleted
             )
 
-            if (partner.removeAt != null) {
+            if (partner.removedAt != null) {
                 PartnerInfoRow(
                     label = "Removed On",
-                    value = formatUserFriendlyDate(partner.removeAt), // Safe call, checked above
+                    value = formatUserFriendlyDate(partner.removedAt), // Safe call, checked above
                     icon = Icons.Default.CalendarToday,
-                    contentColor = if (isDeleted) Color(0xFFFFCDD2) else contentOnCardColor, // Lighter red for visibility
-                    isDeleted = isDeleted,
+                    contentColor = Color(0xFFFFCDD2), // Lighter red for visibility
+                    isDeleted = true,
                     valueFontWeight = FontWeight.SemiBold // Highlight removed date
                 )
             }
