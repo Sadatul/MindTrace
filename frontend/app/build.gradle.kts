@@ -98,4 +98,14 @@ dependencies {
     implementation("androidx.credentials:credentials-play-services-auth:1.2.2") // Bridges Credential Manager with Play Services
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.0") // Google Identity Services library
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
+
+    // QR Code generation
+    implementation("com.google.zxing:core:3.5.2")
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+
+    // QR Code scanning
+    implementation("androidx.camera:camera-camera2:1.3.1")
+    implementation("androidx.camera:camera-lifecycle:1.3.1")
+    implementation("androidx.camera:camera-view:1.3.1")
+    implementation("com.google.mlkit:barcode-scanning:17.2.0")
 }
