@@ -120,7 +120,7 @@ fun LastChatDialog(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "View Chat",
+                                text = "Old Chat",
                                 color = colorResource(R.color.white),
                                 fontWeight = FontWeight.Medium
                             )

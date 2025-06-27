@@ -2,6 +2,7 @@ package com.example.frontend.screens
 
 import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -259,7 +260,40 @@ fun ScreenCareGiver(
                 )
             )
         },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        floatingActionButton = {
+            Surface(
+                shape = RoundedCornerShape(24.dp),
+                color = colorResource(R.color.gradient_caregiver_start),
+                shadowElevation = 20.dp,
+                modifier = Modifier
+                    .padding(24.dp, bottom = 8.dp)
+                    .size(width = 110.dp, height = 110.dp)
+                    .clickable(onClick = onNavigateToChat)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(vertical = 12.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Chat,
+                        contentDescription = "Start Chat",
+                        modifier = Modifier.size(54.dp),
+                        tint = colorResource(R.color.white)
+                    )
+                    Text(
+                        text = "ASK AI",
+                        color = colorResource(R.color.white),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+            }
+        }
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -328,48 +362,6 @@ fun ScreenCareGiver(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Button(
-                        onClick = onNavigateToChat,
-                        modifier = Modifier
-                            .fillMaxWidth(0.85f)
-                            .height(56.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colorResource(R.color.gradient_caregiver_start),
-                            contentColor = colorResource(R.color.white)
-                        ),
-                        shape = RoundedCornerShape(20.dp),
-                        elevation = ButtonDefaults.buttonElevation(
-                            defaultElevation = 12.dp,
-                            pressedElevation = 16.dp
-                        )
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Surface(
-                                modifier = Modifier.size(28.dp),
-                                shape = CircleShape,
-                                color = colorResource(R.color.white).copy(alpha = 0.25f)
-                            ) {
-                                Icon(
-                                    Icons.Filled.Chat,
-                                    contentDescription = null,
-                                    modifier = Modifier
-                                        .size(28.dp)
-                                        .padding(5.dp),
-                                    tint = colorResource(R.color.white)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(
-                                "Help & Support Chat",
-                                fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                        }
-                    }
                     Button(
                         onClick = onNavigateToPatients,
                         modifier = Modifier

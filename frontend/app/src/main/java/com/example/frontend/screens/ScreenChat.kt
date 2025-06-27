@@ -4,7 +4,15 @@ import android.annotation.SuppressLint
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.keyframes
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -48,6 +56,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.colorResource
@@ -56,13 +66,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-// import coil.compose.AsyncImage // Duplicate import
 import com.example.frontend.R
 import com.example.frontend.api.RetrofitInstance
 import com.example.frontend.api.SelfUserInfoCache
 import com.example.frontend.api.UserInfo
 import com.example.frontend.api.getIdToken
-// import com.example.frontend.api.getIdToken // Already imported by RetrofitInstance.dementiaAPI.getIdToken()
 import com.example.frontend.api.models.RequestChat
 import com.example.frontend.screens.components.ChatBubble
 import com.example.frontend.screens.components.LastChatDialog
@@ -248,8 +256,45 @@ fun ChatScreen(
                             .fillMaxWidth(),
                         reverseLayout = true
                     ) {
+                        // AI Typing Indicator
+                        if (isLoading) {
+                            item {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.Start,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    AsyncImage(
+                                        model = R.drawable.ic_mindtrace_logo,
+                                        contentDescription = "AI Assistant",
+                                        modifier = Modifier
+                                            .size(getChatProfilePictureSize())
+                                            .clip(CircleShape)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(
+                                                text = "AI is thinking",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = colorResource(id = R.color.dark_on_surface)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            AnimatedDots()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         // Messages are displayed from newest (index 0) to oldest
-                        items(messages, key = { it.timestamp + it.text }) { message -> // Added key for better performance
+                        items(messages, key = { it.timestamp + it.text }) { message ->
                             ChatBubble(message)
                             Spacer(modifier = Modifier.height(8.dp))
                         }
@@ -260,12 +305,12 @@ fun ChatScreen(
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(vertical = 16.dp), // Increased padding for visibility
+                                        .padding(vertical = 16.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     CircularProgressIndicator(
                                         color = colorResource(R.color.dark_primary),
-                                        modifier = Modifier.size(32.dp) // Slightly larger
+                                        modifier = Modifier.size(32.dp)
                                     )
                                 }
                             }
@@ -275,13 +320,74 @@ fun ChatScreen(
 
                 Spacer(modifier = Modifier.height(8.dp)) // Reduced space before input
 
+                // AI is thinking indicator - positioned directly above input
+                if (isLoading) {
+                    val infiniteTransition = rememberInfiniteTransition(label = "blink")
+                    val alpha by infiniteTransition.animateFloat(
+                        initialValue = 0f,
+                        targetValue = 1f,
+                        animationSpec = infiniteRepeatable(
+                            animation = keyframes {
+                                durationMillis = 1200
+                                0f at 0 with LinearEasing
+                                1f at 400 with LinearEasing
+                                1f at 800 with LinearEasing
+                                0f at 1200 with LinearEasing
+                            },
+                            repeatMode = RepeatMode.Restart
+                        ), label = "blink"
+                    )
+                    
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 4.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(
+                                    Color.Transparent
+                                )
+                                .padding(horizontal = 16.dp, vertical = 10.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Start
+                            ) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "AI is thinking...",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White.copy(alpha = alpha)
+                                    ),
+                                    modifier = Modifier.graphicsLayer {
+                                        scaleX = 0.9f + (alpha * 0.1f)
+                                        scaleY = 0.9f + (alpha * 0.1f)
+                                    }
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                AnimatedDots(
+                                    dotSize = 14.dp,
+                                    color = Color.White.copy(alpha = alpha),
+                                    dotSpacing = 8.dp
+                                )
+                            }
+                        }
+                    }
+                }
+
+
                 // Input field and send button
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 8.dp), // Padding for keyboard spacing
+                        .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
-                ) {                    TextField(
+                ) {
+                    TextField(
                         value = inputText,
                         onValueChange = { inputText = it },
                         modifier = Modifier
@@ -326,124 +432,139 @@ fun ChatScreen(
 
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    IconButton(
-                        onClick = {
-                            if (inputText.isNotBlank()) {
-                                val userMessageText = inputText
-                                inputText = "" // Clear input immediately
+                    if (isLoading) {
+                        // Circular progress indicator in place of send button
+                        Box(
+                            modifier = Modifier.size(48.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    } else {
+                        IconButton(
+                            onClick = {
+                                if (inputText.isNotBlank()) {
+                                    val userMessageText = inputText
+                                    inputText = "" // Clear input immediately
 
-                                // Add user message optimistically
-                                val userMessage = ChatMessage(
-                                    text = userMessageText,
-                                    isUser = true,
-                                    timestamp = Instant.now().toString() // Ensure unique timestamp
-                                )
-                                messages = listOf(userMessage) + messages // Prepend for reverseLayout
+                                    // Add user message optimistically
+                                    val userMessage = ChatMessage(
+                                        text = userMessageText,
+                                        isUser = true,
+                                        timestamp = Instant.now().toString() // Ensure unique timestamp
+                                    )
+                                    messages = listOf(userMessage) + messages // Prepend for reverseLayout
 
-                                scope.launch {
-                                    // Scroll to the new message (index 0)
-                                    listState.animateScrollToItem(0)
-                                    isLoading = true
-                                    try {
-                                        val token = RetrofitInstance.dementiaAPI.getIdToken()
-                                        Log.d(TAG, "Token for sending: $token")
+                                    scope.launch {
+                                        // Scroll to the new message (index 0)
+                                        listState.animateScrollToItem(0)
+                                        isLoading = true
+                                        try {
+                                            val token = RetrofitInstance.dementiaAPI.getIdToken()
+                                            Log.d(TAG, "Token for sending: $token")
 
-                                        val response = RetrofitInstance.dementiaAPI.sendChatMessage(
-                                            "Bearer $token",
-                                            RequestChat(userMessageText)
-                                        )
-                                        if (response.isSuccessful) {
-                                            response.body()?.string()?.let { reply ->
-                                                val assistantMessage = ChatMessage(
-                                                    text = reply,
-                                                    isUser = false,
-                                                    timestamp = Instant.now().toString() // Ensure unique timestamp
-                                                )
-                                                messages = listOf(assistantMessage) + messages
-                                                listState.animateScrollToItem(0)
-                                            } ?: run {
-                                                // Handle empty successful response if necessary
+                                            val response = RetrofitInstance.dementiaAPI.sendChatMessage(
+                                                "Bearer $token",
+                                                RequestChat(userMessageText)
+                                            )
+                                            if (response.isSuccessful) {
+                                                response.body()?.string()?.let { reply ->
+                                                    val assistantMessage = ChatMessage(
+                                                        text = reply,
+                                                        isUser = false,
+                                                        timestamp = Instant.now().toString() // Ensure unique timestamp
+                                                    )
+                                                    messages = listOf(assistantMessage) + messages
+                                                    listState.animateScrollToItem(0)
+                                                } ?: run {
+                                                    // Handle empty successful response if necessary
+                                                    val errorMessage = ChatMessage(
+                                                        text = "Received empty response from server.",
+                                                        isUser = false,
+                                                        timestamp = Instant.now().toString()
+                                                    )
+                                                    messages = listOf(errorMessage) + messages
+                                                    listState.animateScrollToItem(0)
+                                                }
+                                            } else {
+                                                val errorBody = response.errorBody()?.string() ?: "Unknown error"
+                                                Log.e(TAG, "Chat send error: "+response.code()+" - "+errorBody)
                                                 val errorMessage = ChatMessage(
-                                                    text = "Received empty response from server.",
+                                                    text = "Error: "+response.code(),
                                                     isUser = false,
                                                     timestamp = Instant.now().toString()
                                                 )
                                                 messages = listOf(errorMessage) + messages
                                                 listState.animateScrollToItem(0)
                                             }
-                                        } else {
-                                            val errorBody = response.errorBody()?.string() ?: "Unknown error"
-                                            Log.e(TAG, "Chat send error: ${response.code()} - $errorBody")
+                                        } catch (e: Exception) {
+                                            Log.e(TAG, "Chat send exception", e)
                                             val errorMessage = ChatMessage(
-                                                text = "Error: ${response.code()}",
+                                                text = "Error: "+(e.localizedMessage ?: "Network error"),
                                                 isUser = false,
                                                 timestamp = Instant.now().toString()
                                             )
                                             messages = listOf(errorMessage) + messages
                                             listState.animateScrollToItem(0)
+                                        } finally {
+                                            isLoading = false
                                         }
-                                    } catch (e: Exception) {
-                                        Log.e(TAG, "Chat send exception", e)
-                                        val errorMessage = ChatMessage(
-                                            text = "Error: ${e.localizedMessage ?: "Network error"}",
-                                            isUser = false,
-                                            timestamp = Instant.now().toString()
-                                        )
-                                        messages = listOf(errorMessage) + messages
-                                        listState.animateScrollToItem(0)
-                                    } finally {
-                                        isLoading = false
                                     }
                                 }
-                            }
-                        },
-                        enabled = !isLoading && inputText.isNotBlank() && !isInitiallyLoading,
-                        modifier = Modifier
-                            .background(
-                                brush = if (!isLoading && inputText.isNotBlank() && !isInitiallyLoading) {
-                                    Brush.radialGradient(
-                                        colors = listOf(
-                                            colorResource(R.color.gradient_caregiver_start),
-                                            colorResource(R.color.gradient_caregiver_end)
+                            },
+                            enabled = inputText.isNotBlank() && !isInitiallyLoading,
+                            modifier = Modifier
+                                .background(
+                                    brush = if (!isLoading && inputText.isNotBlank() && !isInitiallyLoading) {
+                                        Brush.radialGradient(
+                                            colors = listOf(
+                                                colorResource(R.color.gradient_caregiver_start),
+                                                colorResource(R.color.gradient_caregiver_end)
+                                            )
                                         )
-                                    )
-                                } else {
-                                    Brush.radialGradient(
-                                        colors = listOf(
-                                            colorResource(R.color.dark_surface_variant),
-                                            colorResource(R.color.dark_surface_variant)
+                                    } else {
+                                        Brush.radialGradient(
+                                            colors = listOf(
+                                                colorResource(R.color.dark_surface_variant),
+                                                colorResource(R.color.dark_surface_variant)
+                                            )
                                         )
-                                    )
-                                },
-                                shape = CircleShape
+                                    },
+                                    shape = CircleShape
+                                )
+                                .size(48.dp) // Standard FAB size
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Send,
+                                contentDescription = "Send",
+                                tint = if (!isLoading && inputText.isNotBlank() && !isInitiallyLoading)
+                                    colorResource(R.color.white)
+                                else
+                                    colorResource(R.color.dark_on_surface).copy(alpha = 0.6f)
                             )
-                            .size(48.dp) // Standard FAB size
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Send,
-                            contentDescription = "Send",
-                            tint = if (!isLoading && inputText.isNotBlank() && !isInitiallyLoading)
-                                colorResource(R.color.white)
-                            else
-                                colorResource(R.color.dark_on_surface).copy(alpha = 0.6f)
-                        )
+                        }
                     }
                 }
+
+
             }
         }
     }
       // Show Last Chat Dialog
     if (showLastChatDialog) {
         LastChatDialog(
-            onDismiss = { 
-                showLastChatDialog = false 
+            onDismiss = {
+                showLastChatDialog = false
                 onCancelDialog() // Navigate back to dashboard
             },
-            onViewLastChat = { 
+            onViewLastChat = {
                 showLastChatDialog = false
                 loadInitialMessages()
             },
-            onStartNewChat = { 
+            onStartNewChat = {
                 showLastChatDialog = false
                 messages = emptyList()
                 isInitiallyLoading = false
@@ -502,5 +623,42 @@ suspend fun loadMessages(
     } catch (e: Exception) {
         Log.e(TAG, "Exception loading messages: ${e.message}. Page: $page", e)
         onComplete(emptyList(), false)
+    }
+}
+
+// AnimatedDots composable for typing/thinking animation
+@Composable
+fun AnimatedDots(
+    dotSize: Dp = 16.dp,
+    color: Color = Color.White,
+    dotSpacing: Dp = 8.dp,
+    dotCount: Int = 3
+) {
+    // dotCount is now a parameter
+    val infiniteTransition = rememberInfiniteTransition(label = "dots")
+    val animatedDot = infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = dotCount.toFloat(),
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 900, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ), label = "dotAnim"
+    )
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(dotSpacing)
+    ) {
+        for (i in 0 until dotCount) {
+            val visible = animatedDot.value > i
+            Box(
+                modifier = Modifier
+                    .size(dotSize)
+                    .padding(3.dp)
+                    .background(
+                        color = if (visible) color else colorResource(R.color.dark_surface_variant),
+                        shape = CircleShape
+                    )
+            )
+        }
     }
 }

@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun DialogAddPartner(
-    role: PartnerScreenRole,
+    role: String, // Changed from PartnerScreenRole to String
     onDismiss: () -> Unit,
     onOtpRequested: (String) -> Unit
 ) {
@@ -28,7 +28,8 @@ fun DialogAddPartner(
     var patientInfoLoading by remember { mutableStateOf(false) }
     var showConfirmDialog by remember { mutableStateOf(false) }
 
-    if (role is PartnerScreenRole.Patient) {
+    // If role is PATIENT, show not supported dialog
+    if (role.equals("PATIENT", ignoreCase = true)) {
         AlertDialog(
             onDismissRequest = onDismiss,
             title = { Text("Not Supported") },
@@ -58,10 +59,12 @@ fun DialogAddPartner(
                     showConfirmDialog = false
 
                     coroutineScope.launch {
-                        RetrofitInstance.dementiaAPI.sendPatientAddOTP(patientId)
+                        val success = RetrofitInstance.dementiaAPI.sendPatientAddOTP(patientId)
+                        if (success) {
+                            onOtpRequested(patientId)
+                        }
                     }
 
-                    onOtpRequested(patientId)
 
                 }) { Text("Add Patient") }
             },

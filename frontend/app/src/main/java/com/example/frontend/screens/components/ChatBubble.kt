@@ -20,11 +20,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.example.frontend.R
+import com.example.frontend.api.SelfUserInfoCache
 import com.example.frontend.screens.models.ChatMessage
 import java.time.Instant
 import java.time.ZoneId
@@ -120,17 +123,31 @@ fun ChatBubble(untrimmedMessage: ChatMessage) {
             // User Avatar (right side for user messages)
             if (message.isUser) {
                 Spacer(modifier = Modifier.width(8.dp))
-                Surface(
-                    modifier = Modifier.size(32.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    color = colorResource(R.color.card_patient)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = "User",
-                        tint = colorResource(R.color.white),
-                        modifier = Modifier.padding(6.dp)
+                val userInfo = SelfUserInfoCache.getUserInfo()
+                if (!userInfo?.profilePicture.isNullOrEmpty()) {
+                    // Show user's Google profile picture
+                    AsyncImage(
+                        model = userInfo.profilePicture,
+                        contentDescription = "User Profile",
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(RoundedCornerShape(16.dp)),
+                        contentScale = ContentScale.Crop
                     )
+                } else {
+                    // Default user icon if no profile picture
+                    Surface(
+                        modifier = Modifier.size(32.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        color = colorResource(R.color.card_patient)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "User",
+                            tint = colorResource(R.color.white),
+                            modifier = Modifier.padding(6.dp)
+                        )
+                    }
                 }
             }
         }
