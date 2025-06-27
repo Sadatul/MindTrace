@@ -31,7 +31,9 @@ public class SecretsPropertySource extends PropertySource<Map<String, String>> {
             Map.entry("email-password", "EMAIL_PASSWORD"),
             Map.entry("azure-openai-endpoint", "AZURE_OPENAI_ENDPOINT"),
             Map.entry("azure-openai-key", "AZURE_OPENAI_KEY"),
-            Map.entry("firebase-credential", "FIREBASE_CREDENTIAL")
+            Map.entry("firebase-credential", "FIREBASE_CREDENTIAL"),
+            Map.entry("rabbitmq-user", "RABBITMQ_USER"),
+            Map.entry("rabbitmq-password", "RABBITMQ_PASSWORD")
     );
 
     public SecretsPropertySource(Environment environment) {
