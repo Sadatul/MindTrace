@@ -269,7 +269,7 @@ fun ScreenCareGiver(
                 shadowElevation = 20.dp,
                 modifier = Modifier
                     .padding(24.dp, bottom = 8.dp)
-                    .size(width = 80.dp, height = 80.dp) // Smaller size
+                    .size(width = 120.dp, height = 80.dp) // Smaller size
                     .clickable(onClick = onNavigateToChat)
             ) {
                 Column(
