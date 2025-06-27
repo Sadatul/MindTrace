@@ -19,7 +19,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.ContactPhone
@@ -27,7 +26,9 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.ReportProblem
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -36,15 +37,14 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FabPosition
-import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -188,52 +188,52 @@ fun ScreenPatient(
                     color = colorResource(R.color.gradient_patient_start),
                     shadowElevation = 20.dp,
                     modifier = Modifier
-                        .size(width = 120.dp, height = 110.dp)
+                        .size(width = 120.dp, height = 90.dp) // Increased width
                         .clickable(onClick = onNavigateToCaregivers)
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(vertical = 12.dp),
+                            .padding(vertical = 10.dp), // Slightly reduced padding
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
                             imageVector = Icons.Default.People,
                             contentDescription = "My Caregivers",
-                            modifier = Modifier.size(54.dp),
+                            modifier = Modifier.size(44.dp), // Reduced icon size
                             tint = colorResource(R.color.white)
                         )
                         Text(
                             text = "My Caregivers",
                             color = colorResource(R.color.white),
-                            style = MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(top = 8.dp)
+                            modifier = Modifier.padding(top = 6.dp)
                         )
                     }
                 }
-                Spacer(modifier = Modifier.width(24.dp)) // Small gap between buttons
+                Spacer(modifier = Modifier.width(18.dp)) // Slightly reduced gap
                 // ASK AI / Start Chat Button (rectangle, matches caregivers button)
                 Surface(
                     shape = RoundedCornerShape(24.dp),
                     color = colorResource(R.color.gradient_patient_start),
                     shadowElevation = 20.dp,
                     modifier = Modifier
-                        .size(width = 120.dp, height = 110.dp)
+                        .size(width = 120.dp, height = 90.dp) // Reduced size
                         .clickable(onClick = onNavigateToChat)
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(vertical = 12.dp),
+                            .padding(vertical = 10.dp), // Slightly reduced padding
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Chat,
                             contentDescription = "ASK AI",
-                            modifier = Modifier.size(54.dp),
+                            modifier = Modifier.size(44.dp), // Reduced icon size
                             tint = colorResource(R.color.white)
                         )
                         Text(
@@ -241,7 +241,7 @@ fun ScreenPatient(
                             color = colorResource(R.color.white),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(top = 8.dp)
+                            modifier = Modifier.padding(top = 6.dp)
                         )
                     }
                 }
@@ -275,11 +275,13 @@ fun ScreenPatient(
                     Spacer(modifier = Modifier.weight(1f))
                 } else if (userInfo != null) {
                     PatientInfoCard(
+                        profilePicture = userInfo!!.profilePicture,
                         name = userInfo!!.name,
                         email = userInfo!!.email,
                         gender = userInfo!!.gender,
                         dob = userInfo!!.dob,
-                        profilePicture = userInfo!!.profilePicture,
+                        userId = userInfo!!.id,
+                        // Primary contact information (caregiver)
                         primaryContact = userInfo!!.primaryContact
                     )
                     Spacer(modifier = Modifier.height(20.dp))
@@ -310,7 +312,18 @@ fun ScreenPatient(
 }
 
 @Composable
-fun PatientInfoCard(name: String, email: String, gender: String, dob: String, profilePicture: String?, primaryContact: PrimaryContact?) {
+fun PatientInfoCard(
+    profilePicture: String?,
+    name: String,
+    email: String,
+    gender: String,
+    dob: String,
+    userId: String?,
+    // Primary contact information (caregiver)
+    primaryContact: PrimaryContact?,
+) {
+    var showQrDialog by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
@@ -374,6 +387,32 @@ fun PatientInfoCard(name: String, email: String, gender: String, dob: String, pr
                 icon = Icons.Filled.Person
             )
 
+            // QR Code Row below info fields (no button background, larger icon/text)
+            if (userId != null) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 18.dp, bottom = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.QrCode,
+                        contentDescription = "Show QR Code",
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clickable { showQrDialog = true },
+                        tint = colorResource(R.color.info_blue)
+                    )
+                    Spacer(modifier = Modifier.width(14.dp))
+                    Text(
+                        "My QR Code",
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = colorResource(R.color.info_blue)
+                    )
+                }
+            }
             // Primary Contact Information (Caregiver)
             if (primaryContact != null) {
                 Spacer(modifier = Modifier.height(12.dp))
@@ -417,7 +456,6 @@ fun PatientInfoCard(name: String, email: String, gender: String, dob: String, pr
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 InfoRowContent(label = "Caregiver Name", value = primaryContact.name, icon = Icons.Filled.ContactPhone)
-                InfoRowContent(label = "Caregiver ID", value = primaryContact.id, icon = Icons.Filled.Badge)
                 InfoRowContent(
                     label = "Gender",
                     value = when (primaryContact.gender.uppercase()) {
@@ -429,6 +467,30 @@ fun PatientInfoCard(name: String, email: String, gender: String, dob: String, pr
                     icon = Icons.Filled.Person
                 )
             }
+        }
+        // QR Code Dialog
+        if (showQrDialog && userId != null) {
+            AlertDialog(
+                onDismissRequest = { showQrDialog = false },
+                title = {
+                    Text("Your QR Code", fontWeight = FontWeight.Bold)
+                },
+                text = {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        com.example.frontend.screens.components.QRCode(
+                            data = userId,
+                            modifier = Modifier.size(240.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Scan this code to share your ID", style = MaterialTheme.typography.bodyMedium)
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showQrDialog = false }) {
+                        Text("CLOSE")
+                    }
+                }
+            )
         }
     }
 }

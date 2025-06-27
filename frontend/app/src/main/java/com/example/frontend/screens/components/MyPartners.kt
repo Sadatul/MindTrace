@@ -12,7 +12,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
@@ -204,10 +203,6 @@ fun ScreenMyPartners(
                     .padding(innerPadding)
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
-                // --- NEW Toggle Field ---
-                val activeColor = Color(0xFF4CAF50)
-                val inactiveColor = Color(0xFFF44336)
-
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -397,7 +392,7 @@ fun ScreenMyPartners(
                     onOtpRequested = { partnerId ->
                         showAddPartnerDialog = false
                         addPatientIdForOtp = partnerId
-                    }
+                    },
                 )
             }
             if (addPatientIdForOtp.isNotBlank() && isCaregiver) {
@@ -636,13 +631,6 @@ fun PartnerCard(
                 label = "Name",
                 value = partner.name,
                 icon = Icons.Default.AccountCircle,
-                contentColor = contentOnCardColor,
-                isDeleted = isDeleted
-            )
-            PartnerInfoRow(
-                label = "User ID",
-                value = partner.id,
-                icon = Icons.Default.Badge,
                 contentColor = contentOnCardColor,
                 isDeleted = isDeleted
             )

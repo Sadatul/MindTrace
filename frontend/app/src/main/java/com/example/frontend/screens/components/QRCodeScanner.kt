@@ -17,7 +17,6 @@ import com.journeyapps.barcodescanner.ScanOptions
 fun rememberQRScanner(
     onResult: (String) -> Unit,
     onError: (String) -> Unit = { error ->
-        // Default error handling can be overridden
     }
 ): () -> Unit {
     val context = LocalContext.current

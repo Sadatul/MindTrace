@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -268,28 +269,28 @@ fun ScreenCareGiver(
                 shadowElevation = 20.dp,
                 modifier = Modifier
                     .padding(24.dp, bottom = 8.dp)
-                    .size(width = 110.dp, height = 110.dp)
+                    .size(width = 80.dp, height = 80.dp) // Smaller size
                     .clickable(onClick = onNavigateToChat)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(vertical = 12.dp),
+                        .padding(vertical = 8.dp), // Slightly less padding
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Chat,
-                        contentDescription = "Start Chat",
-                        modifier = Modifier.size(54.dp),
+                        contentDescription = "ASK AI",
+                        modifier = Modifier.size(30.dp), // Smaller icon
                         tint = colorResource(R.color.white)
                     )
                     Text(
                         text = "ASK AI",
                         color = colorResource(R.color.white),
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(top = 8.dp)
+                        modifier = Modifier.padding(top = 4.dp)
                     )
                 }
             }
@@ -324,7 +325,8 @@ fun ScreenCareGiver(
                         email = userInfo!!.email,
                         gender = userInfo!!.gender,
                         dob = userInfo!!.dob,
-                        profilePicture = userInfo!!.profilePicture
+                        profilePicture = userInfo!!.profilePicture,
+                        userId = userInfo!!.id // Pass id for QR code
                     )
                 } else if (errorMsg != null) { // Show initial load error only if not loading user info
                     Card(
@@ -533,15 +535,19 @@ fun CaregiverInfoCard(
     email: String,
     dob: String,
     gender: String,
-    profilePicture: String?
-) {    Card(
+    profilePicture: String?,
+    userId: String? // Add userId for QR code
+) {
+    var showQrDialog by remember { mutableStateOf(false) }
+    Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 16.dp),
         colors = CardDefaults.cardColors(
             containerColor = colorResource(R.color.dark_surface_variant).copy(alpha = 0.95f)
         ),
         shape = RoundedCornerShape(20.dp)
-    ) {        Column(
+    ) {
+        Column(
             modifier = Modifier
                 .padding(24.dp)
                 .fillMaxWidth(),
@@ -550,7 +556,8 @@ fun CaregiverInfoCard(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
-            ) {                Text(
+            ) {
+                Text(
                     text = "My Information",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
@@ -568,7 +575,8 @@ fun CaregiverInfoCard(
                         placeholder = painterResource(R.drawable.ic_launcher_foreground),
                         error = painterResource(R.drawable.ic_launcher_foreground)
                     )
-                } else {                    Icon(
+                } else {
+                    Icon(
                         imageVector = Icons.Default.AccountCircle,
                         contentDescription = "Default Profile",
                         tint = colorResource(R.color.gradient_caregiver_start).copy(alpha = 0.8f),
@@ -605,6 +613,56 @@ fun CaregiverInfoCard(
                 formatGender(gender),
                 colorResource(R.color.info_blue), // Brighter blue for visibility
                 colorResource(R.color.dark_on_surface)
+            )
+            // QR Code Row below info fields (no button background, larger icon/text)
+            if (userId != null) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 18.dp, bottom = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.QrCode,
+                        contentDescription = "Show QR Code",
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clickable { showQrDialog = true },
+                        tint = colorResource(R.color.info_blue)
+                    )
+                    Spacer(modifier = Modifier.width(14.dp))
+                    Text(
+                        "My QR Code",
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = colorResource(R.color.info_blue)
+                    )
+                }
+            }
+        }
+        // QR Code Dialog
+        if (showQrDialog && userId != null) {
+            AlertDialog(
+                onDismissRequest = { showQrDialog = false },
+                title = {
+                    Text("Your QR Code", fontWeight = FontWeight.Bold)
+                },
+                text = {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        com.example.frontend.screens.components.QRCode(
+                            data = userId,
+                            modifier = Modifier.size(240.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Scan this code to share your ID", style = MaterialTheme.typography.bodyMedium)
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showQrDialog = false }) {
+                        Text("CLOSE")
+                    }
+                }
             )
         }
     }
