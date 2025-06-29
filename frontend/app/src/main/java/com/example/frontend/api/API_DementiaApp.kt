@@ -1,8 +1,17 @@
 package com.example.frontend.api
 
+import com.example.frontend.api.models.LogMetadata
+import com.example.frontend.api.models.PatientLog
 import com.example.frontend.api.models.PartnerInfo
+import com.example.frontend.api.models.PatientLogRaw
 import com.example.frontend.api.models.RequestChat
+import com.example.frontend.api.models.RequestStoreLog
+import com.example.frontend.api.models.RequestStoreLogRaw
+import com.example.frontend.api.models.RequestUpdateLog
+import com.example.frontend.api.models.RequestUpdateLogRaw
 import com.example.frontend.api.models.ResponseChat
+import com.example.frontend.api.models.ResponseLogMetadata
+import com.example.frontend.api.models.ResponseLogsMetadataRaw
 import com.example.frontend.screens.NavigationManager
 import com.example.frontend.screens.Screen
 import com.google.firebase.auth.FirebaseAuth
@@ -15,6 +24,7 @@ import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -154,6 +164,40 @@ interface DementiaAPI {
         @Header("Authorization") firebaseIdToken: String,
         @Path("id") patientId: String
     ): Response<ResponseBody>
+
+    @POST("/v1/logs")
+    suspend fun storeLogWithAuth(
+        @Header("Authorization") firebaseIdToken: String,
+        @Body requestStoreLogRaw: RequestStoreLogRaw
+    ): Response<ResponseBody>
+
+
+    @GET("/v1/logs")
+    suspend fun getLogsWithAuth(
+        @Header("Authorization") firebaseIdToken: String,
+        @Query("userId") userId: String? = null,
+        @Query("page") page: Int,
+        @Query("size") size: Int
+    ): Response<ResponseLogsMetadataRaw>
+
+    @GET("/v1/logs/{id}")
+    suspend fun getLogWithAuth(
+        @Header("Authorization") firebaseIdToken: String,
+        @Path("id") id: String
+    ): Response<PatientLogRaw>
+
+    @DELETE("/v1/logs/{id}")
+    suspend fun deleteLogWithAuth(
+        @Header("Authorization") firebaseIdToken: String,
+        @Path("id") id: String
+    ): Response<ResponseBody>
+
+    @PUT("/v1/logs/{id}")
+    suspend fun updateLogWithAuth(
+        @Header("Authorization") firebaseIdToken: String,
+        @Path("id") id: String,
+        @Body updateLogRaw: RequestUpdateLogRaw
+    ): Response<ResponseBody>
 }
 
 suspend fun getIdTokenWithFallback(forceRefresh: Boolean = false, fallback: () -> Unit): String? {
@@ -251,6 +295,38 @@ suspend fun DementiaAPI.addPatient(requestPatientAdd: RequestPatientAdd): Boolea
 suspend fun DementiaAPI.removePatient(patientId: String): Boolean {
     val token = getIdToken() ?: return false
     val response = removePatientWithAuth(firebaseIdToken = "Bearer $token", patientId)
+    return response.isSuccessful
+}
+
+
+suspend fun DementiaAPI.storeLog(log: RequestStoreLog): Boolean {
+    val token = getIdToken() ?: return false
+    val response = storeLogWithAuth(firebaseIdToken = "Bearer $token", log.toRaw())
+    return response.isSuccessful
+}
+
+suspend fun DementiaAPI.getLogs(userId: String?, page: Int, size: Int): ResponseLogMetadata? {
+    val token = getIdToken() ?: return null
+    val logs = getLogsWithAuth(firebaseIdToken = "Bearer $token", userId, page, size).body()
+        ?: return null
+    return logs.toWrapper()
+}
+
+suspend fun DementiaAPI.getLog(id: String): PatientLog? {
+    val token = getIdToken() ?: return null
+    val logRaw = getLogWithAuth(firebaseIdToken = "Bearer $token", id).body() ?: return null
+    return logRaw.toWrapper()
+}
+
+suspend fun DementiaAPI.deleteLog(id: String): Boolean {
+    val token = getIdToken() ?: return false
+    val response = deleteLogWithAuth(firebaseIdToken = "Bearer $token", id)
+    return response.isSuccessful
+}
+
+suspend fun DementiaAPI.updateLog(id: String, updateLog: RequestUpdateLog): Boolean {
+    val token = getIdToken() ?: return false
+    val response = updateLogWithAuth(firebaseIdToken = "Bearer $token", id, updateLog.toRaw())
     return response.isSuccessful
 }
 
