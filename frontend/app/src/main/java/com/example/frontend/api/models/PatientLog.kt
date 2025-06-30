@@ -1,5 +1,9 @@
 package com.example.frontend.api.models
 
+import android.os.Build
+import androidx.annotation.RequiresApi
+import com.example.frontend.api.convertUtcToLocal
+
 enum class LogType {
     EATING, BATHING, SOCIAL, MEDICINE, OUTINGS
 }
@@ -29,8 +33,9 @@ fun logStringToType(type: String): LogType {
 
 data class PatientLog(val id: String, val type: LogType, val description: String, val createdAt: String)
 data class PatientLogRaw(val id: String, val type: String, val description: String, val createdAt: String) {
+    @RequiresApi(Build.VERSION_CODES.O)
     fun toWrapper(): PatientLog {
-        return PatientLog(id, logStringToType(type), description, createdAt) //TODO convert utc to local
+        return PatientLog(id, logStringToType(type), description, convertUtcToLocal(createdAt))
     }
 }
 
@@ -42,13 +47,15 @@ data class RequestStoreLog(val type: LogType, val description: String, val time:
 }
 
 data class LogMetadataRaw(val id: String, val type: String, val description: String, val createdAt: String) {
+    @RequiresApi(Build.VERSION_CODES.O)
     fun toWrapper(): LogMetadata {
-        return LogMetadata(id, logStringToType(type), description, createdAt) //TODO convert utc to local
+        return LogMetadata(id, logStringToType(type), description, convertUtcToLocal(createdAt))
     }
 }
 data class LogMetadata(val id: String, val type: LogType, val description: String, val createdAt: String)
 data class ResponseLogMetadata(val content: List<LogMetadata>, val page: PageInfo)
 data class ResponseLogsMetadataRaw(val content: List<LogMetadataRaw>, val page: PageInfo) {
+    @RequiresApi(Build.VERSION_CODES.O)
     fun toWrapper(): ResponseLogMetadata {
         return ResponseLogMetadata(content.map { it.toWrapper() }, page)
     }

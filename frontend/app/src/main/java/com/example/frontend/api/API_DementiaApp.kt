@@ -1,5 +1,7 @@
 package com.example.frontend.api
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import com.example.frontend.api.models.LogMetadata
 import com.example.frontend.api.models.PatientLog
 import com.example.frontend.api.models.PartnerInfo
@@ -27,6 +29,9 @@ import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
 
 // Placeholder to prevent build errors from existing code
 data class HealthResponse(val status: String)
@@ -176,6 +181,8 @@ interface DementiaAPI {
     suspend fun getLogsWithAuth(
         @Header("Authorization") firebaseIdToken: String,
         @Query("userId") userId: String? = null,
+        @Query("start") start: String?,
+        @Query("end") end: String?,
         @Query("page") page: Int,
         @Query("size") size: Int
     ): Response<ResponseLogsMetadataRaw>
@@ -305,13 +312,22 @@ suspend fun DementiaAPI.storeLog(log: RequestStoreLog): Boolean {
     return response.isSuccessful
 }
 
-suspend fun DementiaAPI.getLogs(userId: String?, page: Int, size: Int): ResponseLogMetadata? {
+@RequiresApi(Build.VERSION_CODES.O)
+suspend fun DementiaAPI.getLogs(userId: String?, start: String?, end: String?, page: Int, size: Int): ResponseLogMetadata? {
     val token = getIdToken() ?: return null
-    val logs = getLogsWithAuth(firebaseIdToken = "Bearer $token", userId, page, size).body()
+    val logs = getLogsWithAuth(
+        firebaseIdToken = "Bearer $token",
+        userId,
+        if (start != null) convertLocalToUtc(start) else null,
+        if (end != null) convertLocalToUtc(end) else null,
+        page,
+        size
+    ).body()
         ?: return null
     return logs.toWrapper()
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 suspend fun DementiaAPI.getLog(id: String): PatientLog? {
     val token = getIdToken() ?: return null
     val logRaw = getLogWithAuth(firebaseIdToken = "Bearer $token", id).body() ?: return null
@@ -332,4 +348,27 @@ suspend fun DementiaAPI.updateLog(id: String, updateLog: RequestUpdateLog): Bool
 
 fun redirectToLogin() {
     NavigationManager.getNavController().navigate(Screen.Register)
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+fun convertUtcToLocal(utcTimestamp: String): String {
+    return try {
+        val instant = Instant.parse(utcTimestamp)
+        val zonedDateTime = instant.atZone(ZoneId.systemDefault())
+        zonedDateTime.toString() // returns ISO 8601 with local time zone
+    } catch (_: Exception) {
+        utcTimestamp
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+fun convertLocalToUtc(localTimestamp: String): String {
+    return try {
+        val localDateTime = LocalDateTime.parse(localTimestamp)
+        val zonedDateTime = localDateTime.atZone(ZoneId.systemDefault())
+        val instant = zonedDateTime.toInstant()
+        instant.toString() // returns UTC in ISO 8601 format, e.g., "2025-06-29T17:00:00Z"
+    } catch (_: Exception) {
+        localTimestamp
+    }
 }
