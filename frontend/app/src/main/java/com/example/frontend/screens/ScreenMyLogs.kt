@@ -28,6 +28,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import java.time.format.DateTimeFormatter
+import java.time.ZonedDateTime
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
@@ -40,6 +42,18 @@ import com.example.frontend.R
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.frontend.screens.components.DialogLog
 
+@RequiresApi(Build.VERSION_CODES.O)
+fun formatTimestamp(timestamp: String): String {
+    return try {
+        val zonedDateTime = ZonedDateTime.parse(timestamp)
+        val formatter = DateTimeFormatter.ofPattern("h:mm a, d MMMM yyyy")
+        zonedDateTime.format(formatter)
+    } catch (e: Exception) {
+        timestamp // Return original if parsing fails
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyLogs(
@@ -255,6 +269,7 @@ fun MyLogs(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun LogItem(
     log: PatientLog,
@@ -275,7 +290,7 @@ private fun LogItem(
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = log.type.name, style = typography.titleMedium)
                 Text(text = log.description, style = typography.bodyMedium)
-                Text(text = log.createdAt, style = typography.bodySmall)
+                Text(text = formatTimestamp(log.createdAt), style = typography.bodySmall)
             }
             
             // Only show the menu if not in view-only mode
