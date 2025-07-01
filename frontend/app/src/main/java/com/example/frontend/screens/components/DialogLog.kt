@@ -20,6 +20,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -46,7 +47,7 @@ fun DialogLog(
     var expanded by remember { mutableStateOf(false) }
     var selectedLogType by remember(initialLogType) { mutableStateOf(initialLogType) }
     var logDescription by remember(initialDescription) { mutableStateOf(initialDescription) }
-    var timeSliderValue by remember { mutableStateOf(0f) }
+    var timeSliderValue by remember { mutableFloatStateOf(0f) }
     
     val logTypeOptions = LogType.entries.toTypedArray()
     
@@ -79,7 +80,7 @@ fun DialogLog(
             val zonedDateTime = ZonedDateTime.parse(timestamp)
             val formatter = DateTimeFormatter.ofPattern("h:mm a, d MMMM yyyy")
             zonedDateTime.format(formatter)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             timestamp // Return original if parsing fails
         }
     }

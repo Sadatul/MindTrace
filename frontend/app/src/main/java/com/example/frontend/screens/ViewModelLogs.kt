@@ -118,26 +118,13 @@ class ViewModelLogs() : ViewModel() {
     fun addLog(logType: LogType, description: String, time: Int) {
         viewModelScope.launch {
             try {
-                val success = if (currentPartnerId != null) {
-                    // Caregiver viewing patient logs - API limitation: log will be created in caregiver's account
-                    _errorMessage.value = "Note: Due to API limitations, the log will be added to your account instead of the patient's account."
-                    RetrofitInstance.dementiaAPI.storeLog(
-                        RequestStoreLog(
-                            type = logType,
-                            description = description,
-                            time = time
-                        )
+                val success = RetrofitInstance.dementiaAPI.storeLog(
+                    RequestStoreLog(
+                        type = logType,
+                        description = description,
+                        time = time
                     )
-                } else {
-                    // Patient viewing their own logs
-                    RetrofitInstance.dementiaAPI.storeLog(
-                        RequestStoreLog(
-                            type = logType,
-                            description = description,
-                            time = time
-                        )
-                    )
-                }
+                )
                 
                 if (success) {
                     _errorMessage.value = "Log added successfully"
@@ -206,19 +193,14 @@ class ViewModelLogs() : ViewModel() {
     }
     
     fun setStartDate(date: LocalDate?) {
-        _startDate.value = date?.let { 
-            // Set to start of day (00:00:00)
-            it.atStartOfDay(ZoneId.systemDefault()).toString()
-        }
+        _startDate.value = date?.atStartOfDay(ZoneId.systemDefault())?.toString()
         // Reload logs when date filter changes
         loadLogs(currentPartnerId)
     }
     
     fun setEndDate(date: LocalDate?) {
-        _endDate.value = date?.let { 
-            // Set to end of day (23:59:59.999999999)
-            it.atTime(23, 59, 59, 999999999).atZone(ZoneId.systemDefault()).toString()
-        }
+        _endDate.value = date?.atTime(23, 59, 59, 999999999)?.atZone(ZoneId.systemDefault())
+            ?.toString()
         // Reload logs when date filter changes
         loadLogs(currentPartnerId)
     }
