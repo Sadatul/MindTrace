@@ -100,8 +100,8 @@ class ViewModelRegister : ViewModel() {
         if (selectedRole == "caregiver") {
             _uiState.value = _uiState.value.copy(
                 caregiverFormData = _uiState.value.caregiverFormData.copy(
-                    name = if (_uiState.value.caregiverFormData.name.isBlank()) defaultName else _uiState.value.caregiverFormData.name,
-                    email = if (_uiState.value.caregiverFormData.email.isBlank()) currentEmail else _uiState.value.caregiverFormData.email,
+                    name = _uiState.value.caregiverFormData.name.ifBlank { defaultName },
+                    email = _uiState.value.caregiverFormData.email.ifBlank { currentEmail },
                     dob = "",
                     gender = ""
                 ),
@@ -110,8 +110,8 @@ class ViewModelRegister : ViewModel() {
         } else {
             _uiState.value = _uiState.value.copy(
                 patientFormData = _uiState.value.patientFormData.copy(
-                    name = if (_uiState.value.patientFormData.name.isBlank()) defaultName else _uiState.value.patientFormData.name,
-                    email = if (_uiState.value.patientFormData.email.isBlank()) currentEmail else _uiState.value.patientFormData.email,
+                    name = _uiState.value.patientFormData.name.ifBlank { defaultName },
+                    email = _uiState.value.patientFormData.email.ifBlank { currentEmail },
                     dob = "",
                     gender = "",
                     primaryContact = "",
