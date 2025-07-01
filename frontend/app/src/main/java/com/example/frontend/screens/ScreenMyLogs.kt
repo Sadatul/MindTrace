@@ -51,7 +51,7 @@ fun formatTimestamp(timestamp: String): String {
         val zonedDateTime = ZonedDateTime.parse(timestamp)
         val formatter = DateTimeFormatter.ofPattern("h:mm a, d MMMM yyyy")
         zonedDateTime.format(formatter)
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         timestamp // Return original if parsing fails
     }
 }
@@ -269,7 +269,7 @@ fun MyLogs(
                     ) {
                         Text(
                             text = "Filter by Date",
-                            style = MaterialTheme.typography.titleMedium,
+                            style = typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         
@@ -377,7 +377,7 @@ private fun DatePickerButton(
             ) {
                 Text(
                     text = label,
-                    style = MaterialTheme.typography.labelMedium,
+                    style = typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
                 
@@ -412,7 +412,7 @@ private fun DatePickerButton(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = selectedDate?.format(DateTimeFormatter.ofPattern("MMM d, yyyy")) ?: "Select date",
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = typography.bodyMedium,
                     color = if (selectedDate != null) 
                         MaterialTheme.colorScheme.onSurface 
                     else 
@@ -549,14 +549,14 @@ fun MyLogsScreen(
     val startDate = startDateString?.let { 
         try {
             ZonedDateTime.parse(it).toLocalDate()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
     val endDate = endDateString?.let { 
         try {
             ZonedDateTime.parse(it).toLocalDate()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
