@@ -17,6 +17,8 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.runtime.Composable
@@ -30,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import java.time.format.DateTimeFormatter
 import java.time.ZonedDateTime
+import java.time.LocalDate
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
@@ -67,7 +70,12 @@ fun MyLogs(
     isViewOnly: Boolean = false, // Add view-only mode for caregivers
     onAddLog: () -> Unit = {}, // Callback for Add Log
     onEditLog: (PatientLog) -> Unit = {}, // Callback for Edit Log
-    onDeleteLog: (String) -> Unit = {} // Callback for Delete Log
+    onDeleteLog: (String) -> Unit = {}, // Callback for Delete Log
+    startDate: LocalDate? = null,
+    endDate: LocalDate? = null,
+    onStartDateChange: (LocalDate?) -> Unit = {},
+    onEndDateChange: (LocalDate?) -> Unit = {},
+    onClearDateFilters: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -241,30 +249,206 @@ fun MyLogs(
         }, floatingActionButtonPosition = FabPosition.Center,
         containerColor = colorResource(R.color.dark_surface)
     ) { innerPadding ->
-        Box(modifier = Modifier
+        Column(modifier = Modifier
             .fillMaxSize()
             .padding(innerPadding)) {
-            if (logs.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = "No logs available.", style = typography.bodyMedium)
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(bottom = 80.dp), // Padding for FAB
-                    contentPadding = PaddingValues(vertical = 8.dp)
+            // Date Filter Section
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
                 ) {
-                    items(logs) { log ->
-                        LogItem(
-                            log = log,
-                            isViewOnly = isViewOnly, // Pass view-only mode to LogItem
-                            onEditLog = { onEditLog(log) },
-                            onDeleteLog = { onDeleteLog(log.id) }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Filter by Date",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        
+                        if (startDate != null || endDate != null) {
+                            TextButton(
+                                onClick = onClearDateFilters,
+                                colors = ButtonDefaults.textButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.primary
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Clear,
+                                    contentDescription = "Clear filters",
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Clear")
+                            }
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Start Date Picker
+                        DatePickerButton(
+                            label = "Start Date",
+                            selectedDate = startDate,
+                            onDateChange = onStartDateChange,
+                            modifier = Modifier.weight(1f)
+                        )
+                        
+                        // End Date Picker
+                        DatePickerButton(
+                            label = "End Date",
+                            selectedDate = endDate,
+                            onDateChange = onEndDateChange,
+                            modifier = Modifier.weight(1f)
                         )
                     }
                 }
             }
+            
+            // Main Content
+            Box(modifier = Modifier
+                .fillMaxSize()
+                .weight(1f)) {
+                if (logs.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(text = "No logs available.", style = typography.bodyMedium)
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(bottom = 80.dp), // Padding for FAB
+                        contentPadding = PaddingValues(vertical = 8.dp)
+                    ) {
+                        items(logs) { log ->
+                            LogItem(
+                                log = log,
+                                isViewOnly = isViewOnly, // Pass view-only mode to LogItem
+                                onEditLog = { onEditLog(log) },
+                                onDeleteLog = { onDeleteLog(log.id) }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DatePickerButton(
+    label: String,
+    selectedDate: LocalDate?,
+    onDateChange: (LocalDate?) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var showDatePicker by remember { mutableStateOf(false) }
+    
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ),
+        border = CardDefaults.outlinedCardBorder()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+                
+                if (selectedDate != null) {
+                    IconButton(
+                        onClick = { onDateChange(null) },
+                        modifier = Modifier.size(20.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Clear,
+                            contentDescription = "Clear $label",
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
+                }
+            }
+            
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showDatePicker = true }
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.DateRange,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = selectedDate?.format(DateTimeFormatter.ofPattern("MMM d, yyyy")) ?: "Select date",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (selectedDate != null) 
+                        MaterialTheme.colorScheme.onSurface 
+                    else 
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
+        }
+    }
+    
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = selectedDate?.toEpochDay()?.times(24 * 60 * 60 * 1000)
+        )
+        
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { millis ->
+                            val date = LocalDate.ofEpochDay(millis / (24 * 60 * 60 * 1000))
+                            onDateChange(date)
+                        }
+                        showDatePicker = false
+                    }
+                ) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Cancel")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
         }
     }
 }
@@ -358,6 +542,24 @@ fun MyLogsScreen(
     val patientInfo by viewModel.patientInfo.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
     val editingLog by viewModel.editingLog.collectAsState()
+    val startDateString by viewModel.startDate.collectAsState()
+    val endDateString by viewModel.endDate.collectAsState()
+    
+    // Convert date strings to LocalDate
+    val startDate = startDateString?.let { 
+        try {
+            ZonedDateTime.parse(it).toLocalDate()
+        } catch (e: Exception) {
+            null
+        }
+    }
+    val endDate = endDateString?.let { 
+        try {
+            ZonedDateTime.parse(it).toLocalDate()
+        } catch (e: Exception) {
+            null
+        }
+    }
     
     // Determine if this is view-only mode (caregiver viewing patient's logs)
     val isViewOnly = !isPatient && partnerId != null
@@ -414,7 +616,12 @@ fun MyLogsScreen(
                         logToDelete = logId
                         showDeleteConfirmDialog = true
                     }
-                }
+                },
+                startDate = startDate,
+                endDate = endDate,
+                onStartDateChange = { date -> viewModel.setStartDate(date) },
+                onEndDateChange = { date -> viewModel.setEndDate(date) },
+                onClearDateFilters = { viewModel.clearDateFilters() }
             )
             
             // Snackbar positioned at the bottom

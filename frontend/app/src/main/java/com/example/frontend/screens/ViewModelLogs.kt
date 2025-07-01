@@ -1,6 +1,7 @@
 package com.example.frontend.screens
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -20,6 +21,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.ZoneId
 
 @RequiresApi(Build.VERSION_CODES.O)
 class ViewModelLogs() : ViewModel() {
@@ -39,6 +42,12 @@ class ViewModelLogs() : ViewModel() {
     private val _editingLog = MutableStateFlow<PatientLog?>(null)
     val editingLog: StateFlow<PatientLog?> = _editingLog.asStateFlow()
 
+    private val _startDate = MutableStateFlow<String?>(null)
+    val startDate: StateFlow<String?> = _startDate.asStateFlow()
+
+    private val _endDate = MutableStateFlow<String?>(null)
+    val endDate: StateFlow<String?> = _endDate.asStateFlow()
+
     private var currentPartnerId: String? = null
 
     fun loadLogs(partnerId: String? = null) {
@@ -51,15 +60,19 @@ class ViewModelLogs() : ViewModel() {
                 // If partnerId is provided, we're loading logs for a specific patient (caregiver view)
                 // Otherwise, we're loading logs for the current user (patient view)
                 val userId = partnerId
+
+                Log.d("DATE_TIME", "${_startDate.value} -> ${_endDate.value}")
                 
                 // Fetch logs
                 val response = RetrofitInstance.dementiaAPI.getLogs(
                     userId = userId,
-                    start = null,
-                    end = null,
+                    start = _startDate.value,
+                    end = _endDate.value,
                     page = 0,
                     size = 50
                 )
+
+                Log.d("DATE_TIME", response.toString())
                 
                 if (response != null) {
                     _logs.value = response.content.map { logMetadata ->
@@ -190,5 +203,29 @@ class ViewModelLogs() : ViewModel() {
 
     fun clearError() {
         _errorMessage.value = null
+    }
+    
+    fun setStartDate(date: LocalDate?) {
+        _startDate.value = date?.let { 
+            // Set to start of day (00:00:00)
+            it.atStartOfDay(ZoneId.systemDefault()).toString()
+        }
+        // Reload logs when date filter changes
+        loadLogs(currentPartnerId)
+    }
+    
+    fun setEndDate(date: LocalDate?) {
+        _endDate.value = date?.let { 
+            // Set to end of day (23:59:59.999999999)
+            it.atTime(23, 59, 59, 999999999).atZone(ZoneId.systemDefault()).toString()
+        }
+        // Reload logs when date filter changes
+        loadLogs(currentPartnerId)
+    }
+    
+    fun clearDateFilters() {
+        _startDate.value = null
+        _endDate.value = null
+        loadLogs(currentPartnerId)
     }
 }
