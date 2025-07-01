@@ -27,17 +27,20 @@ import com.example.frontend.api.models.logTypeToString
 fun DialogLog(
     show: Boolean,
     onDismiss: () -> Unit,
-    onAdd: (LogType, String) -> Unit
+    onAdd: (LogType, String) -> Unit,
+    initialLogType: LogType? = null,
+    initialDescription: String = "",
+    title: String = "Add Log"
 ) {
     var expanded by remember { mutableStateOf(false) }
-    var selectedLogType by remember { mutableStateOf<LogType?>(null) }
-    var logDescription by remember { mutableStateOf("") }
+    var selectedLogType by remember(initialLogType) { mutableStateOf(initialLogType) }
+    var logDescription by remember(initialDescription) { mutableStateOf(initialDescription) }
     val logTypeOptions = LogType.entries.toTypedArray()
 
     if (show) {
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text("Add Log") },
+            title = { Text(title) },
             text = {
                 Column {
                     ExposedDropdownMenuBox(
@@ -89,7 +92,7 @@ fun DialogLog(
                     },
                     enabled = selectedLogType != null && logDescription.isNotBlank()
                 ) {
-                    Text("Add")
+                    Text("Save")
                 }
             },
             dismissButton = {
