@@ -26,7 +26,7 @@ private const val TAG = "ScreenRegister"
 @Composable
 fun ScreenRegister(
     onNavigateToDashboard: (role: String) -> Unit,
-    viewModel: RegisterViewModel = viewModel()
+    viewModel: ViewModelRegister = viewModel()
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()

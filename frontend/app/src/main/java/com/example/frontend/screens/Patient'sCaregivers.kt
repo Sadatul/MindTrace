@@ -11,8 +11,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun ScreenMyCaregivers(
-    onNavigateBack: () -> Unit,
-    onAddCaregiver: () -> Unit = {}
+    onNavigateBack: () -> Unit
 ) {
     var currentUser: UserInfo? by remember { mutableStateOf(null) }
     var caregivers by remember { mutableStateOf(listOf<PartnerInfo>()) }

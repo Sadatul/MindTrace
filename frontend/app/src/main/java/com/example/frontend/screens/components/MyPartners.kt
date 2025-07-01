@@ -58,6 +58,7 @@ fun ScreenMyPartners(
     isLoading: Boolean = false,
     showDeletedPartners: Boolean = false,
     onToggleDeleted: () -> Unit = {},
+    onShowLogs: ((PartnerInfo) -> Unit)? = null // Make optional for patient flow
 ) {
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     var showOtpDialog by remember { mutableStateOf(false) }
@@ -293,6 +294,10 @@ fun ScreenMyPartners(
                                     onDelete = {
                                         selectedPartner = partner
                                         showDeleteConfirmDialog = true
+                                    },
+                                    onShowLogs = {
+                                        println("Selected partner for logs: id=${partner.id}, name=${partner.name}, profilePicture=${partner.profilePicture}")
+                                        onShowLogs?.invoke(partner)
                                     }
                                 )
                             }
@@ -513,13 +518,13 @@ fun EmptyActivePartnersState(relationshipTitle: String) {
 fun PartnerCard(
     partner: PartnerInfo,
     role: String,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onShowLogs: (PartnerInfo) -> Unit // Add callback for showing logs
 ) {
     var showMenu by remember { mutableStateOf(false) }
     val isDeleted = partner.removedAt != null
 
-    val cardBaseColor = if (isDeleted) Color(0xFF757575) else Color(0xFF64B5F6) // Grey for deleted, role color otherwise
-    val contentOnCardColor = if (isDeleted) Color.White.copy(alpha = 0.8f) else Color.White // High contrast for readability
+    val contentOnCardColor = if (isDeleted) Color.Red.copy(alpha = 0.8f) else Color.White // High contrast for readability
 
     val cardGradient = if (isDeleted) {
         Brush.verticalGradient(
@@ -560,68 +565,79 @@ fun PartnerCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = partnerRoleDisplay.uppercase(), // Uppercase for style
-                    style = MaterialTheme.typography.labelSmall, // Smaller label for role
+                    text = partnerRoleDisplay,
+                    color = contentOnCardColor.copy(alpha = 0.8f),
                     fontWeight = FontWeight.Bold,
-                    color = contentOnCardColor.copy(alpha = 0.7f), // Subtler color for role
+                    style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.weight(1f)
                 )
 
                 if (partner.profilePicture != null) {
                     AsyncImage(
                         model = partner.profilePicture,
-                        contentDescription = "Profile picture of ${partner.name}",
+                        contentDescription = "Partner profile picture",
                         modifier = Modifier
                             .size(getPartnerProfilePictureSize())
-                            .clip(CircleShape)
-                            .border(1.dp, contentOnCardColor.copy(alpha = 0.5f), CircleShape), // Subtle border
+                            .clip(CircleShape),
                         contentScale = ContentScale.Crop
                     )
                 } else {
                     Icon(
                         imageVector = Icons.Default.AccountCircle,
-                        contentDescription = "Default profile picture",
-                        tint = cardBaseColor, // Use the base color for icon tint
-                        modifier = Modifier
-                            .size(getPartnerProfilePictureSize())
-                            .background(contentOnCardColor.copy(alpha = 0.1f), CircleShape) // Light background for icon
-                            .padding(4.dp) // Padding within the circle
+                        contentDescription = "Default partner profile picture",
+                        tint = Color.White.copy(alpha = 0.7f),
+                        modifier = Modifier.size(getPartnerProfilePictureSize())
                     )
                 }
 
+                // Show menu only if not deleted
                 if (!isDeleted) {
-                    Box(modifier = Modifier.offset(x = 8.dp)) { // Slightly offset menu button for better spacing
-                        IconButton(onClick = { showMenu = true }) {
-                            Icon(
-                                imageVector = Icons.Default.MoreVert,
-                                contentDescription = "Options for ${partner.name}",
-                                tint = contentOnCardColor // Use content color for icon
-                            )
-                        }
-                        DropdownMenu(
-                            expanded = showMenu,
-                            onDismissRequest = { showMenu = false },
-                            modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant) // Themed background
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Remove ${if (role.equals("Caregiver", ignoreCase = true)) "Patient" else "Caregiver"}", color = MaterialTheme.colorScheme.error) },
-                                onClick = {
-                                    showMenu = false
-                                    onDelete()
-                                },
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Default.Delete,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.error
-                                    )
-                                }
-                            )
+                    // Only show menu for caregivers
+                    if (role.equals("Caregiver", ignoreCase = true)) {
+                        Box {
+                            IconButton(onClick = { showMenu = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = "More actions",
+                                    tint = contentOnCardColor
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = showMenu,
+                                onDismissRequest = { showMenu = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Show Logs") },
+                                    onClick = {
+                                        showMenu = false
+                                        onShowLogs(partner)
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.CalendarToday,
+                                            contentDescription = null
+                                        )
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Remove Patient", color = Color.Red) },
+                                    onClick = {
+                                        showMenu = false
+                                        onDelete()
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.Delete,
+                                            contentDescription = null,
+                                            tint = Color.Red
+                                        )
+                                    }
+                                )
+                            }
                         }
                     }
                 } else {
-                    // Placeholder for spacing if no menu, to keep alignment consistent
-                    Spacer(modifier = Modifier.size(48.dp)) // Approx size of IconButton
+                    Spacer(modifier = Modifier.size(48.dp))
                 }
             }
 

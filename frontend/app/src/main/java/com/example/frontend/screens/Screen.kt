@@ -14,7 +14,9 @@ sealed class Screen {
     data object DashBoardPatient: Screen()
 
     @Serializable
-    data object DashboardCareGiver: Screen()    @Serializable
+    data object DashboardCareGiver: Screen()
+    
+    @Serializable
     data object Chat: Screen()
 
     @Serializable
@@ -22,4 +24,7 @@ sealed class Screen {
 
     @Serializable
     data object MyPatients: Screen()
+
+    @Serializable
+    data object PatientLogs: Screen()
 }

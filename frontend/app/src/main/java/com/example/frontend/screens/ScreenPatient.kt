@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.CalendarToday
@@ -81,7 +82,8 @@ fun ScreenPatient(
     onNavigateToChat: () -> Unit = {},
     onNavigateToCaregivers: () -> Unit = {},
     onSignOut: () -> Unit = {},
-    onLoginWithAnotherAccount: () -> Unit = {}
+    onLoginWithAnotherAccount: () -> Unit = {},
+    onBack: () -> Boolean
 ) {
     var userInfo: UserInfo? by remember { mutableStateOf(null) }
     var isLoading by remember { mutableStateOf(true) }
@@ -107,7 +109,18 @@ fun ScreenPatient(
                         color = colorResource(R.color.dark_on_surface),
                         fontWeight = FontWeight.Bold
                     )
-                }, actions = {
+                },
+                navigationIcon = {
+                    IconButton(onClick = { onBack() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = colorResource(R.color.dark_primary),
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                },
+                actions = {
                     Box {
                         IconButton(
                             onClick = { showProfileMenu = true }) {
