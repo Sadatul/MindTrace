@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun ScreenMyPatients(
     onNavigateBack: () -> Unit,
-    onAddPatient: () -> Unit = {}
+    onShowLogs: (PartnerInfo) -> Unit // Add callback for logs
 ) {
     var currentUser: UserInfo? by remember { mutableStateOf(null) }
     var patients by remember { mutableStateOf(listOf<PartnerInfo>()) }
@@ -52,7 +52,8 @@ fun ScreenMyPatients(
             onNavigateBack = onNavigateBack,
             isLoading = isLoading,
             showDeletedPartners = showDeletedPartners,
-            onToggleDeleted = { showDeletedPartners = !showDeletedPartners }
+            onToggleDeleted = { showDeletedPartners = !showDeletedPartners },
+            onShowLogs = onShowLogs // Pass callback
         )
     }
 }

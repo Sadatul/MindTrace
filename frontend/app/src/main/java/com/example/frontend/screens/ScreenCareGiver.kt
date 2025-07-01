@@ -191,14 +191,16 @@ fun ScreenCareGiver(
                         color = colorResource(R.color.dark_on_surface),
                         fontWeight = FontWeight.Bold
                     )
-                }, actions = {
+                },
+                actions = {
                     Box {
-                        IconButton(onClick = { showProfileMenu = true }) {
+                        IconButton(
+                            onClick = { showProfileMenu = true }) {
                             Icon(
                                 imageVector = Icons.Default.MoreVert,
                                 contentDescription = "Account Menu",
                                 tint = colorResource(R.color.dark_primary),
-                                modifier = Modifier.size(36.dp)
+                                modifier = Modifier.size(32.dp)
                             )
                         }
 

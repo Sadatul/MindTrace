@@ -1,6 +1,7 @@
 package com.example.frontend.api
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import com.example.frontend.api.models.LogMetadata
 import com.example.frontend.api.models.PatientLog
@@ -32,6 +33,7 @@ import retrofit2.http.Query
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.time.ZonedDateTime
 
 // Placeholder to prevent build errors from existing code
 data class HealthResponse(val status: String)
@@ -318,8 +320,8 @@ suspend fun DementiaAPI.getLogs(userId: String?, start: String?, end: String?, p
     val logs = getLogsWithAuth(
         firebaseIdToken = "Bearer $token",
         userId,
-        if (start != null) convertLocalToUtc(start) else null,
-        if (end != null) convertLocalToUtc(end) else null,
+        if (start != null) convertZonedToUtc(start) else null,
+        if (end != null) convertZonedToUtc(end) else null,
         page,
         size
     ).body()
@@ -362,13 +364,12 @@ fun convertUtcToLocal(utcTimestamp: String): String {
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-fun convertLocalToUtc(localTimestamp: String): String {
+private fun convertZonedToUtc(zonedTimestamp: String): String {
     return try {
-        val localDateTime = LocalDateTime.parse(localTimestamp)
-        val zonedDateTime = localDateTime.atZone(ZoneId.systemDefault())
+        val zonedDateTime = ZonedDateTime.parse(zonedTimestamp)
         val instant = zonedDateTime.toInstant()
-        instant.toString() // returns UTC in ISO 8601 format, e.g., "2025-06-29T17:00:00Z"
+        instant.toString() // UTC timestamp in ISO 8601 format
     } catch (_: Exception) {
-        localTimestamp
+        zonedTimestamp
     }
 }

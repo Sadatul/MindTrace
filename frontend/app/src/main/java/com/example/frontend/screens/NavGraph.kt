@@ -21,6 +21,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.example.frontend.api.RetrofitInstance
 import com.example.frontend.api.getSelfUserInfo
 import com.example.frontend.api.signOutUser
@@ -36,11 +37,9 @@ fun SetupNavGraph(navController: NavHostController) {
     var showNewAccountDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    
-    // Create a RegisterViewModel for account switching
-    val switchAccountViewModel: RegisterViewModel = viewModel()
-    
-    // Google Sign-In launcher for account switching
+
+    val switchAccountViewModel: ViewModelRegister = viewModel()
+
     val accountSwitchSignInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -51,6 +50,7 @@ fun SetupNavGraph(navController: NavHostController) {
                 val destination = when (role) {
                     "PATIENT" -> Screen.DashBoardPatient
                     "CAREGIVER" -> Screen.DashboardCareGiver
+                    "PATIENT_LOGS" -> Screen.PatientLogs // Add this case for patient logs navigation
                     else -> throw IllegalArgumentException("Unknown role: $role")
                 }
                 navController.navigate(destination) {
@@ -62,7 +62,7 @@ fun SetupNavGraph(navController: NavHostController) {
             }
         )
     }
-    
+
     val startDestination by produceState<Screen?>(initialValue = null) {
         value = getStartDestination()
     }
@@ -86,7 +86,7 @@ fun SetupNavGraph(navController: NavHostController) {
                 onNavigateToDashboard = { role ->
                     val destination =
                         when (role) {
-                            "PATIENT" -> Screen.DashBoardPatient
+                            "PATIENT" -> Screen.PatientLogs // Changed from DashBoardPatient
                             "CAREGIVER" -> Screen.DashboardCareGiver
                             else -> throw IllegalArgumentException("Unknown role: $role")
                         }
@@ -105,10 +105,9 @@ fun SetupNavGraph(navController: NavHostController) {
                     showCloseAppDialog = true
                 },
                 onLoginWithAnotherAccount = {
-                    // Show dialog first, then handle sign out and navigation on confirmation
                     showNewAccountDialog = true
                 }
-            )
+            ) { navController.popBackStack() }
         }
         composable<Screen.DashboardCareGiver> {
             ScreenCareGiver(
@@ -119,7 +118,6 @@ fun SetupNavGraph(navController: NavHostController) {
                     showCloseAppDialog = true
                 },
                 onLoginWithAnotherAccount = {
-                    // Show dialog first, then handle sign out and navigation on confirmation
                     showNewAccountDialog = true
                 }
             )
@@ -138,9 +136,6 @@ fun SetupNavGraph(navController: NavHostController) {
             ScreenMyCaregivers(
                 onNavigateBack = {
                     navController.popBackStack()
-                },
-                onAddCaregiver = {
-                    // TODO: Implement add caregiver functionality
                 }
             )
         }
@@ -149,9 +144,37 @@ fun SetupNavGraph(navController: NavHostController) {
                 onNavigateBack = {
                     navController.popBackStack()
                 },
-                onAddPatient = {
-                    // TODO: Implement add patient functionality
+                onShowLogs = { partner ->
+                    navController.navigate("patient_logs?partnerId=${partner.id}")
                 }
+            )
+        }
+        // Add composable for Screen.PatientLogs so it can be used as a start destination
+        composable<Screen.PatientLogs> {
+            ScreenMyLogs(
+                onBack = { navController.popBackStack() },
+                onAskAi = { navController.navigate(Screen.Chat) },
+                onMyProfile = { navController.navigate(Screen.DashBoardPatient) },
+                isPatient = true,
+                partnerId = null
+            )
+        }
+        composable(
+            route = "patient_logs?partnerId={partnerId}",
+            arguments = listOf(
+                navArgument("partnerId") {
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val partnerId = backStackEntry.arguments?.getString("partnerId")
+            ScreenMyLogs(
+                onBack = { navController.popBackStack() },
+                onAskAi = { navController.navigate(Screen.Chat) },
+                onMyProfile = { navController.navigate(Screen.DashBoardPatient) },
+                isPatient = partnerId == null,
+                partnerId = partnerId
             )
         }
     }
@@ -160,7 +183,6 @@ fun SetupNavGraph(navController: NavHostController) {
             onDismiss = { showNewAccountDialog = false },
             onConfirmSignInLauncher = {
                 showNewAccountDialog = false
-                // Sign out current user and launch Google account chooser directly
                 coroutineScope.launch {
                     RetrofitInstance.dementiaAPI.signOutUser()
                     switchAccountViewModel.initializeGoogleSignInClient(context)
@@ -182,6 +204,6 @@ fun SetupNavGraph(navController: NavHostController) {
 suspend fun getStartDestination(): Screen {
     val userInfo = RetrofitInstance.dementiaAPI.getSelfUserInfo(autoRedirect = false)
     return if (userInfo == null) Screen.Register
-    else if (userInfo.role == "PATIENT") Screen.DashBoardPatient
+    else if (userInfo.role == "PATIENT") Screen.PatientLogs // Changed from DashBoardPatient
     else Screen.DashboardCareGiver
 }

@@ -30,9 +30,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
-private const val TAG = "RegisterViewModel"
+private const val TAG = "ViewModelRegister"
 
-class RegisterViewModel : ViewModel() {
+class ViewModelRegister : ViewModel() {
     private val _uiState = MutableStateFlow(RegisterUiState())
     val uiState: StateFlow<RegisterUiState> = _uiState.asStateFlow()
 
@@ -91,9 +91,9 @@ class RegisterViewModel : ViewModel() {
     fun confirmRole() {
         val selectedRole = _uiState.value.selectedRole
         val credentials = _uiState.value.firebaseCredentials
-        
+
         _uiState.value = _uiState.value.copy(showConfirmationDialog = false)
-        
+
         val defaultName = credentials?.displayName ?: ""
         val currentEmail = credentials?.email ?: "Email not available"
 
@@ -276,7 +276,7 @@ class RegisterViewModel : ViewModel() {
         Log.d(TAG, "  >> Firebase Display Name: $firebaseDisplayName")
         Log.d(TAG, "  >> Firebase Email: $firebaseEmail")
         Log.d(TAG, "  >> Firebase Photo URL: $firebasePhotoUrl")
-        Log.d(TAG, "  >> Firebase ID Token (first 30 chars): ${firebaseIdToken.take(30)}...")
+        Log.d(TAG, "  >> Firebase ID Token (first 30 chars): ${firebaseIdToken}...")
 
         viewModelScope.launch {
             setLoading(true)
@@ -312,7 +312,10 @@ class RegisterViewModel : ViewModel() {
                                 // Fetch and cache user info for existing user
                                 val userBody = RetrofitInstance.dementiaAPI.getSelfUserInfo() ?: return@launch
                                 Log.d(TAG, "Cached existing user info: $userBody")
-                                onNavigateToDashboard(userBody.role)
+                                if (userBody.role == "CAREGIVER") {
+                                    onNavigateToDashboard(userBody.role)
+                                }else
+                                    onNavigateToDashboard("PATIENT_LOGS")
                             }
                             else -> {
                                 setError("Backend returned unknown status: ${parsedBody.status}. Check logs.")
@@ -443,7 +446,7 @@ class RegisterViewModel : ViewModel() {
 
         Log.d(TAG, "  Using for Patient Registration:")
         Log.d(TAG, "    >> Remembered Firebase User UID: ${credentials?.userUID}")
-        Log.d(TAG, "    >> Remembered Firebase ID Token (start): ${credentials?.idToken?.take(10)}...")
+        Log.d(TAG, "    >> Remembered Firebase ID Token (start): ${credentials?.idToken}...")
 
         setError(null)
 
@@ -462,7 +465,7 @@ class RegisterViewModel : ViewModel() {
         Log.d(TAG, "    >> Primary Contact: '${formData.primaryContact}'")
         Log.d(TAG, "    >> OTP: '${formData.otp}'")
 
-        if (formData.name.isBlank() || formData.dob.isBlank() || formData.gender.isBlank() || 
+        if (formData.name.isBlank() || formData.dob.isBlank() || formData.gender.isBlank() ||
             formData.primaryContact.isBlank() || formData.otp.isBlank()) {
             setError("All fields are required for patient registration.")
             Log.w(TAG, "Patient registration: Form validation failed.")
@@ -496,7 +499,8 @@ class RegisterViewModel : ViewModel() {
                     // Fetch and cache user info after successful registration
                     val userInfo = RetrofitInstance.dementiaAPI.getSelfUserInfo()
                     Log.d(TAG, "Cached user info after patient registration: $userInfo")
-                    onNavigateToDashboard("PATIENT")
+                    // Always navigate to PatientLogs after patient registration
+                    onNavigateToDashboard("PATIENT_LOGS")
                 } else {
                     registrationApiFailed = true
                     val errorBody = response.errorBody()?.string() ?: "Unknown error"

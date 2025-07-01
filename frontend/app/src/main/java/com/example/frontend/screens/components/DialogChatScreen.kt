@@ -166,8 +166,9 @@ fun LastChatDialog(
                     )
                 ) {
                     Text(
-                        text = "Back to Dashboard",
-                        fontWeight = FontWeight.Medium
+                        text = "Back",
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)
                     )
                 }
             }
