@@ -102,7 +102,7 @@ class ViewModelLogs() : ViewModel() {
         }
     }
     
-    fun addLog(logType: LogType, description: String) {
+    fun addLog(logType: LogType, description: String, time: Int) {
         viewModelScope.launch {
             try {
                 val success = if (currentPartnerId != null) {
@@ -112,7 +112,7 @@ class ViewModelLogs() : ViewModel() {
                         RequestStoreLog(
                             type = logType,
                             description = description,
-                            time = (System.currentTimeMillis() / 1000).toInt()
+                            time = time
                         )
                     )
                 } else {
@@ -121,7 +121,7 @@ class ViewModelLogs() : ViewModel() {
                         RequestStoreLog(
                             type = logType,
                             description = description,
-                            time = (System.currentTimeMillis() / 1000).toInt()
+                            time = time
                         )
                     )
                 }

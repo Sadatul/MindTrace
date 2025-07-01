@@ -434,8 +434,8 @@ fun MyLogsScreen(
         DialogLog(
             show = true,
             onDismiss = { showAddLogDialog = false },
-            onAdd = { logType, description ->
-                viewModel.addLog(logType, description)
+            onAdd = { logType, description, time ->
+                viewModel.addLog(logType, description, time)
                 showAddLogDialog = false
             }
         )
@@ -447,11 +447,12 @@ fun MyLogsScreen(
             DialogLog(
                 show = true,
                 onDismiss = { viewModel.stopEditingLog() },
-                onAdd = { logType, description ->
+                onAdd = { logType, description, _ ->
                     viewModel.updateLog(log.id, logType, description)
                 },
                 initialLogType = log.type,
                 initialDescription = log.description,
+                initialTime = log.createdAt,
                 title = "Edit Log"
             )
         }
