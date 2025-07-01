@@ -41,4 +41,30 @@ public class Reminder {
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
+
+    @Column(nullable = false)
+    private Boolean isRecurring;
+
+    @Column(nullable = false)
+    private Long nextExecution;
+
+    @Column(nullable = false)
+    private String zoneId;
+
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean isScheduled = false;
+
+    public Reminder(User user, ReminderType type, String title, String description, String cronExpression, Boolean isRecurring,
+                    Long nextExecution, String zoneId, Boolean isScheduled) {
+        this.user = user;
+        this.type = type;
+        this.title = title;
+        this.description = description;
+        this.cronExpression = cronExpression;
+        this.isRecurring = isRecurring;
+        this.nextExecution = nextExecution;
+        this.zoneId = zoneId;
+        createdAt = Instant.now();
+        this.isScheduled = isScheduled;
+    }
 }

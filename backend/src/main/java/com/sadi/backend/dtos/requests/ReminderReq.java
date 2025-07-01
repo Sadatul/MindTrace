@@ -1,5 +1,6 @@
 package com.sadi.backend.dtos.requests;
 
+import com.sadi.backend.enums.ReminderType;
 import com.sadi.backend.utils.ValidCron;
 import com.sadi.backend.utils.ValidZoneId;
 import jakarta.validation.constraints.NotNull;
@@ -13,29 +14,29 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class ReminderReq{
-        @NotNull
-        String userId;
+public class ReminderReq {
+    @NotNull
+    @Size(min =  1, max = 128, message = "Title must be between 1 and 128 characters")
+    private String title;
 
-        @NotNull
-        @Size(min =  1, max = 128, message = "Title must be between 1 and 128 characters")
-        String title;
+    @NotNull
+    @Size(min = 1, max = 512, message = "Description must be between 1 and 512 characters")
+    private String description;
 
-        @NotNull
-        @Size(min = 1, max = 512, message = "Description must be between 1 and 512 characters")
-        String description;
+    @NotNull(message = "Reminder type cannot be null")
+    private ReminderType reminderType;
 
-        @NotNull
-        @ValidCron
-        String cronExpression;
+    @NotNull
+    @ValidCron
+    private String cronExpression;
 
-        @ValidZoneId
-        String zoneId;
+    @ValidZoneId
+    private String zoneId;
 
-        Boolean isRecurring;
+    Boolean isRecurring;
 
-        public ReminderReq() {
-                isRecurring = false;
-                zoneId = "Asia/Dhaka";
-        }
+    public ReminderReq() {
+        isRecurring = false;
+        zoneId = "Asia/Dhaka";
+    }
 }
