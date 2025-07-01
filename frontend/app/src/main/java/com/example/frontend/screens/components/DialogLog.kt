@@ -1,6 +1,8 @@
 package com.example.frontend.screens.components
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,8 +27,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.frontend.api.models.LogType
 import com.example.frontend.api.models.logTypeToString
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DialogLog(
@@ -65,6 +70,17 @@ fun DialogLog(
             in 1..59 -> "$minutes minutes ago"
             60 -> "1 hour ago"
             else -> "${minutes / 60} hours ago"
+        }
+    }
+    
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun formatTimestamp(timestamp: String): String {
+        return try {
+            val zonedDateTime = ZonedDateTime.parse(timestamp)
+            val formatter = DateTimeFormatter.ofPattern("h:mm a, d MMMM yyyy")
+            zonedDateTime.format(formatter)
+        } catch (e: Exception) {
+            timestamp // Return original if parsing fails
         }
     }
 
@@ -112,7 +128,7 @@ fun DialogLog(
                         modifier = Modifier.fillMaxWidth()
                     )
                     
-                    // Time Slider Section
+                    // Time Section - conditional based on initialTime
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -124,23 +140,34 @@ fun DialogLog(
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
                         
-                        val selectedTimeIndex = timeSliderValue.roundToInt()
-                        val selectedMinutes = timeOptions[selectedTimeIndex]
-                        
-                        Text(
-                            text = getTimeText(selectedMinutes),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                        
-                        Slider(
-                            value = timeSliderValue,
-                            onValueChange = { timeSliderValue = it },
-                            valueRange = 0f..(timeOptions.size - 1).toFloat(),
-                            steps = timeOptions.size - 2, // steps between min and max
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                        if (initialTime != null) {
+                            // Show formatted timestamp in greyed out format
+                            Text(
+                                text = formatTimestamp(initialTime),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                        } else {
+                            // Show slider for time selection
+                            val selectedTimeIndex = timeSliderValue.roundToInt()
+                            val selectedMinutes = timeOptions[selectedTimeIndex]
+                            
+                            Text(
+                                text = getTimeText(selectedMinutes),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                            
+                            Slider(
+                                value = timeSliderValue,
+                                onValueChange = { timeSliderValue = it },
+                                valueRange = 0f..(timeOptions.size - 1).toFloat(),
+                                steps = timeOptions.size - 2, // steps between min and max
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
                 }
             },
@@ -148,10 +175,17 @@ fun DialogLog(
                 Button(
                     onClick = {
                         selectedLogType?.let {
-                            val selectedTimeIndex = timeSliderValue.roundToInt()
-                            val selectedMinutes = timeOptions[selectedTimeIndex]
-                            Log.d("DialogLog", "Add log: type=${it.name}, description=$logDescription, minutes ago=$selectedMinutes")
-                            onAdd(it, logDescription, selectedMinutes)
+                            if (initialTime != null) {
+                                // When editing existing log, pass 0 as the time parameter doesn't matter
+                                Log.d("DialogLog", "Edit log: type=${it.name}, description=$logDescription")
+                                onAdd(it, logDescription, 0)
+                            } else {
+                                // When creating new log, use selected time from slider
+                                val selectedTimeIndex = timeSliderValue.roundToInt()
+                                val selectedMinutes = timeOptions[selectedTimeIndex]
+                                Log.d("DialogLog", "Add log: type=${it.name}, description=$logDescription, minutes ago=$selectedMinutes")
+                                onAdd(it, logDescription, selectedMinutes)
+                            }
                         }
                     },
                     enabled = selectedLogType != null && logDescription.isNotBlank()
