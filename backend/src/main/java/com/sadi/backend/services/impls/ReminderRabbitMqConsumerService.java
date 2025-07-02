@@ -1,6 +1,7 @@
 package com.sadi.backend.services.impls;
 
 import com.sadi.backend.configs.RabbitConfig;
+import com.sadi.backend.configs.ReminderSchedulerConfig;
 import com.sadi.backend.dtos.requests.ReminderDTO;
 import com.sadi.backend.services.abstractions.ReminderSchedulerService;
 import com.sadi.backend.services.abstractions.ReminderService;
@@ -17,11 +18,12 @@ public class ReminderRabbitMqConsumerService {
     private final ReminderSchedulerService reminderSchedulerService;
     private final ReminderService reminderService;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final ReminderSchedulerConfig reminderSchedulerConfig;
 
     @RabbitListener(queues = RabbitConfig.QUEUE)
     public void handleMessage(ReminderDTO request) {
 
-        String key = ReminderSchedulerServiceImpl.REDIS_DELETED_REMINDERS_KEY + request.getId().toString();
+        String key = reminderSchedulerConfig.getRedis().getDeletedRemindersKey() + request.getId().toString();
         boolean exists = redisTemplate.opsForValue().get(key) != null;
         if (exists) {
             redisTemplate.delete(key);

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sadi.backend.dtos.requests.ReminderDTO;
 import com.sadi.backend.repositories.ReminderRepository;
 import com.sadi.backend.services.abstractions.ReminderSchedulerService;
-import com.sadi.backend.services.impls.ReminderSchedulerServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -24,21 +23,20 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class RedisScheduler {
-    private static final int SCHEDULER_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
-    private static final long DB_SCHEDULER_INTERVAL_MS = 10 * 60 * 1000; // 24 hours
     private final RedisTemplate<String, Object> redisTemplate;
     private final RabbitTemplate rabbitTemplate;
     private final ObjectMapper objectMapper;
     private final ReminderRepository reminderRepository;
     private final ReminderSchedulerService reminderSchedulerService;
+    private final ReminderSchedulerConfig reminderSchedulerConfig;
 
-    @Scheduled(fixedRate = SCHEDULER_INTERVAL_MS)
+    @Scheduled(fixedRateString = "${reminder.rabbit.max-delay}")
     public void processDueNotifications() {
         long now = getRedisTime();
-        long upperBound = now + SCHEDULER_INTERVAL_MS;
+        long upperBound = now + reminderSchedulerConfig.getRabbit().getMaxDelay();
 
         Set<ZSetOperations.TypedTuple<Object>> dueNotifications = redisTemplate.opsForZSet()
-            .rangeByScoreWithScores(ReminderSchedulerServiceImpl.REDIS_REMINDER_SET_KEY, 0, upperBound);
+            .rangeByScoreWithScores(reminderSchedulerConfig.getRedis().getReminderSetKey(), 0, upperBound);
 
         assert dueNotifications != null;
         for (ZSetOperations.TypedTuple<Object> tuple : dueNotifications) {
@@ -48,10 +46,10 @@ public class RedisScheduler {
             long scheduledTime = score.longValue();
             long remainingDelay = scheduledTime - now;
 
-            redisTemplate.opsForZSet().remove(ReminderSchedulerServiceImpl.REDIS_REMINDER_SET_KEY, notificationId);
+            redisTemplate.opsForZSet().remove(reminderSchedulerConfig.getRedis().getReminderSetKey(), notificationId);
             assert notificationId != null;
             Object objReq = redisTemplate.opsForHash()
-                    .get(ReminderSchedulerServiceImpl.REDIS_REMINDER_DETAILS_KEY, notificationId
+                    .get(reminderSchedulerConfig.getRedis().getReminderDetailsKey(), notificationId
                     );
 
             if (objReq != null) {
@@ -67,18 +65,18 @@ public class RedisScheduler {
                         }
                 );
 
-                redisTemplate.opsForHash().delete(ReminderSchedulerServiceImpl.REDIS_REMINDER_DETAILS_KEY, notificationId);
+                redisTemplate.opsForHash().delete(reminderSchedulerConfig.getRedis().getReminderDetailsKey(), notificationId);
             }
         }
     }
 
-    @Scheduled(fixedRate = DB_SCHEDULER_INTERVAL_MS)
+    @Scheduled(fixedRateString = "${reminder.redis.max-delay}")
     public void processDatabaseReminders() {
         log.debug("Processing DB Reminders");
         // Subtract 1 second to ensure we catch reminders that might be missed to scheduling delay
         long now = Instant.now().toEpochMilli() - 1000;
         List<UUID> ids = new ArrayList<>();
-        reminderRepository.findReminderByNextExecutionBetweenAndIsScheduled(now, now + DB_SCHEDULER_INTERVAL_MS, false)
+        reminderRepository.findReminderByNextExecutionBetweenAndIsScheduled(now, now + reminderSchedulerConfig.getRedis().getMaxDelay(), false)
                 .forEach(reminder -> {
                     ReminderDTO dto = new ReminderDTO(reminder);
                     reminderSchedulerService.scheduleReminder(dto);
