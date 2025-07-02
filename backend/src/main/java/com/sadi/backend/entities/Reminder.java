@@ -1,5 +1,6 @@
 package com.sadi.backend.entities;
 
+import com.sadi.backend.dtos.BaseSortCategory;
 import com.sadi.backend.enums.ReminderType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -66,5 +67,12 @@ public class Reminder {
         this.zoneId = zoneId;
         createdAt = Instant.now();
         this.isScheduled = isScheduled;
+    }
+
+    @Getter
+    @RequiredArgsConstructor
+    public enum ReminderSortCategory implements BaseSortCategory {
+        NEXT_EXECUTION("nextExecution");
+        private final String value;
     }
 }

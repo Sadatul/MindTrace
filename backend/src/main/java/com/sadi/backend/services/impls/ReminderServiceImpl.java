@@ -4,12 +4,17 @@ import com.sadi.backend.dtos.requests.ReminderDTO;
 import com.sadi.backend.dtos.requests.ReminderReq;
 import com.sadi.backend.entities.Reminder;
 import com.sadi.backend.entities.User;
+import com.sadi.backend.enums.ReminderType;
 import com.sadi.backend.repositories.ReminderRepository;
 import com.sadi.backend.services.abstractions.ReminderSchedulerService;
 import com.sadi.backend.services.abstractions.ReminderService;
+import com.sadi.backend.specifications.ReminderSpecification;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -89,12 +94,19 @@ public class ReminderServiceImpl implements ReminderService {
         reminderRepository.delete(reminderToDelete);
     }
 
+    @Override
+    public Page<Reminder> getReminders(String userId, ReminderType type, Instant start, Instant end, Pageable pageable) {
+        Specification<Reminder> spec = ReminderSpecification.getSpecification(userId, type, start, end);
+        return reminderRepository.findAll(spec, pageable);
+    }
+
     private void verifyOwner(String userId, Reminder reminder) {
         if (!reminder.getUser().getId().equals(userId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to delete this reminder.");
         }
     }
 
+    @Override
     public Reminder getReminder(UUID id) {
         return reminderRepository.findById(id).orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Reminder not found.")
