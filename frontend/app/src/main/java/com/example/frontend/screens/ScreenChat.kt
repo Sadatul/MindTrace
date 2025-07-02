@@ -561,7 +561,7 @@ suspend fun loadMessages(
                             // Consider if ".dropLast(4)" is always correct for assistant messages
                             text = if (msg.type == "ASSISTANT" && msg.message.endsWith("<em>")) msg.message.dropLast(4) else msg.message,
                             isUser = msg.type == "USER",
-                            timestamp = msg.createdAt.toString()
+                            timestamp = msg.createdAt
                         )
                     } else null
                 }

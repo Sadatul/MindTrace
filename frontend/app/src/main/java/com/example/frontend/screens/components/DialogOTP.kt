@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -20,6 +21,29 @@ fun DialogOTP(
     errorMessage: String? = null,
     loading: Boolean = false
 ) {
+    // Responsive sizing for dialog
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val screenHeight = configuration.screenHeightDp.dp
+    
+    val dialogPadding = when {
+        screenWidth < 360.dp -> 12.dp
+        screenWidth < 400.dp -> 16.dp
+        else -> 20.dp
+    }
+    
+    val contentPadding = when {
+        screenHeight < 600.dp -> 16.dp
+        screenHeight < 800.dp -> 20.dp
+        else -> 24.dp
+    }
+    
+    val verticalSpacing = when {
+        screenHeight < 600.dp -> 12.dp
+        screenHeight < 800.dp -> 16.dp
+        else -> 20.dp
+    }
+    
     var otp by remember { mutableStateOf("") }
 
     Dialog(
@@ -29,22 +53,22 @@ fun DialogOTP(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(dialogPadding),
             shape = MaterialTheme.shapes.large,
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface) // Added for better theming
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
+                modifier = Modifier.padding(contentPadding),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onSurface // Added for better theming
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
-                Spacer(modifier = Modifier.height(16.dp)) // Increased spacing
+                Spacer(modifier = Modifier.height(verticalSpacing))
 
                 OutlinedTextField(
                     value = otp,

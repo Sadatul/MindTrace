@@ -30,11 +30,9 @@ fun DialogAddPartner(
     var qrScannerActive by remember { mutableStateOf(false) }
     var showScanPrompt by remember { mutableStateOf(true) }
 
-    var scanResult by remember { mutableStateOf("") }
     val qrScanner = rememberQRScanner(
         onResult = { result ->
             Log.d("DialogAddPartner", "Scanned QR result: $result")
-            scanResult = result
             patientId = result
             qrScannerActive = false
             patientInfoLoading = true
@@ -109,46 +107,43 @@ fun DialogAddPartner(
         }
     }
 
-    if (qrScannerActive) {
-        QRCodeScannerButton(
-            onResult = { scannedId ->
-                Log.d("DialogAddPartner", "QRCodeScannerButton scannedId: $scannedId")
-                patientId = scannedId
-                qrScannerActive = false
-                patientInfoLoading = true
+    // Show error dialog if there's an error
+    if (patientInfoError != null) {
+        AlertDialog(
+            onDismissRequest = { 
                 patientInfoError = null
-                coroutineScope.launch {
-                    try {
-                        val api = RetrofitInstance.dementiaAPI
-                        val token = api.getIdToken()
-                        Log.d("DialogAddPartner", "QRCodeScannerButton using patientId: $patientId, token: $token")
-                        val response = api.getUserInfo("Bearer $token", userId = patientId)
-                        Log.d("DialogAddPartner", "QRCodeScannerButton API response isSuccessful: ${response.isSuccessful}")
-                        if (response.isSuccessful) {
-                            patientInfo = response.body()
-                            Log.d("DialogAddPartner", "QRCodeScannerButton patientInfo: $patientInfo")
-                            if (patientInfo != null) {
-                                showConfirmDialog = true
-                            } else {
-                                patientInfoError = "Patient not found."
-                            }
-                        } else {
-                            patientInfoError = "Patient not found."
-                        }
-                    } catch (e: Exception) {
-                        Log.e("DialogAddPartner", "QRCodeScannerButton error fetching patient info", e)
-                        patientInfoError = "Error: ${e.message}"
-                    } finally {
-                        patientInfoLoading = false
-                    }
+                showScanPrompt = true
+            },
+            title = { Text("Error") },
+            text = { Text(patientInfoError!!) },
+            confirmButton = {
+                Button(onClick = {
+                    patientInfoError = null
+                    showScanPrompt = true
+                }) { Text("Try Again") }
+            },
+            dismissButton = {
+                Button(onClick = {
+                    patientInfoError = null
+                    onDismiss()
+                }) { Text("Cancel") }
+            }
+        )
+        return
+    }
+
+    // Add loading state for patient info loading
+    if (patientInfoLoading) {
+        AlertDialog(
+            onDismissRequest = { },
+            title = { Text("Loading") },
+            text = {
+                Column {
+                    CircularProgressIndicator()
+                    Text("Fetching patient information...")
                 }
             },
-            onError = { err ->
-                Log.e("DialogAddPartner", "QRCodeScannerButton scan error: $err")
-                patientInfoError = err
-                qrScannerActive = false
-            },
-            text = "Scan QR Code"
+            confirmButton = { }
         )
         return
     }
@@ -173,11 +168,19 @@ fun DialogAddPartner(
                     onClick = {
                         otpSendingLoading = true
                         coroutineScope.launch {
-                            val success = RetrofitInstance.dementiaAPI.sendPatientAddOTP(patientId)
-                            otpSendingLoading = false
-                            if (success) {
-                                showConfirmDialog = false
-                                onOtpRequested(patientId)
+                            try {
+                                val success = RetrofitInstance.dementiaAPI.sendPatientAddOTP(patientId)
+                                if (success) {
+                                    showConfirmDialog = false
+                                    onOtpRequested(patientId)
+                                } else {
+                                    patientInfoError = "Failed to send OTP. Please try again."
+                                }
+                            } catch (e: Exception) {
+                                Log.e("DialogAddPartner", "Error sending OTP", e)
+                                patientInfoError = "Network error while sending OTP. Please try again."
+                            } finally {
+                                otpSendingLoading = false
                             }
                         }
                     },

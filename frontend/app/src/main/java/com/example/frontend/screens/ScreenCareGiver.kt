@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -91,6 +93,48 @@ fun ScreenCareGiver(
     onSignOut: () -> Unit,
     onLoginWithAnotherAccount: () -> Unit
 ) {
+    val configuration = LocalConfiguration.current
+    val screenHeight = configuration.screenHeightDp.dp
+    val screenWidth = configuration.screenWidthDp.dp
+    
+    // Comprehensive responsive sizing
+    val buttonWidth = (screenWidth * 0.28f).coerceAtMost(120.dp).coerceAtLeast(80.dp)
+    val buttonHeight = (screenHeight * 0.10f).coerceAtMost(80.dp).coerceAtLeast(50.dp)
+    val iconSize = (buttonWidth * 0.25f).coerceAtMost(30.dp).coerceAtLeast(20.dp)
+    
+    // Main button sizing
+    val buttonWidthFraction = when {
+        screenWidth >= 400.dp -> 0.9f
+        screenWidth >= 360.dp -> 0.85f
+        else -> 0.95f
+    }
+    
+    val mainButtonHeight = when {
+        screenHeight < 600.dp -> 48.dp
+        screenHeight < 800.dp -> 56.dp
+        else -> 64.dp
+    }
+    
+    // Spacing and padding
+    val verticalSpacing = when {
+        screenHeight < 600.dp -> 16.dp
+        screenHeight < 800.dp -> 20.dp
+        else -> 24.dp
+    }
+    
+    val horizontalPadding = when {
+        screenWidth < 360.dp -> 12.dp
+        screenWidth < 400.dp -> 16.dp
+        else -> 20.dp
+    }
+    
+    // Responsive bottom padding to prevent overlap
+    val bottomPadding = when {
+        screenHeight < 600.dp -> 140.dp
+        screenHeight < 800.dp -> 160.dp
+        else -> 180.dp
+    }
+    
     var isLoading by remember { mutableStateOf(false) } // General loading state for the screen
     var isFetchingOtp by remember { mutableStateOf(false) } // Specific loading state for OTP generation
     var errorMsg by remember { mutableStateOf<String?>(null) }
@@ -265,26 +309,44 @@ fun ScreenCareGiver(
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         floatingActionButton = {
+            val configuration = LocalConfiguration.current
+            val screenWidth = configuration.screenWidthDp.dp
+            val buttonWidth = when {
+                screenWidth >= 400.dp -> 140.dp
+                screenWidth >= 360.dp -> 120.dp
+                else -> 100.dp
+            }
+            val buttonHeight = when {
+                screenWidth >= 400.dp -> 90.dp
+                screenWidth >= 360.dp -> 80.dp
+                else -> 70.dp
+            }
+            val iconSize = when {
+                screenWidth >= 400.dp -> 34.dp
+                screenWidth >= 360.dp -> 30.dp
+                else -> 26.dp
+            }
+            
             Surface(
                 shape = RoundedCornerShape(24.dp),
                 color = colorResource(R.color.gradient_caregiver_start),
                 shadowElevation = 20.dp,
                 modifier = Modifier
                     .padding(24.dp, bottom = 8.dp)
-                    .size(width = 120.dp, height = 80.dp) // Smaller size
+                    .size(width = buttonWidth, height = buttonHeight)
                     .clickable(onClick = onNavigateToChat)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(vertical = 8.dp), // Slightly less padding
+                        .padding(vertical = 8.dp),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Chat,
                         contentDescription = "ASK AI",
-                        modifier = Modifier.size(30.dp), // Smaller icon
+                        modifier = Modifier.size(iconSize),
                         tint = colorResource(R.color.white)
                     )
                     Text(
@@ -314,10 +376,12 @@ fun ScreenCareGiver(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
                     .padding(innerPadding)
-                    .padding(16.dp),
+                    .padding(horizontal = horizontalPadding, vertical = 16.dp)
+                    .padding(bottom = bottomPadding), // Responsive padding for floating action button
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+                verticalArrangement = Arrangement.spacedBy(verticalSpacing)
             ) {
                 if (isLoading && userInfo == null) {
                     CircularProgressIndicator(color = colorResource(id = R.color.dark_primary))
@@ -369,8 +433,8 @@ fun ScreenCareGiver(
                     Button(
                         onClick = onNavigateToPatients,
                         modifier = Modifier
-                            .fillMaxWidth(0.85f)
-                            .height(56.dp),
+                            .fillMaxWidth(buttonWidthFraction)
+                            .height(mainButtonHeight),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = colorResource(R.color.gradient_caregiver_start),
                             contentColor = colorResource(R.color.white)
@@ -415,9 +479,10 @@ fun ScreenCareGiver(
                             getNewPatientRegistrationCode()
                         },
                         modifier = Modifier
-                            .fillMaxWidth(0.85f)
-                            .height(56.dp),
-                        enabled = !isFetchingOtp,                        colors = ButtonDefaults.buttonColors(
+                            .fillMaxWidth(buttonWidthFraction)
+                            .height(mainButtonHeight),
+                        enabled = !isFetchingOtp,
+                        colors = ButtonDefaults.buttonColors(
                             containerColor = colorResource(R.color.gradient_caregiver_start),
                             contentColor = colorResource(R.color.white),
                             disabledContainerColor = colorResource(R.color.gradient_caregiver_start).copy(
@@ -438,7 +503,7 @@ fun ScreenCareGiver(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Surface(
-                                modifier = Modifier.size(28.dp), // Consistent icon surface size
+                                modifier = Modifier.size(28.dp),
                                 shape = CircleShape,
                                 color = colorResource(R.color.white).copy(alpha = 0.25f)
                             ) {
@@ -446,7 +511,7 @@ fun ScreenCareGiver(
                                     Icons.Filled.PersonAdd,
                                     contentDescription = null,
                                     modifier = Modifier
-                                        .size(28.dp) // Consistent icon size with padding
+                                        .size(28.dp)
                                         .padding(5.dp),
                                     tint = colorResource(R.color.white)
                                 )
@@ -470,7 +535,7 @@ fun ScreenCareGiver(
                 }
 
                 // Display error messages specifically from OTP generation
-                if (!isFetchingOtp && errorMsg != null && !(isLoading && userInfo == null) && showNewPatientOtpDialog == false) {
+                if (!isFetchingOtp && errorMsg != null && !(isLoading && userInfo == null) && !showNewPatientOtpDialog) {
                     // This condition ensures the error is from OTP and dialog isn't already up
                     Log.d(TAG, "Displaying non-initial load error message: $errorMsg")
                     Spacer(modifier = Modifier.height(16.dp)) // Add some space before this error

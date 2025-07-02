@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalConfiguration
 import coil.compose.AsyncImage
 import com.example.frontend.R
 import com.example.frontend.api.RequestPatientAdd
@@ -60,13 +61,23 @@ fun ScreenMyPartners(
     onToggleDeleted: () -> Unit = {},
     onShowLogs: ((PartnerInfo) -> Unit)? = null // Make optional for patient flow
 ) {
+    val configuration = LocalConfiguration.current
+    val screenHeight = configuration.screenHeightDp.dp
+    
+    // Responsive bottom padding based on screen size
+    val fabPadding = when {
+        screenHeight < 600.dp -> 100.dp // Small screens
+        screenHeight < 800.dp -> 120.dp // Medium screens  
+        else -> 140.dp // Large screens
+    }
+    
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     var showOtpDialog by remember { mutableStateOf(false) }
     var selectedPartner by remember { mutableStateOf<PartnerInfo?>(null) }
 
     // Add dialog state for Add Partner
     var showAddPartnerDialog by remember { mutableStateOf(false) }
-    var addPatientIdForOtp by remember { mutableStateOf<String>("") }
+    var addPatientIdForOtp by remember { mutableStateOf("") }
     var addLoading by remember { mutableStateOf(false) }
     var addError by remember { mutableStateOf<String?>(null) }
 
@@ -285,7 +296,7 @@ fun ScreenMyPartners(
                         // If there are partners to display after filtering
                         LazyColumn(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
-                            contentPadding = PaddingValues(bottom = 80.dp) // Ensure space for FAB or other bottom elements
+                            contentPadding = PaddingValues(bottom = fabPadding) // Responsive spacing for FAB
                         ) {
                             items(filteredPartners) { partner ->
                                 PartnerCard(
@@ -592,20 +603,21 @@ fun PartnerCard(
 
                 // Show menu only if not deleted
                 if (!isDeleted) {
-                    // Only show menu for caregivers
-                    if (role.equals("Caregiver", ignoreCase = true)) {
-                        Box {
-                            IconButton(onClick = { showMenu = true }) {
-                                Icon(
-                                    imageVector = Icons.Default.MoreVert,
-                                    contentDescription = "More actions",
-                                    tint = contentOnCardColor
-                                )
-                            }
-                            DropdownMenu(
-                                expanded = showMenu,
-                                onDismissRequest = { showMenu = false }
-                            ) {
+                    // Show menu for both caregivers and patients
+                    Box {
+                        IconButton(onClick = { showMenu = true }) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "More actions",
+                                tint = contentOnCardColor
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
+                        ) {
+                            // Show "Show Logs" only for caregivers viewing patients
+                            if (role.equals("Caregiver", ignoreCase = true)) {
                                 DropdownMenuItem(
                                     text = { Text("Show Logs") },
                                     onClick = {
@@ -619,21 +631,27 @@ fun PartnerCard(
                                         )
                                     }
                                 )
-                                DropdownMenuItem(
-                                    text = { Text("Remove Patient", color = Color.Red) },
-                                    onClick = {
-                                        showMenu = false
-                                        onDelete()
-                                    },
-                                    leadingIcon = {
-                                        Icon(
-                                            imageVector = Icons.Default.Delete,
-                                            contentDescription = null,
-                                            tint = Color.Red
-                                        )
-                                    }
-                                )
                             }
+                            // Show delete option for both roles with appropriate text
+                            DropdownMenuItem(
+                                text = { 
+                                    Text(
+                                        text = if (role.equals("Caregiver", ignoreCase = true)) "Remove Patient" else "Remove Caregiver",
+                                        color = Color.Red
+                                    ) 
+                                },
+                                onClick = {
+                                    showMenu = false
+                                    onDelete()
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = null,
+                                        tint = Color.Red
+                                    )
+                                }
+                            )
                         }
                     }
                 } else {
@@ -796,5 +814,12 @@ private fun isYesterday(now: Calendar, then: Calendar): Boolean {
 
 @Composable
 private fun getPartnerProfilePictureSize(): Dp {
-    return 40.dp // Slightly smaller profile picture for this card layout
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    
+    return when {
+        screenWidth >= 400.dp -> 48.dp
+        screenWidth >= 360.dp -> 44.dp
+        else -> 40.dp
+    }
 }
