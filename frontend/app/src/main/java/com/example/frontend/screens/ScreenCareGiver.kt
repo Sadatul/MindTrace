@@ -96,12 +96,7 @@ fun ScreenCareGiver(
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
     val screenWidth = configuration.screenWidthDp.dp
-    
-    // Comprehensive responsive sizing
-    val buttonWidth = (screenWidth * 0.28f).coerceAtMost(120.dp).coerceAtLeast(80.dp)
-    val buttonHeight = (screenHeight * 0.10f).coerceAtMost(80.dp).coerceAtLeast(50.dp)
-    val iconSize = (buttonWidth * 0.25f).coerceAtMost(30.dp).coerceAtLeast(20.dp)
-    
+
     // Main button sizing
     val buttonWidthFraction = when {
         screenWidth >= 400.dp -> 0.9f
