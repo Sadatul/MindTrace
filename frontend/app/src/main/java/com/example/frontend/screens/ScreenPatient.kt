@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -85,6 +87,36 @@ fun ScreenPatient(
     onLoginWithAnotherAccount: () -> Unit = {},
     onBack: () -> Boolean
 ) {
+    val configuration = LocalConfiguration.current
+    val screenHeight = configuration.screenHeightDp.dp
+    val screenWidth = configuration.screenWidthDp.dp
+    
+    // Comprehensive responsive sizing
+    val fabWidth = (screenWidth * 0.28f).coerceAtMost(140.dp).coerceAtLeast(100.dp)
+    val fabHeight = (screenHeight * 0.11f).coerceAtMost(100.dp).coerceAtLeast(80.dp)
+    val iconSize = (fabWidth * 0.35f).coerceAtMost(48.dp).coerceAtLeast(32.dp)
+    
+    // Spacing between floating action buttons
+    val spacerWidth = when {
+        screenWidth >= 400.dp -> 24.dp
+        screenWidth >= 360.dp -> 18.dp
+        else -> 12.dp
+    }
+    
+    // Content padding and spacing
+    val horizontalPadding = when {
+        screenWidth < 360.dp -> 12.dp
+        screenWidth < 400.dp -> 16.dp
+        else -> 20.dp
+    }
+    
+    // Responsive bottom padding for dual floating action buttons
+    val bottomPadding = when {
+        screenHeight < 600.dp -> 160.dp
+        screenHeight < 800.dp -> 180.dp  
+        else -> 200.dp
+    }
+    
     var userInfo: UserInfo? by remember { mutableStateOf(null) }
     var isLoading by remember { mutableStateOf(true) }
     var showProfileMenu by remember { mutableStateOf(false) }
@@ -195,26 +227,26 @@ fun ScreenPatient(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
             ) {
-                // My Caregivers Button (rectangle, matches chat button)
+                // My Caregivers Button
                 Surface(
                     shape = RoundedCornerShape(24.dp),
                     color = colorResource(R.color.gradient_patient_start),
                     shadowElevation = 20.dp,
                     modifier = Modifier
-                        .size(width = 120.dp, height = 90.dp) // Increased width
+                        .size(width = fabWidth, height = fabHeight)
                         .clickable(onClick = onNavigateToCaregivers)
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(vertical = 10.dp), // Slightly reduced padding
+                            .padding(vertical = 10.dp),
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
                             imageVector = Icons.Default.People,
                             contentDescription = "My Caregivers",
-                            modifier = Modifier.size(44.dp), // Reduced icon size
+                            modifier = Modifier.size(iconSize),
                             tint = colorResource(R.color.white)
                         )
                         Text(
@@ -226,27 +258,27 @@ fun ScreenPatient(
                         )
                     }
                 }
-                Spacer(modifier = Modifier.width(18.dp)) // Slightly reduced gap
-                // ASK AI / Start Chat Button (rectangle, matches caregivers button)
+                Spacer(modifier = Modifier.width(spacerWidth))
+                // ASK AI Button
                 Surface(
                     shape = RoundedCornerShape(24.dp),
                     color = colorResource(R.color.gradient_patient_start),
                     shadowElevation = 20.dp,
                     modifier = Modifier
-                        .size(width = 120.dp, height = 90.dp) // Reduced size
+                        .size(width = fabWidth, height = fabHeight)
                         .clickable(onClick = onNavigateToChat)
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(vertical = 10.dp), // Slightly reduced padding
+                            .padding(vertical = 10.dp),
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Chat,
                             contentDescription = "ASK AI",
-                            modifier = Modifier.size(44.dp), // Reduced icon size
+                            modifier = Modifier.size(iconSize),
                             tint = colorResource(R.color.white)
                         )
                         Text(
@@ -278,14 +310,21 @@ fun ScreenPatient(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
                     .padding(innerPadding)
-                    .padding(16.dp),
+                    .padding(horizontal = horizontalPadding, vertical = 16.dp)
+                    .padding(bottom = bottomPadding), // Responsive padding for floating action buttons
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 if (isLoading) {
-                    Spacer(modifier = Modifier.weight(1f))
-                    CircularProgressIndicator(color = colorResource(R.color.dark_primary))
-                    Spacer(modifier = Modifier.weight(1f))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = colorResource(R.color.dark_primary))
+                    }
                 } else if (userInfo != null) {
                     PatientInfoCard(
                         profilePicture = userInfo!!.profilePicture,
@@ -299,23 +338,26 @@ fun ScreenPatient(
                     )
                     Spacer(modifier = Modifier.height(20.dp))
                 } else if (errorMsg.isNullOrBlank()) { // Only if no specific error message is passed from NavGraph
-                    Spacer(modifier = Modifier.weight(1f))
-                    Text(
-                        "Could not load patient information.",
-                        color = colorResource(id = R.color.dark_on_surface) // Use a less alarming color
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "Could not load patient information.",
+                            color = colorResource(id = R.color.dark_on_surface) // Use a less alarming color
+                        )
+                    }
                 }
 
                 // Display error message passed from NavGraph or other sources
                 if (!errorMsg.isNullOrBlank()) {
                     if (userInfo == null && !isLoading) { // If user info also failed to load
-                        Spacer(modifier = Modifier.weight(0.5f))
+                        Spacer(modifier = Modifier.height(20.dp))
                     }
                     ErrorDisplay(errorMsg)
-                    if (userInfo == null && !isLoading) {
-                        Spacer(modifier = Modifier.weight(0.5f))
-                    } else {
+                    if (userInfo != null || isLoading) {
                         Spacer(modifier = Modifier.height(20.dp)) // Add space if user info is present
                     }
                 }

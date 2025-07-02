@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalConfiguration
 import coil.compose.AsyncImage
 import com.example.frontend.R
 import com.example.frontend.api.RequestPatientAdd
@@ -60,6 +61,16 @@ fun ScreenMyPartners(
     onToggleDeleted: () -> Unit = {},
     onShowLogs: ((PartnerInfo) -> Unit)? = null // Make optional for patient flow
 ) {
+    val configuration = LocalConfiguration.current
+    val screenHeight = configuration.screenHeightDp.dp
+    
+    // Responsive bottom padding based on screen size
+    val fabPadding = when {
+        screenHeight < 600.dp -> 100.dp // Small screens
+        screenHeight < 800.dp -> 120.dp // Medium screens  
+        else -> 140.dp // Large screens
+    }
+    
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     var showOtpDialog by remember { mutableStateOf(false) }
     var selectedPartner by remember { mutableStateOf<PartnerInfo?>(null) }
@@ -285,7 +296,7 @@ fun ScreenMyPartners(
                         // If there are partners to display after filtering
                         LazyColumn(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
-                            contentPadding = PaddingValues(bottom = 80.dp) // Ensure space for FAB or other bottom elements
+                            contentPadding = PaddingValues(bottom = fabPadding) // Responsive spacing for FAB
                         ) {
                             items(filteredPartners) { partner ->
                                 PartnerCard(
@@ -803,5 +814,12 @@ private fun isYesterday(now: Calendar, then: Calendar): Boolean {
 
 @Composable
 private fun getPartnerProfilePictureSize(): Dp {
-    return 40.dp // Slightly smaller profile picture for this card layout
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    
+    return when {
+        screenWidth >= 400.dp -> 48.dp
+        screenWidth >= 360.dp -> 44.dp
+        else -> 40.dp
+    }
 }

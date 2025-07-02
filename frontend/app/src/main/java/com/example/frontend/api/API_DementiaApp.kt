@@ -1,9 +1,7 @@
 package com.example.frontend.api
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
-import com.example.frontend.api.models.LogMetadata
 import com.example.frontend.api.models.PatientLog
 import com.example.frontend.api.models.PartnerInfo
 import com.example.frontend.api.models.PatientLogRaw
@@ -31,7 +29,6 @@ import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 import java.time.Instant
-import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
