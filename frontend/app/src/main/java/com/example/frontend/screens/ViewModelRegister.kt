@@ -315,7 +315,7 @@ class ViewModelRegister : ViewModel() {
                                 if (userBody.role == "CAREGIVER") {
                                     onNavigateToDashboard(userBody.role)
                                 }else
-                                    onNavigateToDashboard("PATIENT_LOGS")
+                                    onNavigateToDashboard("PATIENT")
                             }
                             else -> {
                                 setError("Backend returned unknown status: ${parsedBody.status}. Check logs.")
@@ -500,7 +500,7 @@ class ViewModelRegister : ViewModel() {
                     val userInfo = RetrofitInstance.dementiaAPI.getSelfUserInfo()
                     Log.d(TAG, "Cached user info after patient registration: $userInfo")
                     // Always navigate to PatientLogs after patient registration
-                    onNavigateToDashboard("PATIENT_LOGS")
+                    onNavigateToDashboard("PATIENT")
                 } else {
                     registrationApiFailed = true
                     val errorBody = response.errorBody()?.string() ?: "Unknown error"

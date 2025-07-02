@@ -66,7 +66,7 @@ fun ScreenMyPartners(
 
     // Add dialog state for Add Partner
     var showAddPartnerDialog by remember { mutableStateOf(false) }
-    var addPatientIdForOtp by remember { mutableStateOf<String>("") }
+    var addPatientIdForOtp by remember { mutableStateOf("") }
     var addLoading by remember { mutableStateOf(false) }
     var addError by remember { mutableStateOf<String?>(null) }
 
@@ -592,20 +592,21 @@ fun PartnerCard(
 
                 // Show menu only if not deleted
                 if (!isDeleted) {
-                    // Only show menu for caregivers
-                    if (role.equals("Caregiver", ignoreCase = true)) {
-                        Box {
-                            IconButton(onClick = { showMenu = true }) {
-                                Icon(
-                                    imageVector = Icons.Default.MoreVert,
-                                    contentDescription = "More actions",
-                                    tint = contentOnCardColor
-                                )
-                            }
-                            DropdownMenu(
-                                expanded = showMenu,
-                                onDismissRequest = { showMenu = false }
-                            ) {
+                    // Show menu for both caregivers and patients
+                    Box {
+                        IconButton(onClick = { showMenu = true }) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "More actions",
+                                tint = contentOnCardColor
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
+                        ) {
+                            // Show "Show Logs" only for caregivers viewing patients
+                            if (role.equals("Caregiver", ignoreCase = true)) {
                                 DropdownMenuItem(
                                     text = { Text("Show Logs") },
                                     onClick = {
@@ -619,21 +620,27 @@ fun PartnerCard(
                                         )
                                     }
                                 )
-                                DropdownMenuItem(
-                                    text = { Text("Remove Patient", color = Color.Red) },
-                                    onClick = {
-                                        showMenu = false
-                                        onDelete()
-                                    },
-                                    leadingIcon = {
-                                        Icon(
-                                            imageVector = Icons.Default.Delete,
-                                            contentDescription = null,
-                                            tint = Color.Red
-                                        )
-                                    }
-                                )
                             }
+                            // Show delete option for both roles with appropriate text
+                            DropdownMenuItem(
+                                text = { 
+                                    Text(
+                                        text = if (role.equals("Caregiver", ignoreCase = true)) "Remove Patient" else "Remove Caregiver",
+                                        color = Color.Red
+                                    ) 
+                                },
+                                onClick = {
+                                    showMenu = false
+                                    onDelete()
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = null,
+                                        tint = Color.Red
+                                    )
+                                }
+                            )
                         }
                     }
                 } else {

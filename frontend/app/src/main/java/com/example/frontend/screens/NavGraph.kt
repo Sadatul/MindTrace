@@ -1,6 +1,7 @@
 package com.example.frontend.screens
 
 import android.os.Build
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
@@ -48,9 +49,8 @@ fun SetupNavGraph(navController: NavHostController) {
             resultCode = result.resultCode,
             onNavigateToDashboard = { role ->
                 val destination = when (role) {
-                    "PATIENT" -> Screen.DashBoardPatient
+                    "PATIENT" -> Screen.PatientLogs
                     "CAREGIVER" -> Screen.DashboardCareGiver
-                    "PATIENT_LOGS" -> Screen.PatientLogs // Add this case for patient logs navigation
                     else -> throw IllegalArgumentException("Unknown role: $role")
                 }
                 navController.navigate(destination) {
@@ -72,6 +72,8 @@ fun SetupNavGraph(navController: NavHostController) {
             CircularProgressIndicator()
         }
         return
+    }else{
+        Log.d("start"," $startDestination")
     }
 
     NavHost(navController = navController, startDestination = startDestination!!) {
