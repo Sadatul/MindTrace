@@ -10,12 +10,10 @@ import com.sadi.backend.services.abstractions.ReminderService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Optional;
@@ -27,9 +25,6 @@ import java.util.UUID;
 public class ReminderServiceImpl implements ReminderService {
     private final ReminderRepository reminderRepository;
     private final ReminderSchedulerService reminderSchedulerService;
-
-    @Value("${scheduling.redis.delay}")
-    private long redisDelay;
 
     @Override
     public void sendReminder(ReminderDTO req) {
@@ -76,13 +71,12 @@ public class ReminderServiceImpl implements ReminderService {
         Optional<Reminder> reminder = reminderRepository.findById(id);
         if(reminder.isEmpty()) return;
 
-        long delay = Duration.between(nextExec.get(), Instant.now()).toMillis();
-        Reminder reminderToUpdate = reminder.get();
+        log.debug("Updating next execution for Reminder {}", reminder);
 
-        if(delay > redisDelay) {
-             reminderToUpdate.setIsScheduled(false);
-        }
+        Reminder reminderToUpdate = reminder.get();
         reminderToUpdate.setNextExecution(nextExec.get().toEpochMilli());
+        reminderToUpdate.setIsScheduled(reminderSchedulerService.isReminderScheduled(cronExpression, ZoneId.of(zoneId)));
+        log.debug("Updating next execution for Reminder 2 {}", reminderToUpdate);
         reminderRepository.save(reminderToUpdate);
     }
 
