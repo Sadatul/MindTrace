@@ -15,6 +15,8 @@ import lombok.ToString;
 @Setter
 @ToString
 public class ReminderReq {
+    private String userId;
+
     @NotNull
     @Size(min =  1, max = 128, message = "Title must be between 1 and 128 characters")
     private String title;

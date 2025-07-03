@@ -5,19 +5,17 @@ meta {
 }
 
 get {
-  url: {{host}}/v1/reminders?type="type"&title="title"&description="semantic search by description"&starttime="start time of search interval"&endtime="end time of search interval"&size="size"&page="page number"
+  url: {{host}}/v1/reminders?userId=6uGEoUSyILUlVrKhogKdCvnDWaN2
   body: none
   auth: bearer
 }
 
 params:query {
-  type: "type"
-  title: "title"
-  description: "semantic search by description"
-  starttime: "start time of search interval"
-  endtime: "end time of search interval"
-  size: "size"
-  page: "page number"
+  userId: 6uGEoUSyILUlVrKhogKdCvnDWaN2
+}
+
+auth:bearer {
+  token: eyJhbGciOiJSUzI1NiIsImtpZCI6Ijg3NzQ4NTAwMmYwNWJlMDI2N2VmNDU5ZjViNTEzNTMzYjVjNThjMTIiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiU2FkYXR1bCBpc2xhbSBTYWRpIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0lENEktWEJheGJweGFuR09TZmR4MWhKclFRSUM1aERfMjVEYXp4LU1YWHJJT2I5QT1zOTYtYyIsInNjcCI6IkNBUkVHSVZFUiIsImlzcyI6Imh0dHBzOi8vc2VjdXJldG9rZW4uZ29vZ2xlLmNvbS90ZXN0LWF1dGgtY2EyOGMiLCJhdWQiOiJ0ZXN0LWF1dGgtY2EyOGMiLCJhdXRoX3RpbWUiOjE3NTE1MDIyOTIsInVzZXJfaWQiOiI5QXdneHE3a3pBVW0xV2loY3FrR3lZdm9nTVYyIiwic3ViIjoiOUF3Z3hxN2t6QVVtMVdpaGNxa0d5WXZvZ01WMiIsImlhdCI6MTc1MTUwMjI5MiwiZXhwIjoxNzUxNTA1ODkyLCJlbWFpbCI6InNhZGF0dWxpc2xhbXNhZGlAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZ29vZ2xlLmNvbSI6WyIxMTU3MDcxODIwMjY5NTI3MDIwMDEiXSwiZW1haWwiOlsic2FkYXR1bGlzbGFtc2FkaUBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJnb29nbGUuY29tIn19.AUg0QTa3OOv-KHE2_0vXhorBt1-H1FcNHGhSOPrVUaIGgUfIjgl60EsAlgl6-vcq3UsnuCC2AgJfzG4zo5vg3Ohjg1ID1p6ntO_iSlZtjNsyW1kt4G8WxChRkKT1DG6GoUu72Ub2wFllsXGzY6RCWSJVOpU-8gfMcKDcGSH62rhwKtk_k37V3ZgW5wy79InduWJjAkvLQbM1YHvzx1Y6-NUId8rI6b4llffpUOf2oH1wUBMI9KWzYGR5t3_1cNACZP1z_m8F4cG6j2qLtOYoSVJVVDAepm_QZYUABFXlNfol_bc1SN9Hbk4E3ETG15zfPm_jRWeW2C5KN2SEIy25hA
 }
 
 docs {
@@ -27,21 +25,43 @@ docs {
   ```
   status: 200
   {
-    "content":[
+    "content": [
       {
-        "id": "string",
-        "time": "cron time string",
-        "title": "string",
-        "description": "string",
-        "type": "string"
+        "id": "9c928a0b-ac47-46a9-84de-191dd13d2895",
+        "reminderType": "BASE",
+        "title": "Remind me to take mdicine",
+        "description": "Very2 important medicine. Take it now",
+        "cronExpression": "0 0/12 * * * *",
+        "createdAt": "2025-07-03T00:38:15.069593Z",
+        "isRecurring": false,
+        "nextExecution": "2025-07-03T00:48:00Z",
+        "zoneId": "Asia/Dhaka"
+      },
+      {
+        "id": "29e9c9f0-9b1d-4ea4-9cba-94ac187d52d1",
+        "reminderType": "BASE",
+        "title": "Remind me to take mdicine",
+        "description": "Very2 important medicine. Take it now",
+        "cronExpression": "0 0/12 * * * *",
+        "createdAt": "2025-07-03T00:39:16.269636Z",
+        "isRecurring": false,
+        "nextExecution": "2025-07-03T00:48:00Z",
+        "zoneId": "Asia/Dhaka"
       }
     ],
-    "page":{
-      "size": number,
-      "number": pagenumber (starts from 0),
-      "totalElements": 1,
+    "page": {
+      "size": 20,
+      "number": 0,
+      "totalElements": 2,
       "totalPages": 1
     }
   }
   ```
+  
+  **NOTES:**
+  * This endpoint has filtering logic:
+  * start, end -> utc time stamp -> 2025-06-15T16:45:10.356067Z. Any of them can be null. start is null, all reminders with next execution before end time will be shown and vice-versa
+  * type -> BASE
+  * page and size for pagination.
+  * Optional userId can be used to get any users reminders by his caregiver. Remember only caregiver can access his patients logs, otherwise you will get 403 Forbidden.
 }

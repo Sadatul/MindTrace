@@ -36,7 +36,12 @@ public class ReminderController {
     @PostMapping
     public ResponseEntity<Void> createReminder(@Valid @RequestBody ReminderReq req)
     {
-        String userId = SecurityUtils.getName();
+        String userId = req.getUserId();
+        if(userId == null) {
+            userId = SecurityUtils.getName();
+        } else {
+            userService.verifyCaregiver(userId, SecurityUtils.getName());
+        }
         UUID uuid = reminderService.createReminder(userId, req);
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
@@ -47,9 +52,8 @@ public class ReminderController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteReminder(@PathVariable UUID id) {
-        String userId = SecurityUtils.getName();
-        log.debug("Received delete reminder request for user: {}, reminder ID: {}", userId, id);
-        reminderService.deleteReminder(userId, id, true);
+        log.debug("Received delete reminder request for reminder ID: {}", id);
+        reminderService.deleteReminder(id);
         return ResponseEntity.noContent().build();
     }
 
@@ -82,10 +86,7 @@ public class ReminderController {
     ResponseEntity<ReminderFullRes> getReminder(@PathVariable UUID id) {
         log.debug("Received get reminder request: {}", id);
         Reminder reminder = reminderService.getReminder(id);
-        String userId = SecurityUtils.getName();
-        if(!reminder.getUser().getId().equals(userId)) {
-            userService.verifyCaregiver(reminder.getUser().getId(), userId);
-        }
+        reminderService.verifyOwnerOrCaregiver(SecurityUtils.getName(), reminder);
         return  ResponseEntity.ok(ReminderFullRes.getReminderFullResFromReminder(reminder));
     }
 }

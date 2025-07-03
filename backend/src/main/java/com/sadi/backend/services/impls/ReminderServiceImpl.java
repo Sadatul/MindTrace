@@ -6,9 +6,11 @@ import com.sadi.backend.entities.Reminder;
 import com.sadi.backend.entities.User;
 import com.sadi.backend.enums.ReminderType;
 import com.sadi.backend.repositories.ReminderRepository;
+import com.sadi.backend.services.UserService;
 import com.sadi.backend.services.abstractions.ReminderSchedulerService;
 import com.sadi.backend.services.abstractions.ReminderService;
 import com.sadi.backend.specifications.ReminderSpecification;
+import com.sadi.backend.utils.SecurityUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +32,7 @@ import java.util.UUID;
 public class ReminderServiceImpl implements ReminderService {
     private final ReminderRepository reminderRepository;
     private final ReminderSchedulerService reminderSchedulerService;
+    private final UserService userService;
 
     @Override
     public void sendReminder(ReminderDTO req) {
@@ -59,13 +62,20 @@ public class ReminderServiceImpl implements ReminderService {
 
     @Override
     @Transactional
-    public void deleteReminder(String userId, UUID id, boolean isOwner) {
+    public void deleteReminder(UUID id) {
+        String userId = SecurityUtils.getName();
         Reminder reminder = getReminder(id);
-        if(isOwner)
-            verifyOwner(userId, reminder);
+        verifyOwnerOrCaregiver(userId, reminder);
         if (reminder.getIsScheduled())
             reminderSchedulerService.deleteScheduledReminder(reminder);
         reminderRepository.delete(reminder);
+    }
+
+    @Override
+    public void verifyOwnerOrCaregiver(String userId, Reminder reminder) {
+        if(!reminder.getUser().getId().equals(userId)) {
+            userService.verifyCaregiver(reminder.getUser().getId(), userId);
+        }
     }
 
     @Override
@@ -98,12 +108,6 @@ public class ReminderServiceImpl implements ReminderService {
     public Page<Reminder> getReminders(String userId, ReminderType type, Instant start, Instant end, Pageable pageable) {
         Specification<Reminder> spec = ReminderSpecification.getSpecification(userId, type, start, end);
         return reminderRepository.findAll(spec, pageable);
-    }
-
-    private void verifyOwner(String userId, Reminder reminder) {
-        if (!reminder.getUser().getId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to delete this reminder.");
-        }
     }
 
     @Override

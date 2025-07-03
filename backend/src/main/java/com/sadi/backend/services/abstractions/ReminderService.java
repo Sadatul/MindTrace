@@ -15,10 +15,11 @@ import java.util.UUID;
 public interface ReminderService {
     void sendReminder(ReminderDTO req);
     UUID createReminder(String userId, ReminderReq req);
-    void deleteReminder(String userId, UUID id, boolean isOwner);
+    void deleteReminder(UUID id);
 
     void updateNextExecution(UUID id, @NotNull String cronExpression, String zoneId);
     void deleteReminderById(UUID id);
     Page<Reminder> getReminders(String userId, ReminderType type, Instant start, Instant end, Pageable pageable);
     Reminder getReminder(UUID id);
+    void verifyOwnerOrCaregiver(String userId, Reminder reminder);
 }
