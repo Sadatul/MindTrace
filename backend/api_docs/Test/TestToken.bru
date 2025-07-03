@@ -1,0 +1,15 @@
+meta {
+  name: TestToken
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{host}}/v1/private/health
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTYxMyIsInNjcCI6IkNBUkVHSVZFUiIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJpc3MiOiJodHRwczovL3Rlc3QtaXNzdWVyLmNvbSIsIm5hbWUiOiJTYWRpIEtha2EiLCJleHAiOjE3NTIxMjkyOTMsImlhdCI6MTc1MTUyNDQ5MywiZW1haWwiOiJzYWRpQGdtYWlsLmNvbSJ9.0zfL16yzbY445aIuJvxHMu3Wam5Lrk-MerMyQxay_Ec
+}

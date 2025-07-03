@@ -1,0 +1,22 @@
+meta {
+  name: TOKEN
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{host}}/v1/test-tokens
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "sub": "12345615",
+    "email": "2005070@gmail.com",
+    "emailVerified": true,
+    "name": "Irtiaz Vai Vai",
+    "scp": "CAREGIVER"
+    
+  }
+}

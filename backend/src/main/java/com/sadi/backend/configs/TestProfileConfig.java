@@ -3,6 +3,9 @@ package com.sadi.backend.configs;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import com.sadi.backend.utils.CodeGenerator;
+import com.sadi.backend.utils.TestOtpGenerator;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,5 +35,10 @@ public class TestProfileConfig {
     JwtDecoder testJwtDecoder() {
         SecretKey originalKey = new SecretKeySpec(secret.getBytes(), "HmacSHA256");
         return NimbusJwtDecoder.withSecretKey(originalKey).build();
+    }
+
+    @PostConstruct
+    public void init() {
+        CodeGenerator.setDelegate(new TestOtpGenerator());
     }
 }

@@ -4,6 +4,7 @@ import com.sadi.backend.services.abstractions.EmailService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
+@Profile("!test")
 public class EmailServiceImpl implements EmailService {
     private final JavaMailSender mailSender;
 

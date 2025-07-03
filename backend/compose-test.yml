@@ -1,0 +1,56 @@
+services:
+   db:
+     image: postgres:latest
+     container_name: postgres
+     environment:
+       - POSTGRES_USER=software
+       - POSTGRES_PASSWORD=software
+       - POSTGRES_DB=software
+     ports:
+       - "5432:5432"
+     healthcheck:
+       test: [ "CMD", "pg_isready", "-U", "software" ]
+       interval: 5s
+       timeout: 5s
+       retries: 5
+     networks:
+       - host_network
+   redis:
+     image: redis:7.2
+#     command: [ "redis-server", "--requirepass", "testpass", "--user", "default on >testpass ~* +@all" ]
+#     environment:
+#       REDIS_PASSWORD: testpass
+     ports:
+       - "6379:6379"
+     networks:
+       - host_network
+   rabbitmq:
+     hostname: 'sadatul'
+     image: rabbitmq:4.1-management
+     container_name: 'rabbitmq'
+     restart: always
+     environment:
+       - RABBITMQ_DEFAULT_USER=my-user
+       - RABBITMQ_DEFAULT_PASS=my-pass
+       - RABBITMQ_PLUGINS_DIR=/opt/rabbitmq/plugins:/usr/lib/rabbitmq/plugins
+     ports:
+       - 5672:5672
+       - 15672:15672
+     volumes:
+       - ./rabbitmq_enabled_plugins:/etc/rabbitmq/enabled_plugins:rw
+       - ./plugins:/usr/lib/rabbitmq/plugins
+     networks:
+       - host_network
+   qdrant:
+     image: qdrant/qdrant
+     environment:
+       QDRANT__SERVICE__API_KEY: testkey
+     ports:
+       - "6333:6333"
+       - "6334:6334"
+     networks:
+       - host_network
+
+networks:
+  host_network:
+
