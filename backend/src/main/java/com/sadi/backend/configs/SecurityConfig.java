@@ -21,6 +21,7 @@ public class SecurityConfig {
                         .requestMatchers("/v1/public/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/v1/telegram/register").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/v1/test-tokens").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
