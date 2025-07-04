@@ -33,7 +33,7 @@ import kotlinx.coroutines.tasks.await
 private const val TAG = "ViewModelRegister"
 
 class ViewModelRegister : ViewModel() {
-    private val _uiState = MutableStateFlow(RegisterUiState())
+    val _uiState = MutableStateFlow(RegisterUiState())
     val uiState: StateFlow<RegisterUiState> = _uiState.asStateFlow()
 
     private val firebaseAuth = Firebase.auth
