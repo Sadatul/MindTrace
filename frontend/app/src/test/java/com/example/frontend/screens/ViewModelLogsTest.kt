@@ -18,7 +18,6 @@ import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.MockedStatic
 import org.mockito.Mockito.*
-import org.mockito.junit.MockitoJUnitRunner
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.example.frontend.api.DementiaAPI
@@ -40,7 +39,6 @@ import com.example.frontend.api.storeLog
 import com.example.frontend.api.updateLog
 import retrofit2.Response
 import java.time.LocalDate
-import java.time.ZoneId
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -52,9 +50,6 @@ class ViewModelLogsTest {
 
     @Mock
     private lateinit var mockDementiaAPI: DementiaAPI
-
-    @Mock
-    private lateinit var mockRetrofitInstance: RetrofitInstance
 
     private lateinit var mockRetrofitStatic: MockedStatic<RetrofitInstance>
 

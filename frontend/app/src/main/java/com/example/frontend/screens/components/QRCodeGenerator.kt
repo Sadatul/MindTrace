@@ -25,7 +25,7 @@ fun QRCode(
             try {
                 val barcodeEncoder = BarcodeEncoder()
                 qrCodeBitmap = barcodeEncoder.encodeBitmap(data, BarcodeFormat.QR_CODE, size, size)
-            } catch (e: WriterException) {
+            } catch (_: WriterException) {
                 Toast.makeText(context, "Error generating QR code", Toast.LENGTH_SHORT).show()
             }
         }

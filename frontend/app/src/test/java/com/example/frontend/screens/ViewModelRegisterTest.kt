@@ -24,7 +24,6 @@ import org.mockito.Mockito.*
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.example.frontend.R
-import com.example.frontend.api.AuthManagerResponse
 import com.example.frontend.api.CaregiverRegisterRequest
 import com.example.frontend.api.PatientRegisterRequest
 import com.example.frontend.api.DementiaAPI
@@ -35,7 +34,6 @@ import com.example.frontend.api.getSelfUserInfo
 import com.example.frontend.screens.models.CaregiverFormData
 import com.example.frontend.screens.models.PatientFormData
 import com.example.frontend.screens.models.FirebaseCredentials
-import com.example.frontend.screens.models.RegisterUiState
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
