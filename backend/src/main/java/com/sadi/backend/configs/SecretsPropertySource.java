@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.azure.identity.DefaultAzureCredentialBuilder;
+import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.SecretClientBuilder;
 import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
@@ -36,6 +37,13 @@ public class SecretsPropertySource extends PropertySource<Map<String, String>> {
             Map.entry("rabbitmq-password", "RABBITMQ_PASSWORD")
     );
 
+    // Azure credentials needed for test profile
+    private static final Map<String, String> AZURE_CREDENTIAL_MAPPINGS = Map.ofEntries(
+            Map.entry("azure-client-id", "AZURE_CLIENT_ID"),
+            Map.entry("azure-client-secret", "AZURE_CLIENT_SECRET"),
+            Map.entry("azure-tenant-id", "AZURE_TENANT_ID")
+    );
+
     public SecretsPropertySource(Environment environment) {
         super("azureSecrets", loadSecrets(environment));
     }
@@ -51,36 +59,94 @@ public class SecretsPropertySource extends PropertySource<Map<String, String>> {
 
         if ("prod".equalsIgnoreCase(profile)) {
             System.out.println("Loading secrets from Docker secrets (prod mode)");
-            for (Map.Entry<String, String> entry : SECRET_MAPPINGS.entrySet()) {
-                String secretName = entry.getKey();
-                String envName = entry.getValue();
-                String path = "/run/secrets/" + secretName;
-                try {
-                    String value = readSecretFile(path);
-                    secrets.put(envName, value);
-                    System.out.println("Loaded secret from file: " + path + " -> " + envName);
-                } catch (IOException e) {
-                    throw new RuntimeException("Failed to read secret: " + path, e);
-                }
-            }
+            loadAllSecretsFromDockerSecrets(secrets);
+        } else if ("test".equalsIgnoreCase(profile)) {
+            System.out.println("Loading Azure credentials from Docker secrets and other secrets from Azure Key Vault (test mode)");
+            loadTestProfileSecrets(secrets);
         } else {
             System.out.println("Loading secrets from Azure Key Vault (dev mode)");
-            SecretClient secretClient = new SecretClientBuilder()
-                    .vaultUrl(keyVaultUrl)
-                    .credential(new DefaultAzureCredentialBuilder().build())
-                    .buildClient();
-
-            for (Map.Entry<String, String> entry : SECRET_MAPPINGS.entrySet()) {
-                String secretName = entry.getKey();
-                String envName = entry.getValue();
-
-                KeyVaultSecret secret = secretClient.getSecret(secretName);
-                secrets.put(envName, secret.getValue());
-                System.out.println("Fetched from Azure: " + secretName + " -> " + envName);
-            }
+            loadSecretsFromAzureKeyVault(secrets, null);
         }
 
         return secrets;
+    }
+
+    private static void loadAllSecretsFromDockerSecrets(Map<String, String> secrets) {
+        for (Map.Entry<String, String> entry : SECRET_MAPPINGS.entrySet()) {
+            String secretName = entry.getKey();
+            String envName = entry.getValue();
+            String path = "/run/secrets/" + secretName;
+            try {
+                String value = readSecretFile(path);
+                secrets.put(envName, value);
+                System.out.println("Loaded secret from file: " + path + " -> " + envName);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to read secret: " + path, e);
+            }
+        }
+    }
+
+    private static void loadTestProfileSecrets(Map<String, String> secrets) {
+        // First, load Azure credentials from Docker secrets
+        Map<String, String> azureCredentials = new HashMap<>();
+        for (Map.Entry<String, String> entry : AZURE_CREDENTIAL_MAPPINGS.entrySet()) {
+            String secretName = entry.getKey();
+            String envName = entry.getValue();
+            String path = "/run/secrets/" + secretName;
+            try {
+                String value = readSecretFile(path);
+                azureCredentials.put(envName, value);
+                secrets.put(envName, value); // Also add to main secrets map
+                System.out.println("Loaded Azure credential from file: " + path + " -> " + envName);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to read Azure credential: " + path, e);
+            }
+        }
+
+        // Then, use those credentials to load other secrets from Azure Key Vault
+        loadSecretsFromAzureKeyVault(secrets, azureCredentials);
+    }
+
+    private static void loadSecretsFromAzureKeyVault(Map<String, String> secrets, Map<String, String> azureCredentials) {
+        SecretClient secretClient;
+
+        if (azureCredentials != null) {
+            // Use provided Azure credentials (for test profile)
+            String clientId = azureCredentials.get("AZURE_CLIENT_ID");
+            String clientSecret = azureCredentials.get("AZURE_CLIENT_SECRET");
+            String tenantId = azureCredentials.get("AZURE_TENANT_ID");
+
+            System.out.println("Using explicit Azure credentials for Key Vault access");
+            secretClient = new SecretClientBuilder()
+                    .vaultUrl(keyVaultUrl)
+                    .credential(new ClientSecretCredentialBuilder()
+                            .clientId(clientId)
+                            .clientSecret(clientSecret)
+                            .tenantId(tenantId)
+                            .build())
+                    .buildClient();
+        } else {
+            // Use default Azure credentials (for dev profile)
+            System.out.println("Using default Azure credentials for Key Vault access");
+            secretClient = new SecretClientBuilder()
+                    .vaultUrl(keyVaultUrl)
+                    .credential(new DefaultAzureCredentialBuilder().build())
+                    .buildClient();
+        }
+
+        for (Map.Entry<String, String> entry : SECRET_MAPPINGS.entrySet()) {
+            String secretName = entry.getKey();
+            String envName = entry.getValue();
+
+            try {
+                KeyVaultSecret secret = secretClient.getSecret(secretName);
+                secrets.put(envName, secret.getValue());
+                System.out.println("Fetched from Azure Key Vault: " + secretName + " -> " + envName);
+            } catch (Exception e) {
+                System.err.println("Failed to fetch secret from Azure Key Vault: " + secretName);
+                throw new RuntimeException("Failed to fetch secret: " + secretName, e);
+            }
+        }
     }
 
     private static String readSecretFile(String path) throws IOException {

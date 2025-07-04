@@ -1,0 +1,140 @@
+version: '3.8'
+
+services:
+  reverse-proxy:
+    image: traefik:v3.4
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.swarm=true"
+      - "--providers.swarm.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=sadatulislamsadi@gmail.com"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - letsencrypt:/letsencrypt
+    networks:
+      - host_network
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+  backend:
+    image: ghcr.io/sadatul/mindtrace_backend_test:0.0.2-SNAPSHOT
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend-http.rule=Host(`mindtrace.pinklifeline.xyz`)"
+      - "traefik.http.routers.backend-http.entrypoints=web"
+      - "traefik.http.routers.backend-http.middlewares=redirect-to-https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
+      - "traefik.http.routers.backend.rule=Host(`mindtrace.pinklifeline.xyz`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls=true"
+      - "traefik.http.routers.backend.tls.certresolver=myresolver"
+      - "traefik.http.services.backend.loadbalancer.server.port=8080"
+
+    environment:
+      - SPRING_PROFILES_ACTIVE=test
+      - DB_URL_TEST=db:5432/software
+      - QDRANT_HOST_TEST=qdrant
+      - RABBITMQ_HOST_TEST=rabbitmq
+      - REDIS_HOST_TEST=redis
+      - JWT_SECRET_KEY=u4az5oOOo45Ck57cVsx7LrmiFDv/c4frDEAWZBSIUDk=
+    secrets:
+      - azure-client-id
+      - azure-client-secret
+      - azure-tenant-id
+    networks:
+      - host_network
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+        order: start-first
+      rollback_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        delay: 30s
+        max_attempts: 3
+
+  db:
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=software
+      - POSTGRES_PASSWORD=software
+      - POSTGRES_DB=software
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "software"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - host_network
+    deploy:
+      replicas: 1
+
+  redis:
+    image: redis:7.2
+    command: redis-server --requirepass testpass
+    ports:
+      - "6379:6379"
+    networks:
+      - host_network
+    deploy:
+      replicas: 1
+
+  rabbitmq:
+    hostname: 'sadatul'
+    image: sadatul/rabbitmq_mindtrace:latest
+    environment:
+      - RABBITMQ_DEFAULT_USER=my-user
+      - RABBITMQ_DEFAULT_PASS=my-pass
+    ports:
+      - 5672:5672
+      - 15672:15672
+    networks:
+      - host_network
+    deploy:
+      replicas: 1
+
+  qdrant:
+    image: qdrant/qdrant
+    environment:
+      QDRANT__SERVICE__API_KEY: testkey
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    networks:
+      - host_network
+    deploy:
+      replicas: 1
+
+networks:
+  host_network:
+    driver: overlay
+    attachable: true
+
+volumes:
+  letsencrypt:
+
+secrets:
+  azure-client-id:
+    external: true
+  azure-client-secret:
+    external: true
+  azure-tenant-id:
+    external: true

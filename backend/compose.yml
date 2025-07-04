@@ -19,21 +19,15 @@ services:
   #     - host_network
   rabbitmq:
     hostname: 'sadatul'
-    image: rabbitmq:4.1-management
+    image: sadatul/rabbitmq_mindtrace:latest
     container_name: 'rabbitmq'
     restart: always
-    environment:
-      - RABBITMQ_DEFAULT_USER=my-user
-      - RABBITMQ_DEFAULT_PASS=my-pass
-      - RABBITMQ_PLUGINS_DIR=/opt/rabbitmq/plugins:/usr/lib/rabbitmq/plugins
     ports:
       - 5672:5672
       - 15672:15672
     volumes:
-      - ./data/:/var/lib/rabbitmq/
-      - ./log/:/var/log/rabbitmq/
-      - ./rabbitmq_enabled_plugins:/etc/rabbitmq/enabled_plugins:rw
-      - ./plugins:/usr/lib/rabbitmq/plugins
+      - rabbitmq_data:/var/lib/rabbitmq/
+      - rabbitmq_log:/var/log/rabbitmq/
     networks:
       - host_network
 #  backend:
@@ -61,6 +55,8 @@ services:
 #      - "8080:8080"
 #    networks:
 #      - host_network
-
+volumes:
+  rabbitmq_data:
+  rabbitmq_log:
 networks:
   host_network:
