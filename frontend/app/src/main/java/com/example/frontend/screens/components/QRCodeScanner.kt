@@ -4,10 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import com.journeyapps.barcodescanner.ScanContract
@@ -50,54 +47,6 @@ fun rememberQRScanner(
                 permissionLauncher.launch(Manifest.permission.CAMERA)
             }
         }
-    }
-}
-
-@Composable
-fun QRCodeScannerButton(
-    onResult: (String) -> Unit,
-    modifier: Modifier = Modifier,
-    text: String = "Scan QR Code",
-    onError: (String) -> Unit = { error ->
-        // Default error handling can be overridden
-    }
-) {
-    val context = LocalContext.current
-    
-    val scanLauncher = rememberLauncherForActivityResult(
-        contract = ScanContract()
-    ) { result ->
-        if (result.contents != null && result.contents.isNotEmpty()) {
-            onResult(result.contents)
-        } else {
-            onError("Scan cancelled or no data found")
-        }
-    }
-    
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            launchScanner(scanLauncher)
-        } else {
-            onError("Camera permission is required to scan QR codes")
-        }
-    }
-    
-    Button(
-        onClick = {
-            when (PackageManager.PERMISSION_GRANTED) {
-                ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) -> {
-                    launchScanner(scanLauncher)
-                }
-                else -> {
-                    permissionLauncher.launch(Manifest.permission.CAMERA)
-                }
-            }
-        },
-        modifier = modifier
-    ) {
-        Text(text)
     }
 }
 

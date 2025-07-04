@@ -23,7 +23,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Male
 import androidx.compose.material.icons.filled.Female
@@ -643,7 +642,7 @@ private fun AdvancedGenderField(
 
                         val selectedOption = genderOptions.find { it.first == displayGenderString }
                         val displayIcon = selectedOption?.second ?: Icons.Default.QuestionMark
-                        val displayText = if (displayGenderString.isNotEmpty()) displayGenderString else "Select Gender"
+                        val displayText = displayGenderString.ifEmpty { "Select Gender" }
 
                         Icon(
                             imageVector = displayIcon,
