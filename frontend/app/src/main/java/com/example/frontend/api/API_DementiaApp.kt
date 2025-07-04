@@ -361,7 +361,7 @@ fun convertUtcToLocal(utcTimestamp: String): String {
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-private fun convertZonedToUtc(zonedTimestamp: String): String {
+fun convertZonedToUtc(zonedTimestamp: String): String {
     return try {
         val zonedDateTime = ZonedDateTime.parse(zonedTimestamp)
         val instant = zonedDateTime.toInstant()

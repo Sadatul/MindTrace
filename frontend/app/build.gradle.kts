@@ -60,6 +60,9 @@ dependencies {
 
     // Testing libraries
     testImplementation(libs.junit)
+    testImplementation("org.mockito:mockito-core:5.5.0")
+    testImplementation("org.mockito:mockito-inline:5.2.0")
+    testImplementation("org.robolectric:robolectric:4.10.3")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom)) // Compose BOM for testing
