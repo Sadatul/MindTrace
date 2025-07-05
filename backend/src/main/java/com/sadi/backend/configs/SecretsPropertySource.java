@@ -1,5 +1,9 @@
 package com.sadi.backend.configs;
 
+import com.azure.identity.DefaultAzureCredentialBuilder;
+import com.azure.security.keyvault.secrets.SecretClient;
+import com.azure.security.keyvault.secrets.SecretClientBuilder;
+import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import lombok.NonNull;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.PropertySource;
@@ -9,12 +13,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-
-import com.azure.identity.DefaultAzureCredentialBuilder;
-import com.azure.identity.ClientSecretCredentialBuilder;
-import com.azure.security.keyvault.secrets.SecretClient;
-import com.azure.security.keyvault.secrets.SecretClientBuilder;
-import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 
 public class SecretsPropertySource extends PropertySource<Map<String, String>> {
 
@@ -37,11 +35,12 @@ public class SecretsPropertySource extends PropertySource<Map<String, String>> {
             Map.entry("rabbitmq-password", "RABBITMQ_PASSWORD")
     );
 
-    // Azure credentials needed for test profile
-    private static final Map<String, String> AZURE_CREDENTIAL_MAPPINGS = Map.ofEntries(
-            Map.entry("azure-client-id", "AZURE_CLIENT_ID"),
-            Map.entry("azure-client-secret", "AZURE_CLIENT_SECRET"),
-            Map.entry("azure-tenant-id", "AZURE_TENANT_ID")
+    private static final Map<String, String> TEST_SECRET_MAPPINGS = Map.ofEntries(
+            Map.entry("bot-token", "BOT_TOKEN"),
+            Map.entry("email-password", "EMAIL_PASSWORD"),
+            Map.entry("azure-openai-endpoint", "AZURE_OPENAI_ENDPOINT"),
+            Map.entry("azure-openai-key", "AZURE_OPENAI_KEY"),
+            Map.entry("firebase-credential", "FIREBASE_CREDENTIAL")
     );
 
     public SecretsPropertySource(Environment environment) {
@@ -62,10 +61,10 @@ public class SecretsPropertySource extends PropertySource<Map<String, String>> {
             loadAllSecretsFromDockerSecrets(secrets);
         } else if ("test".equalsIgnoreCase(profile)) {
             System.out.println("Loading Azure credentials from Docker secrets and other secrets from Azure Key Vault (test mode)");
-            loadTestProfileSecrets(secrets);
+            loadSecretsFromAzureKeyVault(secrets, TEST_SECRET_MAPPINGS);
         } else {
             System.out.println("Loading secrets from Azure Key Vault (dev mode)");
-            loadSecretsFromAzureKeyVault(secrets, null);
+            loadSecretsFromAzureKeyVault(secrets, SECRET_MAPPINGS);
         }
 
         return secrets;
@@ -86,55 +85,13 @@ public class SecretsPropertySource extends PropertySource<Map<String, String>> {
         }
     }
 
-    private static void loadTestProfileSecrets(Map<String, String> secrets) {
-        // First, load Azure credentials from Docker secrets
-//        Map<String, String> azureCredentials = new HashMap<>();
-//        for (Map.Entry<String, String> entry : AZURE_CREDENTIAL_MAPPINGS.entrySet()) {
-//            String secretName = entry.getKey();
-//            String envName = entry.getValue();
-//            String path = "/run/secrets/" + secretName;
-//            try {
-//                String value = readSecretFile(path);
-//                azureCredentials.put(envName, value);
-//                secrets.put(envName, value); // Also add to main secrets map
-//                System.out.println("Loaded Azure credential from file: " + path + " -> " + envName);
-//            } catch (IOException e) {
-//                throw new RuntimeException("Failed to read Azure credential: " + path, e);
-//            }
-//        }
+    private static void loadSecretsFromAzureKeyVault(Map<String, String> secrets, Map<String, String> secretMappings) {
+        SecretClient secretClient = new SecretClientBuilder()
+                .vaultUrl(keyVaultUrl)
+                .credential(new DefaultAzureCredentialBuilder().build())
+                .buildClient();
 
-        // Then, use those credentials to load other secrets from Azure Key Vault
-        loadSecretsFromAzureKeyVault(secrets, null);
-    }
-
-    private static void loadSecretsFromAzureKeyVault(Map<String, String> secrets, Map<String, String> azureCredentials) {
-        SecretClient secretClient;
-
-        if (azureCredentials != null) {
-            // Use provided Azure credentials (for test profile)
-            String clientId = azureCredentials.get("AZURE_CLIENT_ID");
-            String clientSecret = azureCredentials.get("AZURE_CLIENT_SECRET");
-            String tenantId = azureCredentials.get("AZURE_TENANT_ID");
-
-            System.out.println("Using explicit Azure credentials for Key Vault access");
-            secretClient = new SecretClientBuilder()
-                    .vaultUrl(keyVaultUrl)
-                    .credential(new ClientSecretCredentialBuilder()
-                            .clientId(clientId)
-                            .clientSecret(clientSecret)
-                            .tenantId(tenantId)
-                            .build())
-                    .buildClient();
-        } else {
-            // Use default Azure credentials (for dev profile)
-            System.out.println("Using default Azure credentials for Key Vault access");
-            secretClient = new SecretClientBuilder()
-                    .vaultUrl(keyVaultUrl)
-                    .credential(new DefaultAzureCredentialBuilder().build())
-                    .buildClient();
-        }
-
-        for (Map.Entry<String, String> entry : SECRET_MAPPINGS.entrySet()) {
+        for (Map.Entry<String, String> entry : secretMappings.entrySet()) {
             String secretName = entry.getKey();
             String envName = entry.getValue();
 
