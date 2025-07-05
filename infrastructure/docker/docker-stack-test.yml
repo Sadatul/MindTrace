@@ -125,8 +125,6 @@ services:
 
 networks:
   host_network:
-    driver: overlay
-    attachable: true
 
 volumes:
   letsencrypt:
