@@ -3,14 +3,14 @@
   become: yes
 
   vars:
-    github_user: "{{ lookup('env', 'GITHUB_USER') }}"
-    github_pat: "{{ lookup('env', 'GITHUB_PAT') }}"
+    github_user: Sadatul
+    github_pat: pass
 
   tasks:
     - name: Docker login to GHCR
-      ansible.builtin.shell: |
-        echo "{{ github_pat }}" | docker login ghcr.io -u {{ github_user }} --password-stdin
+      become: yes
+      become_user: azureuser
+      ansible.builtin.command: docker login ghcr.io -u {{ github_user }} --password-stdin
       args:
+        stdin: "{{ github_pat }}"
         executable: /bin/bash
-      environment:
-        DOCKER_CONFIG: /root/.docker

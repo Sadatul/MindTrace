@@ -8,18 +8,20 @@ import com.sadi.backend.entities.PatientCaregiver;
 import com.sadi.backend.entities.PatientDetail;
 import com.sadi.backend.entities.User;
 import com.sadi.backend.enums.Role;
+import com.sadi.backend.repositories.PatientCaregiverRepository;
 import com.sadi.backend.repositories.PatientDetailRepository;
 import com.sadi.backend.repositories.UserRepository;
 import com.sadi.backend.services.abstractions.UserVerificationService;
+import com.sadi.backend.utils.ProfileUtils;
 import com.sadi.backend.utils.SecurityUtils;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import com.sadi.backend.repositories.PatientCaregiverRepository;
 
 import java.util.Collections;
 
@@ -30,12 +32,14 @@ public class UserService {
     private final PatientDetailRepository patientDetailRepository;
     private final UserVerificationService userVerificationService;
     private final PatientCaregiverRepository patientCaregiverRepository;
+    private final Environment environment;
 
-    public UserService(UserRepository userRepository, PatientDetailRepository patientDetailRepository, UserVerificationService userVerificationService, PatientCaregiverRepository patientCaregiverRepository) {
+    public UserService(UserRepository userRepository, PatientDetailRepository patientDetailRepository, UserVerificationService userVerificationService, PatientCaregiverRepository patientCaregiverRepository, Environment environment) {
         this.userRepository = userRepository;
         this.patientDetailRepository = patientDetailRepository;
         this.userVerificationService = userVerificationService;
         this.patientCaregiverRepository = patientCaregiverRepository;
+        this.environment = environment;
     }
 
     public Boolean existsByEmail(String email) {
@@ -60,7 +64,7 @@ public class UserService {
                 email,
                 req.name(),
                 Role.CAREGIVER,
-                req.profilePicture(),
+                jwt.getClaim("picture"),
                 req.dob(),
                 req.gender()
             );
@@ -86,7 +90,7 @@ public class UserService {
                 email,
                 req.name(),
                 Role.PATIENT,
-                req.profilePicture(),
+                jwt.getClaim("picture"),
                 req.dob(),
                 req.gender()
         );
@@ -101,6 +105,9 @@ public class UserService {
     }
 
     public void addScope(String uuid, Role role){
+        // A rag tag solution to avoid adding scope in test profile
+        if(ProfileUtils.isTest(environment)) return;
+
         FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
         try {
             firebaseAuth.setCustomUserClaims(uuid, Collections.singletonMap("scp", role.toString()));

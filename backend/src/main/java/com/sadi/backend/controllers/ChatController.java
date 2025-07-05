@@ -2,6 +2,7 @@ package com.sadi.backend.controllers;
 
 import com.sadi.backend.dtos.requests.ChatRequest;
 import com.sadi.backend.dtos.responses.ChatResponse;
+import com.sadi.backend.enums.ChatType;
 import com.sadi.backend.services.abstractions.ChatService;
 import com.sadi.backend.services.abstractions.LoggingTools;
 import com.sadi.backend.utils.BasicUtils;
@@ -44,6 +45,7 @@ public class ChatController {
         Message sysPrompt = template.createMessage(Map.of("time", BasicUtils.getISOStringFromZoneIdAndInstant(req.zone(), Instant.now())));
         StringBuilder response = new StringBuilder();
         String userId = SecurityUtils.getName();
+        chatService.saveChat(req.query(), ChatType.USER, userId);
         return chatClient
                 .prompt()
                 .system(sysPrompt.getText())
@@ -56,7 +58,7 @@ public class ChatController {
                             response.append(chatResponse.getResult().getOutput().getText())
                 )
                 .doOnComplete(() ->
-                    chatService.saveChat(req.query(), response.toString(), userId)
+                    chatService.saveChat(response.toString(), ChatType.ASSISTANT, userId)
                 )
                 .mapNotNull(chatResponse -> chatResponse.getResult().getOutput().getText());
     }

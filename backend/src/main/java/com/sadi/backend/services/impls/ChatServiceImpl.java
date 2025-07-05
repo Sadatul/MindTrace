@@ -7,7 +7,6 @@ import com.sadi.backend.enums.ChatType;
 import com.sadi.backend.repositories.ChatRepository;
 import com.sadi.backend.services.abstractions.ChatService;
 import com.sadi.backend.utils.SecurityUtils;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.messages.Message;
@@ -25,13 +24,10 @@ public class ChatServiceImpl implements ChatService {
     private final ChatMemoryRepository redisChatMemoryRepository;
 
     @Override
-    @Transactional
-    public void saveChat(String userMessage, String assistantMessage, String userId) {
+    public void saveChat(String message, ChatType type, String userId) {
         User user = new User(userId);
-        Chat userChat = new Chat(user, ChatType.USER, userMessage);
-        Chat assistantChat = new Chat(user, ChatType.ASSISTANT, assistantMessage);
+        Chat userChat = new Chat(user, type, message);
         chatRepository.save(userChat);
-        chatRepository.save(assistantChat);
     }
 
     @Override

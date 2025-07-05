@@ -5,6 +5,7 @@ import com.google.firebase.auth.AuthErrorCode;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
+@Profile("!test")
 public class FirebaseJwtDecoder implements JwtDecoder {
     private final FirebaseAuth firebaseAuth;
 

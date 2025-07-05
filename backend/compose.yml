@@ -1,20 +1,30 @@
 name: software
 
 services:
-  db:
-    image: postgres:latest
-    container_name: postgres
-    environment:
-      - POSTGRES_USER=software
-      - POSTGRES_PASSWORD=software
-      - POSTGRES_DB=software
+  # db:
+  #   image: postgres:latest
+  #   container_name: postgres
+  #   environment:
+  #     - POSTGRES_USER=software
+  #     - POSTGRES_PASSWORD=software
+  #     - POSTGRES_DB=software
+  #   ports:
+  #     - "5432:5432"
+  #   healthcheck:
+  #     test: [ "CMD", "pg_isready", "-U", "software" ]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 5
+  #   networks:
+  #     - host_network
+  rabbitmq:
+    hostname: 'sadatul'
+    image: sadatul/rabbitmq_mindtrace:latest
+    container_name: 'rabbitmq'
+    restart: always
     ports:
-      - "5432:5432"
-    healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "software" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      - 5672:5672
+      - 15672:15672
     networks:
       - host_network
 #  backend:
@@ -42,6 +52,8 @@ services:
 #      - "8080:8080"
 #    networks:
 #      - host_network
-
+volumes:
+  rabbitmq_data:
+  rabbitmq_log:
 networks:
   host_network:
