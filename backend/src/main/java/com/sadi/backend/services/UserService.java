@@ -64,7 +64,7 @@ public class UserService {
                 email,
                 req.name(),
                 Role.CAREGIVER,
-                req.profilePicture(),
+                jwt.getClaim("picture"),
                 req.dob(),
                 req.gender()
             );
@@ -90,7 +90,7 @@ public class UserService {
                 email,
                 req.name(),
                 Role.PATIENT,
-                req.profilePicture(),
+                jwt.getClaim("picture"),
                 req.dob(),
                 req.gender()
         );

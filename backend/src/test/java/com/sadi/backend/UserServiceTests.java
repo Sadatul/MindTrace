@@ -90,10 +90,11 @@ class UserServiceTests extends AbstractBaseIntegrationTest {
 			securityUtils.when(SecurityUtils::getName).thenReturn("user-5");
 			Jwt jwt = Mockito.mock(Jwt.class);
 			Mockito.when(jwt.getClaim("email")).thenReturn("eve@example.com");
+			Mockito.when(jwt.getClaim("picture")).thenReturn(null);
 			securityUtils.when(SecurityUtils::getPrinciple).thenReturn(jwt);
 
 			CaregiverRegistrationRequest req = new CaregiverRegistrationRequest(
-					"Eve Caregiver", null, LocalDate.of(1992, 2, 2), Gender.F
+					"Eve Caregiver", LocalDate.of(1992, 2, 2), Gender.F
 			);
 
 			String id = userService.registerCareGiver(req);
@@ -109,10 +110,11 @@ class UserServiceTests extends AbstractBaseIntegrationTest {
 			securityUtils.when(SecurityUtils::getName).thenReturn("user-2");
 			Jwt jwt = Mockito.mock(Jwt.class);
 			Mockito.when(jwt.getClaim("email")).thenReturn("bob@example.com");
+			Mockito.when(jwt.getClaim("picture")).thenReturn(null);
 			securityUtils.when(SecurityUtils::getPrinciple).thenReturn(jwt);
 
 			CaregiverRegistrationRequest req = new CaregiverRegistrationRequest(
-					"Bob Caregiver", null, LocalDate.of(1985, 5, 15), Gender.M
+					"Bob Caregiver", LocalDate.of(1985, 5, 15), Gender.M
 			);
 
 			assertThrows(ResponseStatusException.class, () -> userService.registerCareGiver(req));
@@ -128,10 +130,11 @@ class UserServiceTests extends AbstractBaseIntegrationTest {
 			securityUtils.when(SecurityUtils::getName).thenReturn("user-6");
 			Jwt jwt = Mockito.mock(Jwt.class);
 			Mockito.when(jwt.getClaim("email")).thenReturn("frank@example.com");
+			Mockito.when(jwt.getClaim("picture")).thenReturn(null);
 			securityUtils.when(SecurityUtils::getPrinciple).thenReturn(jwt);
 
 			PatientRegistrationRequest req = new PatientRegistrationRequest(
-					"Frank Patient", null, LocalDate.of(1995, 3, 3), Gender.M, "user-2", "123456"
+					"Frank Patient",  LocalDate.of(1995, 3, 3), Gender.M, "user-2", "123456"
 			);
 
 			String id = userService.registerPatient(req);
@@ -152,10 +155,11 @@ class UserServiceTests extends AbstractBaseIntegrationTest {
 			securityUtils.when(SecurityUtils::getName).thenReturn("user-7");
 			Jwt jwt = Mockito.mock(Jwt.class);
 			Mockito.when(jwt.getClaim("email")).thenReturn("grace@example.com");
+			Mockito.when(jwt.getClaim("picture")).thenReturn(null);
 			securityUtils.when(SecurityUtils::getPrinciple).thenReturn(jwt);
 
 			PatientRegistrationRequest req = new PatientRegistrationRequest(
-					"Grace Patient", null, LocalDate.of(1996, 4, 4), Gender.F, "user-2", "wrong-otp"
+					"Grace Patient", LocalDate.of(1996, 4, 4), Gender.F, "user-2", "wrong-otp"
 			);
 
 			assertThrows(ResponseStatusException.class, () -> userService.registerPatient(req));
