@@ -88,23 +88,23 @@ public class SecretsPropertySource extends PropertySource<Map<String, String>> {
 
     private static void loadTestProfileSecrets(Map<String, String> secrets) {
         // First, load Azure credentials from Docker secrets
-        Map<String, String> azureCredentials = new HashMap<>();
-        for (Map.Entry<String, String> entry : AZURE_CREDENTIAL_MAPPINGS.entrySet()) {
-            String secretName = entry.getKey();
-            String envName = entry.getValue();
-            String path = "/run/secrets/" + secretName;
-            try {
-                String value = readSecretFile(path);
-                azureCredentials.put(envName, value);
-                secrets.put(envName, value); // Also add to main secrets map
-                System.out.println("Loaded Azure credential from file: " + path + " -> " + envName);
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to read Azure credential: " + path, e);
-            }
-        }
+//        Map<String, String> azureCredentials = new HashMap<>();
+//        for (Map.Entry<String, String> entry : AZURE_CREDENTIAL_MAPPINGS.entrySet()) {
+//            String secretName = entry.getKey();
+//            String envName = entry.getValue();
+//            String path = "/run/secrets/" + secretName;
+//            try {
+//                String value = readSecretFile(path);
+//                azureCredentials.put(envName, value);
+//                secrets.put(envName, value); // Also add to main secrets map
+//                System.out.println("Loaded Azure credential from file: " + path + " -> " + envName);
+//            } catch (IOException e) {
+//                throw new RuntimeException("Failed to read Azure credential: " + path, e);
+//            }
+//        }
 
         // Then, use those credentials to load other secrets from Azure Key Vault
-        loadSecretsFromAzureKeyVault(secrets, azureCredentials);
+        loadSecretsFromAzureKeyVault(secrets, null);
     }
 
     private static void loadSecretsFromAzureKeyVault(Map<String, String> secrets, Map<String, String> azureCredentials) {

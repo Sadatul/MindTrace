@@ -29,7 +29,23 @@ jobs:
     needs: check_files
     if: ${{ needs.check_files.outputs.backend_changes == 'true' }}
     steps:
-    - uses: actions/checkout@v4  
+    - uses: actions/checkout@v4
+    - name: Cache Docker images based on AbstractIntegratioTest.java
+      uses: actions/cache@v4
+      id: cache
+      with:
+        path: /tmp/.docker-cache
+        key: ${{ runner.os }}-docker-testcontainers-${{ hashFiles('backend/src/test/java/com/sadi/backend/AbstractBaseIntegrationTest.java') }}
+    - name: Pre-pull Testcontainers images using AbstractIntegratioTest.java
+      if: steps.cache.outputs.cache-hit != 'true'
+      run: |
+          ls -l
+          bash scripts/pull-images.sh
+          mkdir -p /tmp/.docker-cache
+          docker save $(bash scripts/get-images.sh | xargs) -o /tmp/.docker-cache/testcontainers.tar
+    - name: Load cached images
+      if: steps.cache.outputs.cache-hit == 'true'
+      run: docker load -i /tmp/.docker-cache/testcontainers.tar
     - name: Set up JDK 21
       uses: actions/setup-java@v4
       with:
@@ -39,4 +55,4 @@ jobs:
     - name: Test with Maven
       run: |
         cd ./backend
-        mvn test
+        AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }} AZURE_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }} AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }} JWT_SECRET_KEY=u4az5oOOo45Ck57cVsx7LrmiFDv/c4frDEAWZBSIUDk= SPRING_PROFILES_ACTIVE=test mvn test
