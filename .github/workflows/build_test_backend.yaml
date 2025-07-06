@@ -51,7 +51,14 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin'
-        cache: 'maven'
+    - name: Cache Maven packages manually
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.m2/repository
+        key: maven-${{ runner.os }}-${{ hashFiles('backend/pom.xml', 'backend/.mvn/wrapper/maven-wrapper.properties') }}
+        restore-keys: |
+          maven-${{ runner.os }}-
     - name: Test with Maven
       run: |
         cd ./backend
