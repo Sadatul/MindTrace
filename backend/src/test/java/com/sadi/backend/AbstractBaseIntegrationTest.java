@@ -1,6 +1,8 @@
 package com.sadi.backend;
 
 import com.sadi.backend.configs.SecretsPropertySource;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -15,6 +17,7 @@ import org.testcontainers.utility.DockerImageName;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@AutoConfigureMockMvc
 @ContextConfiguration(initializers = AbstractBaseIntegrationTest.TestContextInitializer.class)
 public abstract class AbstractBaseIntegrationTest {
 
