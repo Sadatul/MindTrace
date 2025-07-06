@@ -37,6 +37,15 @@ jobs:
         distribution: 'temurin'
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
+    - name: Cache Gradle dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: gradle-${{ runner.os }}-${{ hashFiles('frontend/**/*.gradle*', 'frontend/gradle.properties', 'frontend/gradle/wrapper/gradle-wrapper.properties') }}
+        restore-keys: |
+          gradle-${{ runner.os }}-
     - name: Decode google-services.json
       run: |
         echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 -d > ./frontend/app/google-services.json
