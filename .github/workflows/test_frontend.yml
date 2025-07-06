@@ -1,0 +1,44 @@
+name: Test and Build Backend
+
+on:
+  pull_request:
+    branches:
+        - main
+  workflow_dispatch:
+
+jobs:
+#   check_files:
+#     runs-on: ubuntu-latest
+#     outputs:
+#       backend_changes: ${{ steps.backend_changes.outputs.backend_changes }}
+#     steps:
+#     - name: Check out repository code
+#       uses: actions/checkout@v4
+#     - name: Check for changes in the backend folder
+#       id: backend_changes
+#       run: |
+#         git fetch origin main
+#         git fetch origin ${{ github.head_ref }}
+#         if git diff --name-only origin/${{ github.base_ref }} origin/${{ github.head_ref }} | grep -q '^backend/'; then
+#           echo "backend_changes=true" >> $GITHUB_OUTPUT
+#         else
+#           echo "backend_changes=false" >> $GITHUB_OUTPUT
+#         fi
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+    - name: Decode google-services.json
+      run: |
+        echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 -d > ./frontend/app/google-services.json
+    - name: Test with Maven
+      run: |
+        cd ./frontend
+        ./gradlew test
