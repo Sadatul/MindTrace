@@ -23,13 +23,11 @@ import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Chat
-import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -41,6 +39,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -65,11 +64,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -96,56 +93,59 @@ fun ScreenCareGiver(
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
     val screenWidth = configuration.screenWidthDp.dp
-    
-    // Comprehensive responsive sizing
-    val buttonWidth = (screenWidth * 0.28f).coerceAtMost(120.dp).coerceAtLeast(80.dp)
-    val buttonHeight = (screenHeight * 0.10f).coerceAtMost(80.dp).coerceAtLeast(50.dp)
-    val iconSize = (buttonWidth * 0.25f).coerceAtMost(30.dp).coerceAtLeast(20.dp)
-    
+
+    // Comprehensive responsive sizing (consistent with patient screen)
+    val fabWidth = (screenWidth * 0.28f).coerceAtMost(140.dp).coerceAtLeast(100.dp)
+    val fabHeight = (screenHeight * 0.11f).coerceAtMost(100.dp).coerceAtLeast(80.dp)
+    val iconSize = (fabWidth * 0.35f).coerceAtMost(48.dp).coerceAtLeast(32.dp)
+
+    // Spacing between floating action buttons
+    val spacerWidth = when {
+        screenWidth >= 400.dp -> 24.dp
+        screenWidth >= 360.dp -> 18.dp
+        else -> 12.dp
+    }
+
     // Main button sizing
     val buttonWidthFraction = when {
         screenWidth >= 400.dp -> 0.9f
         screenWidth >= 360.dp -> 0.85f
         else -> 0.95f
     }
-    
+
     val mainButtonHeight = when {
         screenHeight < 600.dp -> 48.dp
         screenHeight < 800.dp -> 56.dp
         else -> 64.dp
     }
-    
+
     // Spacing and padding
     val verticalSpacing = when {
         screenHeight < 600.dp -> 16.dp
         screenHeight < 800.dp -> 20.dp
         else -> 24.dp
     }
-    
+
     val horizontalPadding = when {
         screenWidth < 360.dp -> 12.dp
         screenWidth < 400.dp -> 16.dp
         else -> 20.dp
     }
-    
-    // Responsive bottom padding to prevent overlap
+
+    // Responsive bottom padding for dual floating action buttons (consistent with patient screen)
     val bottomPadding = when {
-        screenHeight < 600.dp -> 140.dp
-        screenHeight < 800.dp -> 160.dp
-        else -> 180.dp
+        screenHeight < 600.dp -> 160.dp
+        screenHeight < 800.dp -> 180.dp
+        else -> 200.dp
     }
-    
+
     var isLoading by remember { mutableStateOf(false) } // General loading state for the screen
-    var isFetchingOtp by remember { mutableStateOf(false) } // Specific loading state for OTP generation
     var errorMsg by remember { mutableStateOf<String?>(null) }
-    var newPatientOtp by remember { mutableStateOf<String?>(null) }
-    var showNewPatientOtpDialog by remember { mutableStateOf(false) }
     var showProfileMenu by remember { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
-    val coroutineScope = rememberCoroutineScope()
-    val clipboardManager = LocalClipboardManager.current
     var userInfo: UserInfo? by remember { mutableStateOf(null) }
+
 
     LaunchedEffect(Unit) {
         val cachedUserInfo = SelfUserInfoCache.getUserInfo()
@@ -166,62 +166,6 @@ fun ScreenCareGiver(
             errorMsg = "Could not load user details."
         } finally {
             isLoading = false
-        }
-    }
-
-    fun getNewPatientRegistrationCode() {
-        Log.d(TAG, "getNewPatientRegistrationCode called.")
-        coroutineScope.launch {
-            isFetchingOtp = true
-            errorMsg = null
-            newPatientOtp = null
-            Log.d(TAG, "Coroutine launched for API call. isFetchingOtp=true, newPatientOtp=null")
-            try {
-                val caregiverAuthToken = RetrofitInstance.dementiaAPI.getIdToken()
-                Log.d(TAG, "Attempting API call to RetrofitInstance.dementiaAPI.getOtp")
-                val response = RetrofitInstance.dementiaAPI.getOtp("Bearer $caregiverAuthToken")
-                Log.d(
-                    TAG,
-                    "API call finished. Response code: ${response.code()}, isSuccessful: ${response.isSuccessful}"
-                )
-
-                if (response.isSuccessful && response.body() != null) {
-                    val responseBody = response.body()!!
-                    Log.d(TAG, "API Response Successful. Body: $responseBody")
-                    newPatientOtp = responseBody.otp
-                    Log.d(TAG, "Extracted OTP from response: $newPatientOtp")
-                    if (newPatientOtp != null) {
-                        Log.d(TAG, "OTP is not null. Setting showNewPatientOtpDialog = true")
-                        showNewPatientOtpDialog = true
-                    } else {
-                        val specificError = "Received empty registration code from server."
-                        errorMsg = specificError
-                        Log.w(
-                            TAG,
-                            "Registration OTP is null in response body. Error: $specificError"
-                        )
-                        snackbarHostState.showSnackbar(specificError)
-                    }
-                } else {
-                    val errorBody = response.errorBody()?.string() ?: "No error body"
-                    Log.e(
-                        TAG,
-                        "API call failed. Code: ${response.code()}, Message: ${response.message()}, Error body: $errorBody"
-                    )
-                    val specificError =
-                        "Failed to get code: ${response.message()} (Code: ${response.code()})"
-                    errorMsg = specificError
-                    snackbarHostState.showSnackbar("Failed to generate code: ${response.message()}")
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Exception during API call getOtp", e)
-                val specificError = "An error occurred: ${e.message}"
-                errorMsg = specificError
-                snackbarHostState.showSnackbar("An error occurred while fetching the code.")
-            } finally {
-                isFetchingOtp = false
-                Log.d(TAG, "API call coroutine finished. isFetchingOtp=false")
-            }
         }
     }
 
@@ -309,56 +253,75 @@ fun ScreenCareGiver(
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         floatingActionButton = {
-            val configuration = LocalConfiguration.current
-            val screenWidth = configuration.screenWidthDp.dp
-            val buttonWidth = when {
-                screenWidth >= 400.dp -> 140.dp
-                screenWidth >= 360.dp -> 120.dp
-                else -> 100.dp
-            }
-            val buttonHeight = when {
-                screenWidth >= 400.dp -> 90.dp
-                screenWidth >= 360.dp -> 80.dp
-                else -> 70.dp
-            }
-            val iconSize = when {
-                screenWidth >= 400.dp -> 34.dp
-                screenWidth >= 360.dp -> 30.dp
-                else -> 26.dp
-            }
-            
-            Surface(
-                shape = RoundedCornerShape(24.dp),
-                color = colorResource(R.color.gradient_caregiver_start),
-                shadowElevation = 20.dp,
-                modifier = Modifier
-                    .padding(24.dp, bottom = 8.dp)
-                    .size(width = buttonWidth, height = buttonHeight)
-                    .clickable(onClick = onNavigateToChat)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
             ) {
-                Column(
+                // My Patients Button
+                Surface(
+                    shape = RoundedCornerShape(24.dp),
+                    color = colorResource(R.color.gradient_caregiver_start),
+                    shadowElevation = 20.dp,
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(vertical = 8.dp),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .size(width = fabWidth, height = fabHeight)
+                        .clickable(onClick = onNavigateToPatients)
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Chat,
-                        contentDescription = "ASK AI",
-                        modifier = Modifier.size(iconSize),
-                        tint = colorResource(R.color.white)
-                    )
-                    Text(
-                        text = "ASK AI",
-                        color = colorResource(R.color.white),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(vertical = 10.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.People,
+                            contentDescription = "My Patients",
+                            modifier = Modifier.size(iconSize),
+                            tint = colorResource(R.color.white)
+                        )
+                        Text(
+                            text = "My Patients",
+                            color = colorResource(R.color.white),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(top = 6.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(spacerWidth))
+                // ASK AI Button
+                Surface(
+                    shape = RoundedCornerShape(24.dp),
+                    color = colorResource(R.color.gradient_caregiver_start),
+                    shadowElevation = 20.dp,
+                    modifier = Modifier
+                        .size(width = fabWidth, height = fabHeight)
+                        .clickable(onClick = onNavigateToChat)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(vertical = 10.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Chat,
+                            contentDescription = "ASK AI",
+                            modifier = Modifier.size(iconSize),
+                            tint = colorResource(R.color.white)
+                        )
+                        Text(
+                            text = "ASK AI",
+                            color = colorResource(R.color.white),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(top = 6.dp)
+                        )
+                    }
                 }
             }
-        }
+        }, floatingActionButtonPosition = FabPosition.Center
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -425,173 +388,49 @@ fun ScreenCareGiver(
                 }
 
 
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                Button(
+                    onClick = onNavigateToPatients,
+                    modifier = Modifier
+                        .fillMaxWidth(buttonWidthFraction)
+                        .height(mainButtonHeight),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colorResource(R.color.gradient_caregiver_start),
+                        contentColor = colorResource(R.color.white)
+                    ),
+                    shape = RoundedCornerShape(20.dp),
+                    elevation = ButtonDefaults.buttonElevation(
+                        defaultElevation = 12.dp,
+                        pressedElevation = 16.dp
+                    )
                 ) {
-                    Button(
-                        onClick = onNavigateToPatients,
-                        modifier = Modifier
-                            .fillMaxWidth(buttonWidthFraction)
-                            .height(mainButtonHeight),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colorResource(R.color.gradient_caregiver_start),
-                            contentColor = colorResource(R.color.white)
-                        ),
-                        shape = RoundedCornerShape(20.dp),
-                        elevation = ButtonDefaults.buttonElevation(
-                            defaultElevation = 12.dp,
-                            pressedElevation = 16.dp
-                        )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Surface(
-                                modifier = Modifier.size(28.dp),
-                                shape = CircleShape,
-                                color = colorResource(R.color.white).copy(alpha = 0.25f)
-                            ) {
-                                Icon(
-                                    Icons.Default.People,
-                                    contentDescription = null,
-                                    modifier = Modifier
-                                        .size(28.dp)
-                                        .padding(5.dp),
-                                    tint = colorResource(R.color.white)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(
-                                "My Patients",
-                                fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                        }
-                    }
-
-                    Button(
-                        onClick = {
-                            Log.d(TAG, "'Get Code for New Patient' button clicked.")
-                            getNewPatientRegistrationCode()
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth(buttonWidthFraction)
-                            .height(mainButtonHeight),
-                        enabled = !isFetchingOtp,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colorResource(R.color.gradient_caregiver_start),
-                            contentColor = colorResource(R.color.white),
-                            disabledContainerColor = colorResource(R.color.gradient_caregiver_start).copy(
-                                alpha = 0.5f
-                            ),
-                            disabledContentColor = colorResource(R.color.white).copy(alpha = 0.7f)
-                        ),
-                        shape = RoundedCornerShape(20.dp),
-                        elevation = ButtonDefaults.buttonElevation(
-                            defaultElevation = 12.dp,
-                            pressedElevation = 16.dp,
-                            disabledElevation = 4.dp
-                        )
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Surface(
-                                modifier = Modifier.size(28.dp),
-                                shape = CircleShape,
-                                color = colorResource(R.color.white).copy(alpha = 0.25f)
-                            ) {
-                                Icon(
-                                    Icons.Filled.PersonAdd,
-                                    contentDescription = null,
-                                    modifier = Modifier
-                                        .size(28.dp)
-                                        .padding(5.dp),
-                                    tint = colorResource(R.color.white)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(
-                                if (isFetchingOtp) "Generating Code..." else "Get Code for New Patient",
-                                fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            if (isFetchingOtp) {
-                                Spacer(modifier = Modifier.width(8.dp))
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(18.dp),
-                                    strokeWidth = 2.dp,
-                                    color = colorResource(R.color.white)
-                                )
-                            }
-                        }
-                    }
-                }
-
-                // Display error messages specifically from OTP generation
-                if (!isFetchingOtp && errorMsg != null && !(isLoading && userInfo == null) && !showNewPatientOtpDialog) {
-                    // This condition ensures the error is from OTP and dialog isn't already up
-                    Log.d(TAG, "Displaying non-initial load error message: $errorMsg")
-                    Spacer(modifier = Modifier.height(16.dp)) // Add some space before this error
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = colorResource(R.color.error_red).copy(alpha = 0.1f)
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .padding(16.dp)
-                                .fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
+                        Surface(
+                            modifier = Modifier.size(28.dp),
+                            shape = CircleShape,
+                            color = colorResource(R.color.white).copy(alpha = 0.25f)
                         ) {
                             Icon(
-                                Icons.Filled.ErrorOutline,
-                                contentDescription = "Error",
-                                tint = colorResource(id = R.color.error_red)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = errorMsg!!, // errorMsg is confirmed not null here
-                                color = colorResource(R.color.error_red),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Medium,
+                                Icons.Default.People,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .padding(5.dp),
+                                tint = colorResource(R.color.white)
                             )
                         }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            "My Patients",
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleMedium
+                        )
                     }
                 }
             }
-        }
-
-        Log.d(
-            TAG,
-            "ScreenCareGiver recomposing. showNewPatientOtpDialog: $showNewPatientOtpDialog, newPatientOtp: $newPatientOtp"
-        )
-
-        if (showNewPatientOtpDialog && newPatientOtp != null) { // Ensure OTP is not null before showing dialog
-            Log.d(TAG, "Rendering ShowOTP Dialog. OTP: $newPatientOtp")
-            ShowOTP(
-                otp = newPatientOtp!!, // OTP is confirmed not null here
-                onCopy = {
-                    Log.d(TAG, "Copy clicked in ShowOTP Dialog.")
-                    clipboardManager.setText(AnnotatedString(newPatientOtp!!))
-                    coroutineScope.launch { snackbarHostState.showSnackbar("Registration code copied!") }
-                    showNewPatientOtpDialog = false
-                    // errorMsg = null // Clear error message when OTP dialog is shown successfully
-                },
-                onCancel = {
-                    Log.d(TAG, "Cancel/Close clicked in ShowOTP Dialog.")
-                    showNewPatientOtpDialog = false
-                    // errorMsg = null // Clear error message on cancel as well, if appropriate
-                }
-            )
         }
     }
 }
@@ -600,12 +439,51 @@ fun ScreenCareGiver(
 fun CaregiverInfoCard(
     name: String,
     email: String,
-    dob: String,
     gender: String,
+    dob: String,
     profilePicture: String?,
-    userId: String? // Add userId for QR code
+    userId: String
 ) {
     var showQrDialog by remember { mutableStateOf(false) }
+    var qrCodeData by remember { mutableStateOf<String?>(null) }
+    var isLoadingQrData by remember { mutableStateOf(false) }
+    var qrError by remember { mutableStateOf<String?>(null) }
+    val coroutineScope = rememberCoroutineScope()
+
+    fun handleQrDialogClose() {
+        showQrDialog = false
+        qrCodeData = null
+        qrError = null
+    }
+
+    fun generateQrCodeData() {
+        coroutineScope.launch {
+            isLoadingQrData = true
+            qrError = null
+            try {
+                val caregiverAuthToken = RetrofitInstance.dementiaAPI.getIdToken()
+                val response = RetrofitInstance.dementiaAPI.getOtp("Bearer $caregiverAuthToken")
+
+                if (response.isSuccessful && response.body() != null) {
+                    val otp = response.body()!!.otp
+                    if (otp != null) {
+                        qrCodeData = "$userId|$otp"
+                        showQrDialog = true
+                    } else {
+                        qrError = "Failed to generate registration code"
+                    }
+                } else {
+                    qrError = "Failed to fetch registration code: ${response.message()}"
+                }
+            } catch (e: Exception) {
+                qrError = "Error generating QR code: ${e.message}"
+                Log.e(TAG, "Error generating QR code data", e)
+            } finally {
+                isLoadingQrData = false
+            }
+        }
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 16.dp),
@@ -628,7 +506,7 @@ fun CaregiverInfoCard(
                     text = "My Information",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    color = colorResource(R.color.info_blue), // Brighter blue for visibility
+                    color = colorResource(R.color.info_blue),
                     modifier = Modifier.weight(1f)
                 )
                 if (profilePicture != null) {
@@ -657,76 +535,125 @@ fun CaregiverInfoCard(
                 "Name",
                 Icons.Filled.AccountCircle,
                 name,
-                colorResource(R.color.info_blue), // Brighter blue for visibility
+                colorResource(R.color.info_blue),
                 colorResource(R.color.dark_on_surface)
             )
             InfoRow(
                 "Email",
                 Icons.Filled.Email,
                 email,
-                colorResource(R.color.info_blue), // Brighter blue for visibility
+                colorResource(R.color.info_blue),
                 colorResource(R.color.dark_on_surface)
             )
             InfoRow(
                 "Date of Birth",
                 Icons.Filled.CalendarToday,
                 dob,
-                colorResource(R.color.info_blue), // Brighter blue for visibility
+                colorResource(R.color.info_blue),
                 colorResource(R.color.dark_on_surface)
             )
             InfoRow(
                 "Gender",
                 Icons.Filled.Person,
                 formatGender(gender),
-                colorResource(R.color.info_blue), // Brighter blue for visibility
+                colorResource(R.color.info_blue),
                 colorResource(R.color.dark_on_surface)
             )
-            // QR Code Row below info fields (no button background, larger icon/text)
-            if (userId != null) {
+            if (userId.isNotBlank()) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 18.dp, bottom = 8.dp)
+                        .clickable(enabled = !isLoadingQrData) {
+                            generateQrCodeData()
+                        }
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.QrCode,
-                        contentDescription = "Show QR Code",
-                        modifier = Modifier
-                            .size(38.dp)
-                            .clickable { showQrDialog = true },
-                        tint = colorResource(R.color.info_blue)
-                    )
+                    if (isLoadingQrData) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(38.dp),
+                            color = colorResource(R.color.info_blue),
+                            strokeWidth = 3.dp
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.QrCode,
+                            contentDescription = "Show QR Code",
+                            modifier = Modifier.size(38.dp),
+                            tint = colorResource(R.color.info_blue)
+                        )
+                    }
                     Spacer(modifier = Modifier.width(14.dp))
                     Text(
-                        "My QR Code",
+                        if (isLoadingQrData) "Generating QR Code..." else "My QR Code",
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleLarge,
                         color = colorResource(R.color.info_blue)
                     )
                 }
+                qrError?.let { error ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = colorResource(R.color.error_red).copy(alpha = 0.1f)
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .padding(12.dp)
+                                .fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Filled.ErrorOutline,
+                                contentDescription = "Error",
+                                tint = colorResource(R.color.error_red),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = error,
+                                color = colorResource(R.color.error_red),
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Medium,
+                            )
+                        }
+                    }
+                }
             }
         }
-        // QR Code Dialog
-        if (showQrDialog && userId != null) {
+        if (showQrDialog && qrCodeData != null) {
             AlertDialog(
-                onDismissRequest = { showQrDialog = false },
+                onDismissRequest = { handleQrDialogClose() },
                 title = {
-                    Text("Your QR Code", fontWeight = FontWeight.Bold)
+                    Text("Registration QR Code", fontWeight = FontWeight.Bold)
                 },
                 text = {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         com.example.frontend.screens.components.QRCode(
-                            data = userId,
+                            data = qrCodeData!!,
                             modifier = Modifier.size(240.dp)
                         )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            "Scan this code to register as a patient",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium
+                        )
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text("Scan this code to share your ID", style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            "Contains: Caregiver ID + Registration Code",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colorResource(R.color.dark_on_surface).copy(alpha = 0.7f)
+                        )
                     }
                 },
                 confirmButton = {
-                    TextButton(onClick = { showQrDialog = false }) {
+                    TextButton(onClick = { handleQrDialogClose() }) {
                         Text("CLOSE")
                     }
                 }
@@ -736,7 +663,13 @@ fun CaregiverInfoCard(
 }
 
 @Composable
-fun InfoRow(label: String, icon: ImageVector, value: String, iconColor: Color, textColor: Color) {
+fun InfoRow(
+    label: String,
+    icon: ImageVector,
+    value: String,
+    iconColor: Color,
+    textColor: Color
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -746,12 +679,12 @@ fun InfoRow(label: String, icon: ImageVector, value: String, iconColor: Color, t
         Surface(
             modifier = Modifier.size(40.dp),
             shape = CircleShape,
-            color = iconColor.copy(alpha = 0.18f) // Lighter, more visible blue background
+            color = iconColor.copy(alpha = 0.18f)
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = "$label Icon",
-                tint = iconColor, // Brighter blue
+                tint = iconColor,
                 modifier = Modifier
                     .padding(8.dp)
                     .size(24.dp)
@@ -785,67 +718,9 @@ fun formatGender(genderCode: String): String {
 }
 
 @Composable
-fun ShowOTP(otp: String, onCopy: () -> Unit, onCancel: () -> Unit) {
-    Log.d(TAG, "ShowOTP Dialog recomposing. OTP: $otp")
-    AlertDialog(
-        onDismissRequest = onCancel,
-        title = {
-            Text(
-                "New Patient Registration Code",
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface // Use theme colors
-            )
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(
-                    "Share this One-Time Code with the new patient for their registration process.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant // Use theme colors
-                )
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), // Use theme colors
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
-                    ) {
-                        Text(
-                            otp,
-                            modifier = Modifier.weight(1f),
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary // Use theme colors
-                        )
-                        IconButton(onClick = onCopy, modifier = Modifier.size(48.dp)) {
-                            Icon(
-                                Icons.Filled.ContentCopy,
-                                "Copy Code",
-                                tint = MaterialTheme.colorScheme.primary // Use theme colors
-                            )
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onCancel) {
-                Text("CLOSE", color = MaterialTheme.colorScheme.primary) // Use theme colors
-            }
-        },
-        containerColor = MaterialTheme.colorScheme.surface,
-        titleContentColor = MaterialTheme.colorScheme.onSurface,
-        textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-    )
-}
-
-@Composable
-private fun getCaregiverProfilePictureSize(): Dp {
+fun getCaregiverProfilePictureSize(): Dp {
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
-
     return when {
         screenWidth >= 400.dp -> 72.dp
         screenWidth >= 360.dp -> 64.dp

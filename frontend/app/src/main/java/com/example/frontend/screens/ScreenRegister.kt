@@ -139,7 +139,6 @@ fun ScreenRegister(
                 email = uiState.patientFormData.email,
                 dob = uiState.patientFormData.dob,
                 gender = uiState.patientFormData.gender,
-                otp = uiState.patientFormData.otp,
                 profilePictureUrl = uiState.firebaseCredentials?.photoUrl,
                 onDobChange = { dob ->
                     viewModel.updatePatientFormData(uiState.patientFormData.copy(dob = dob))
