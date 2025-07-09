@@ -2,8 +2,6 @@ package com.example.frontend.screens
 
 import android.os.Build
 import android.util.Log
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,12 +11,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -27,41 +22,12 @@ import com.example.frontend.api.RetrofitInstance
 import com.example.frontend.api.getSelfUserInfo
 import com.example.frontend.api.signOutUser
 import com.example.frontend.screens.components.CloseAppDialog
-import com.example.frontend.screens.components.NewAccountDialog
-import kotlinx.coroutines.launch
 import kotlin.system.exitProcess
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SetupNavGraph(navController: NavHostController) {
     var showCloseAppDialog by remember { mutableStateOf(false) }
-    var showNewAccountDialog by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-
-    val switchAccountViewModel: ViewModelRegister = viewModel()
-
-    val accountSwitchSignInLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        switchAccountViewModel.handleGoogleSignInResult(
-            data = result.data,
-            resultCode = result.resultCode,
-            onNavigateToDashboard = { role ->
-                val destination = when (role) {
-                    "PATIENT" -> Screen.PatientLogs
-                    "CAREGIVER" -> Screen.DashboardCareGiver
-                    else -> throw IllegalArgumentException("Unknown role: $role")
-                }
-                navController.navigate(destination) {
-                    popUpTo(navController.graph.startDestinationId) {
-                        inclusive = true
-                    }
-                    launchSingleTop = true
-                }
-            }
-        )
-    }
 
     val startDestination by produceState<Screen?>(initialValue = null) {
         value = getStartDestination()
@@ -107,7 +73,13 @@ fun SetupNavGraph(navController: NavHostController) {
                     showCloseAppDialog = true
                 },
                 onLoginWithAnotherAccount = {
-                    showNewAccountDialog = true
+                    // Simply navigate to main registration screen
+                    navController.navigate(Screen.Register) {
+                        popUpTo(navController.graph.startDestinationId) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
                 }
             ) { navController.popBackStack() }
         }
@@ -120,7 +92,13 @@ fun SetupNavGraph(navController: NavHostController) {
                     showCloseAppDialog = true
                 },
                 onLoginWithAnotherAccount = {
-                    showNewAccountDialog = true
+                    // Simply navigate to main registration screen
+                    navController.navigate(Screen.Register) {
+                        popUpTo(navController.graph.startDestinationId) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -179,20 +157,6 @@ fun SetupNavGraph(navController: NavHostController) {
                 partnerId = partnerId
             )
         }
-    }
-    if (showNewAccountDialog){
-        NewAccountDialog(
-            onDismiss = { showNewAccountDialog = false },
-            onConfirmSignInLauncher = {
-                showNewAccountDialog = false
-                coroutineScope.launch {
-                    RetrofitInstance.dementiaAPI.signOutUser()
-                    switchAccountViewModel.initializeGoogleSignInClient(context)
-                    switchAccountViewModel.signOut()
-                    accountSwitchSignInLauncher.launch(switchAccountViewModel.getGoogleSignInIntent())
-                }
-            }
-        )
     }
 
     if (showCloseAppDialog) {

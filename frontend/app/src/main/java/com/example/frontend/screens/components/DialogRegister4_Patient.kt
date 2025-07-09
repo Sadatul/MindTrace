@@ -21,7 +21,6 @@ fun PatientRegisterDialog(
     email: String,
     dob: String,
     gender: String,
-    otp: String,
     profilePictureUrl: String?,
     onDobChange: (String) -> Unit,
     onGenderChange: (String) -> Unit,
@@ -33,10 +32,22 @@ fun PatientRegisterDialog(
     var qrScannerActive by remember { mutableStateOf(false) }
     var qrScanned by remember { mutableStateOf(false) }
     val qrScanner = rememberQRScanner(
-        onResult = { scannedId ->
-            onPrimaryContactChange(scannedId)
-            qrScannerActive = false
-            qrScanned = true
+        onResult = { scannedData ->
+            // Parse the QR code data: format is "caregiverId|otp"
+            val parts = scannedData.split("|")
+            if (parts.size == 2) {
+                val caregiverId = parts[0]
+                val extractedOtp = parts[1]
+                onPrimaryContactChange(caregiverId)
+                onOtpChange(extractedOtp)
+                qrScannerActive = false
+                qrScanned = true
+            } else {
+                // Fallback: treat entire string as caregiver ID for backwards compatibility
+                onPrimaryContactChange(scannedData)
+                qrScannerActive = false
+                qrScanned = true
+            }
         },
         onError = { error ->
             qrScannerActive = false
@@ -118,37 +129,37 @@ fun PatientRegisterDialog(
                             }
                         }
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    // OTP Field
-                    OutlinedTextField(
-                        value = otp,
-                        onValueChange = onOtpChange,
-                        label = {
-                            Text(
-                                "OTP from Primary Contact (Caregiver)",
-                                color = MaterialTheme.colorScheme.primary,
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-                            )
-                        },
-                        singleLine = true,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .border(
-                                width = 2.5.dp,
-                                color = MaterialTheme.colorScheme.primary,
-                                shape = RoundedCornerShape(16.dp)
-                            )
-                            .background(
-                                color = MaterialTheme.colorScheme.background,
-                                shape = RoundedCornerShape(16.dp)
+                    
+                    // Show extracted data when QR is scanned
+                    if (qrScanned) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f)
                             ),
-                        shape = RoundedCornerShape(16.dp),
-                        textStyle = LocalTextStyle.current.copy(fontWeight = FontWeight.Bold)
-                    )
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text(
+                                    text = "Registration Data Extracted:",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "✓ Primary Contact ID and OTP automatically set",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
                 }
             }
         },
-        infoMessage = "Complete your patient profile. The OTP and Primary Contact ID are provided by your Primary Contact (Caregiver).",
+        infoMessage = "Complete your patient profile by scanning your caregiver's QR code. The QR code contains both your Primary Contact ID and OTP.",
         onDobChange = onDobChange,
         onGenderChange = onGenderChange,
         onDismiss = onDismiss,

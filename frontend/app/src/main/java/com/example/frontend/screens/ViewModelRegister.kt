@@ -305,7 +305,6 @@ class ViewModelRegister : ViewModel() {
                                     )
                                 )
                                 Log.d(TAG, "Stored for registration - UID: $firebaseUserUID, Token (start): ${firebaseIdToken.take(10)}")
-                                clearAllDialogs()
                                 showRegisterPrompt()
                             }
                             "exists" -> {

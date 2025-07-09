@@ -494,7 +494,7 @@ fun PatientInfoCard(
                             model = primaryContact.profilePicture,
                             contentDescription = "Caregiver Profile Picture",
                             modifier = Modifier
-                                .size(getCaregiverProfilePictureSize())
+                                .size(getPrimaryContactProfilePictureSize())
                                 .clip(CircleShape),
                             contentScale = ContentScale.Crop,
                             placeholder = painterResource(R.drawable.ic_launcher_foreground), // Replace
@@ -505,7 +505,7 @@ fun PatientInfoCard(
                             imageVector = Icons.Default.AccountCircle,
                             contentDescription = "Default Caregiver Profile",
                             tint = colorResource(R.color.dark_primary),
-                            modifier = Modifier.size(getCaregiverProfilePictureSize())
+                            modifier = Modifier.size(getPrimaryContactProfilePictureSize())
                         )
                     }
                 }
@@ -625,7 +625,7 @@ private fun getProfilePictureSize(): Dp {
 }
 
 @Composable
-private fun getCaregiverProfilePictureSize(): Dp {
+private fun getPrimaryContactProfilePictureSize(): Dp {
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
 
