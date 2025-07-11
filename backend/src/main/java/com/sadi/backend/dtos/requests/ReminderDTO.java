@@ -10,6 +10,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @AllArgsConstructor
@@ -53,4 +55,16 @@ public class ReminderDTO {
                 this.zoneId = reminder.getZoneId();
                 this.isRecurring = reminder.getIsRecurring();
         }
+
+            public Map<String, String> getMap() {
+                Map<String, String> map = new HashMap<>();
+                map.put("id", id.toString());
+                map.put("userId", userId);
+                map.put("title", title);
+                map.put("description", description);
+                map.put("cronExpression", cronExpression);
+                map.put("zoneId", zoneId);
+                map.put("isRecurring", isRecurring.toString());
+                return map;
+            }
 }

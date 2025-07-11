@@ -1,11 +1,11 @@
 meta {
-  name: StoreReminder
+  name: RegisterDevice
   type: http
-  seq: 1
+  seq: 7
 }
 
 post {
-  url: {{host}}/v1/reminders
+  url: {{host}}/v1/auth/register/device
   body: json
   auth: bearer
 }
@@ -16,33 +16,24 @@ auth:bearer {
 
 body:json {
   {
-    "reminderType": "BASE",
-    "title": "Remind me to take mdicine",
-    "description": "Very2 important medicine. Take it now",
-    "cronExpression": "0 0/1 * * * *"
+    "token": "cWGBKHMWRRiAbPnci397Ov:APA91bEX7RcGWn4BsRsqeDqVjgSDrBI9PO1D3AfjqeU58KrwJ0nygLYMh1ihgdAnr1JKisTs74R27mkbPg6JyiCY8krL4rPTq-Ss9F28lyWVaZJhgb_RQyE",
+    "deviceName": "Sadi's Samsung",
+    "deviceId": "123456"
   }
 }
 
 docs {
-  **Desc**: Used to store logs \
-  **Authorization**: USER or CAREGIVER \
-  **Request Body**: `ReminderReq`
-  
-  ```json
-  {
-    "userId": "string (optional, only for caregiver)",
-    "title": "string (1–128 chars)",
-    "description": "string (1–512 chars)",
-    "reminderType": "BASE",
-    "cronExpression": "valid cron expression",
-    "zoneId": "string (default: Asia/Dhaka)",
-    "isRecurring": "boolean (default: false)"
-  }
-  ```
-  
+  **Desc**: Used for user device registration \
+  **Authorization**: ALL \
   **Response Bodies**:
   ```
   status: 201
   ```
+  
+  **Notes: **
+  * deviceId will be generated at frontend. Ask Sadi or ChatGPT. Generated DeviceId must be unique everytime. And on uninstall it should change, so that upon reinstallation the app feels like a completely new device.
+  * Get the device name from android
+  * Call this on every login. 
+  * Must call this endpoint after registration is done. Importnat don't call it before registration
   
 }

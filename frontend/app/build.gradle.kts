@@ -89,7 +89,8 @@ dependencies {
 
     // Firebase Bill of Materials (BoM) - Manages versions of Firebase libraries
     implementation(platform("com.google.firebase:firebase-bom:33.15.0")) // Use the latest compatible version
-
+    implementation("com.google.firebase:firebase-messaging-ktx")
+    
     // Firebase Authentication
     implementation("com.google.firebase:firebase-auth-ktx") // Firebase Authentication library (Kotlin extensions)
 

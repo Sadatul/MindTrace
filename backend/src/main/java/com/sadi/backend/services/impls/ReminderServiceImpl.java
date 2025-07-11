@@ -8,6 +8,7 @@ import com.sadi.backend.enums.ReminderType;
 import com.sadi.backend.repositories.ReminderRepository;
 import com.sadi.backend.services.UserService;
 import com.sadi.backend.services.abstractions.ReminderSchedulerService;
+import com.sadi.backend.services.abstractions.ReminderSenderService;
 import com.sadi.backend.services.abstractions.ReminderService;
 import com.sadi.backend.specifications.ReminderSpecification;
 import com.sadi.backend.utils.SecurityUtils;
@@ -33,10 +34,11 @@ public class ReminderServiceImpl implements ReminderService {
     private final ReminderRepository reminderRepository;
     private final ReminderSchedulerService reminderSchedulerService;
     private final UserService userService;
+    private final ReminderSenderService reminderSenderService;
 
     @Override
     public void sendReminder(ReminderDTO req) {
-        log.info("Sending Reminder Request {}", req);
+        reminderSenderService.sendReminder(req);
     }
 
     @Override

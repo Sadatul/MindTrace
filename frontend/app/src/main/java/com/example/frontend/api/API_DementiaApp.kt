@@ -1,6 +1,7 @@
 package com.example.frontend.api
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import com.example.frontend.api.models.PatientLog
 import com.example.frontend.api.models.PartnerInfo
@@ -17,6 +18,7 @@ import com.example.frontend.screens.NavigationManager
 import com.example.frontend.screens.Screen
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.tasks.await
 import okhttp3.ResponseBody
 import retrofit2.Response
@@ -31,6 +33,9 @@ import retrofit2.http.Query
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
 // Placeholder to prevent build errors from existing code
 data class HealthResponse(val status: String)
@@ -226,6 +231,17 @@ suspend fun getIdTokenWithFallback(forceRefresh: Boolean = false, fallback: () -
         fallback()
         null
     }
+}
+
+suspend fun DementiaAPI.getFCMToken(): String? = suspendCoroutine { cont ->
+    FirebaseMessaging.getInstance().token
+        .addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                cont.resume(task.result)
+            } else {
+                cont.resumeWithException(task.exception ?: Exception("Unknown FCM error"))
+            }
+        }
 }
 
 suspend fun DementiaAPI.getIdToken(

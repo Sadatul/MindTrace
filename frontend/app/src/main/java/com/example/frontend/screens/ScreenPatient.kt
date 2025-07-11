@@ -1,6 +1,7 @@
 package com.example.frontend.screens
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -25,11 +26,13 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.ContactPhone
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.QrCode
+import androidx.compose.material.icons.filled.Report
 import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -61,9 +64,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -73,6 +79,7 @@ import com.example.frontend.R
 import com.example.frontend.api.PrimaryContact
 import com.example.frontend.api.RetrofitInstance
 import com.example.frontend.api.UserInfo
+import com.example.frontend.api.getFCMToken
 import com.example.frontend.api.getSelfUserInfo
 
 private const val TAG = "ScreenPatient"
@@ -118,6 +125,7 @@ fun ScreenPatient(
     }
     
     var userInfo: UserInfo? by remember { mutableStateOf(null) }
+    var fcmToken: String? by remember { mutableStateOf(null) }
     var isLoading by remember { mutableStateOf(true) }
     var showProfileMenu by remember { mutableStateOf(false) }
 
@@ -125,6 +133,7 @@ fun ScreenPatient(
         isLoading = true
         try {
             userInfo = RetrofitInstance.dementiaAPI.getSelfUserInfo()
+            fcmToken = RetrofitInstance.dementiaAPI.getFCMToken()
         } catch (e: Exception) {
             Log.e(TAG, "Error fetching user info", e)
         } finally {
@@ -333,6 +342,7 @@ fun ScreenPatient(
                         gender = userInfo!!.gender,
                         dob = userInfo!!.dob,
                         userId = userInfo!!.id,
+                        fcmToken = fcmToken,
                         // Primary contact information (caregiver)
                         primaryContact = userInfo!!.primaryContact
                     )
@@ -374,10 +384,13 @@ fun PatientInfoCard(
     gender: String,
     dob: String,
     userId: String?,
+    fcmToken: String?,
     // Primary contact information (caregiver)
     primaryContact: PrimaryContact?,
 ) {
     var showQrDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -431,6 +444,49 @@ fun PatientInfoCard(
             InfoRowContent(label = "Name", value = name, icon = Icons.Filled.AccountCircle)
             InfoRowContent(label = "Email", value = email, icon = Icons.Filled.Email)
             InfoRowContent(label = "Date of Birth", value = dob, icon = Icons.Filled.CalendarToday)
+            if (fcmToken != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Report,
+                        contentDescription = "FCM Token",
+                        tint = colorResource(R.color.dark_primary),
+                        modifier = Modifier.size(24.dp)
+                    )
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "FCM Token",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colorResource(R.color.dark_primary).copy(alpha = 0.7f),
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = fcmToken.take(40) + if (fcmToken.length > 40) "..." else "",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colorResource(R.color.dark_primary)
+                        )
+                    }
+
+                    IconButton(
+                        onClick = {
+                            clipboardManager.setText(AnnotatedString(fcmToken))
+                            Toast.makeText(context, "FCM Token copied to clipboard", Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ContentCopy,
+                            contentDescription = "Copy FCM Token",
+                            tint = colorResource(R.color.info_blue),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
             InfoRowContent(
                 label = "Gender",
                 value = when (gender.uppercase()) {

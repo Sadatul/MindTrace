@@ -2,10 +2,11 @@ package com.sadi.backend.controllers;
 
 import com.sadi.backend.dtos.requests.CaregiverRegistrationRequest;
 import com.sadi.backend.dtos.requests.PatientRegistrationRequest;
+import com.sadi.backend.dtos.requests.UserDeviceReq;
 import com.sadi.backend.dtos.responses.OtpResponse;
 import com.sadi.backend.dtos.responses.StatusResponse;
 import com.sadi.backend.services.UserService;
-import com.sadi.backend.services.abstractions.EmailService;
+import com.sadi.backend.services.abstractions.UserDeviceService;
 import com.sadi.backend.services.abstractions.UserVerificationService;
 import com.sadi.backend.utils.SecurityUtils;
 import jakarta.validation.Valid;
@@ -23,12 +24,12 @@ import java.net.URI;
 public class AuthController {
     private final UserService userService;
     private final UserVerificationService userVerificationService;
-    private final EmailService emailService;
+    private final UserDeviceService userDeviceService;
 
-    public AuthController(UserService userService, UserVerificationService userVerificationService, EmailService emailService) {
+    public AuthController(UserService userService, UserVerificationService userVerificationService, UserDeviceService userDeviceService) {
         this.userService = userService;
         this.userVerificationService = userVerificationService;
-        this.emailService = emailService;
+        this.userDeviceService = userDeviceService;
     }
 
     @PostMapping()
@@ -67,5 +68,20 @@ public class AuthController {
         URI uri = ServletUriComponentsBuilder.fromCurrentRequestUri()
                 .path("/{id}").buildAndExpand(id).toUri();
         return ResponseEntity.created(uri).build();
+    }
+
+    @PostMapping("/register/device")
+    public ResponseEntity<Void> registerUserDevice(@RequestBody @Valid UserDeviceReq req){
+        log.debug("Received device register request for user: {}", req);
+        String id = userDeviceService.addUserDevice(req, SecurityUtils.getName());
+        URI uri = ServletUriComponentsBuilder.fromCurrentRequestUri()
+                .path("/{id}").buildAndExpand(id).toUri();
+        return ResponseEntity.created(uri).build();
+    }
+
+    @DeleteMapping("/logout")
+    public ResponseEntity<Void> logout(@RequestParam String deviceId){
+        userDeviceService.deleteTokenByDeviceId(deviceId, SecurityUtils.getName());
+        return ResponseEntity.noContent().build();
     }
 }
