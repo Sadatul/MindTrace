@@ -1,22 +1,22 @@
 name: software
 
 services:
-  # db:
-  #   image: postgres:latest
-  #   container_name: postgres
-  #   environment:
-  #     - POSTGRES_USER=software
-  #     - POSTGRES_PASSWORD=software
-  #     - POSTGRES_DB=software
-  #   ports:
-  #     - "5432:5432"
-  #   healthcheck:
-  #     test: [ "CMD", "pg_isready", "-U", "software" ]
-  #     interval: 5s
-  #     timeout: 5s
-  #     retries: 5
-  #   networks:
-  #     - host_network
+  db:
+    image: postgres:17
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=software
+      - POSTGRES_PASSWORD=software
+      - POSTGRES_DB=software
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "software" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - host_network
   rabbitmq:
     hostname: 'sadatul'
     image: sadatul/rabbitmq_mindtrace:latest

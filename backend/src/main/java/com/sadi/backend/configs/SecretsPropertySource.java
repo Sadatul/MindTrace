@@ -62,7 +62,10 @@ public class SecretsPropertySource extends PropertySource<Map<String, String>> {
         } else if ("test".equalsIgnoreCase(profile)) {
             System.out.println("Loading Azure credentials from Docker secrets and other secrets from Azure Key Vault (test mode)");
             loadSecretsFromAzureKeyVault(secrets, TEST_SECRET_MAPPINGS);
-        } else {
+        } else if ("online".equalsIgnoreCase(profile)){
+            System.out.println("No secrets loaded, only loading from direct environment variables (online mode)");
+        }
+        else {
             System.out.println("Loading secrets from Azure Key Vault (dev mode)");
             loadSecretsFromAzureKeyVault(secrets, SECRET_MAPPINGS);
         }
