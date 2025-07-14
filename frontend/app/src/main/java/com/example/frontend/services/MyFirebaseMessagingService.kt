@@ -26,23 +26,12 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         val intent = Intent(this, MainActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
         val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
-
-        val heavyVibrationPattern = longArrayOf(
-            0,    // Start immediately
-            500,  // Vibrate for 500ms
-            200,  // Pause for 200ms
-            500,  // Vibrate for 500ms
-            200,  // Pause for 200ms
-            800   // Final long vibration for 800ms
-        )
-
         val channelId:String = getString(R.string.default_notification_channel_id)
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.drawable.ic_mindtrace_logo)
             .setContentTitle(title ?: "FCM Message")
             .setContentText(messageBody ?: "No message")
             .setAutoCancel(true)
-            .setVibrate(heavyVibrationPattern)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pendingIntent)
 
@@ -66,7 +55,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         if (title != null || body != null) {
             Log.d(TAG, "Data Notification Body: $body")
-            sendNotification(body, title)
         }
 
         // Check if message contains a notification payload.
