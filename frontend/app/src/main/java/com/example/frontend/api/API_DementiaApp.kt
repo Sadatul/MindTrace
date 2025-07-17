@@ -1,8 +1,10 @@
 package com.example.frontend.api
 
+import android.content.Context
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import com.example.frontend.api.models.DeviceRegistrationRequest
 import com.example.frontend.api.models.PatientLog
 import com.example.frontend.api.models.PartnerInfo
 import com.example.frontend.api.models.PatientLogRaw
@@ -19,6 +21,7 @@ import com.example.frontend.screens.Screen
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import okhttp3.ResponseBody
 import retrofit2.Response
@@ -107,6 +110,18 @@ interface DementiaAPI {
 
     @GET("/v1/auth/register/otp")
     suspend fun getOtp(@Header("Authorization") bearerToken: String): Response<OtpResponse>
+
+    @POST("/v1/auth/register/device")
+    suspend fun registerDevice(
+        @Header("Authorization") bearerToken: String,
+        @Body request: DeviceRegistrationRequest
+    ): Response<ResponseBody>
+    
+    @DELETE("/v1/auth/logout")
+    suspend fun logoutDevice(
+        @Header("Authorization") bearerToken: String,
+        @Query("deviceId") deviceId: String
+    ): Response<ResponseBody>
 
     @GET("/v1/chat")
     suspend fun getChatHistory(
@@ -272,10 +287,98 @@ suspend fun DementiaAPI.getSelfUserInfo(autoRedirect: Boolean = true): UserInfo?
     }
 }
 
-fun DementiaAPI.signOutUser() {
-    SelfUserInfoCache.signOutUser()
-    FirebaseAuth.getInstance().signOut()
-    redirectToLogin()
+/**
+ * Extension function to deregister a device from the backend during logout.
+ * Sends a DELETE request to the logout endpoint with the device ID.
+ * 
+ * @param deviceId The unique device identifier to deregister
+ * @return Boolean indicating success (true) or failure (false)
+ */
+suspend fun DementiaAPI.deregisterDevice(deviceId: String): Boolean {
+    Log.d("DementiaAPI", "Deregistering device during logout - DeviceId: $deviceId")
+    
+    return try {
+        // Get authentication token with fallback handling
+        val authToken = getIdToken(forceRefresh = false, autoRedirect = false)
+        if (authToken == null) {
+            Log.e("DementiaAPI", "Failed to get authentication token for device deregistration")
+            return false
+        }
+        
+        Log.d("DementiaAPI", "Making device logout API call")
+        
+        // Execute API call
+        val response = logoutDevice("Bearer $authToken", deviceId)
+        
+        // Handle response
+        if (response.isSuccessful) {
+            Log.i("DementiaAPI", "Device deregistration successful - DeviceId: $deviceId")
+            true
+        } else {
+            val errorBody = response.errorBody()?.string()
+            val statusCode = response.code()
+            Log.e("DementiaAPI", "Device deregistration failed - Status: $statusCode, Error: $errorBody, DeviceId: $deviceId")
+            
+            // Log specific error types for troubleshooting
+            when (statusCode) {
+                401 -> Log.e("DementiaAPI", "Authentication failed during device deregistration")
+                403 -> Log.e("DementiaAPI", "Authorization denied for device deregistration")
+                404 -> Log.e("DementiaAPI", "Device not found during deregistration")
+                500 -> Log.e("DementiaAPI", "Server error during device deregistration")
+                else -> Log.e("DementiaAPI", "Unexpected error during device deregistration - Status: $statusCode")
+            }
+            
+            false
+        }
+    } catch (e: Exception) {
+        Log.e("DementiaAPI", "Exception during device deregistration - DeviceId: $deviceId", e)
+        
+        // Log specific exception types for better troubleshooting
+        when (e) {
+            is java.net.UnknownHostException -> Log.e("DementiaAPI", "Network connectivity issue during device deregistration")
+            is java.net.SocketTimeoutException -> Log.e("DementiaAPI", "Request timeout during device deregistration")
+            is javax.net.ssl.SSLException -> Log.e("DementiaAPI", "SSL/TLS error during device deregistration")
+            else -> Log.e("DementiaAPI", "Unexpected exception type during device deregistration: ${e.javaClass.simpleName}")
+        }
+        
+        false
+    }
+}
+
+/**
+ * Signs out the current user and deregisters the device from the backend.
+ * This is a non-suspending function that launches a coroutine for the deregistration.
+ * 
+ * @param context The application context needed to access device information
+ */
+fun DementiaAPI.signOutUser(context: Context) {
+    // Get the device ID before signing out
+    val deviceRegistrationManager = DeviceRegistrationManager(context)
+    val deviceId = deviceRegistrationManager.getOrCreateDeviceId()
+    
+    // Launch a coroutine to deregister the device
+    kotlinx.coroutines.MainScope().launch {
+        try {
+            Log.d("DementiaAPI", "Attempting to deregister device before sign out - DeviceId: $deviceId")
+            val success = deregisterDevice(deviceId)
+            
+            if (success) {
+                Log.i("DementiaAPI", "Device successfully deregistered during sign out")
+            } else {
+                Log.e("DementiaAPI", "Failed to deregister device during sign out")
+            }
+        } catch (e: Exception) {
+            Log.e("DementiaAPI", "Exception during device deregistration on sign out", e)
+        } finally {
+            // Clear local device info
+            deviceRegistrationManager.clearDeviceInfo()
+            
+            // Proceed with sign out regardless of deregistration result
+            SelfUserInfoCache.signOutUser()
+            FirebaseAuth.getInstance().signOut()
+            redirectToLogin()
+        }
+    }
 }
 
 
@@ -359,6 +462,79 @@ suspend fun DementiaAPI.updateLog(id: String, updateLog: RequestUpdateLog): Bool
     val token = getIdToken() ?: return false
     val response = updateLogWithAuth(firebaseIdToken = "Bearer $token", id, updateLog.toRaw())
     return response.isSuccessful
+}
+
+/**
+ * Extension function to register device FCM token with the backend API.
+ * Handles authentication token retrieval and API call execution with proper error handling.
+ * 
+ * @param token FCM token to register
+ * @param deviceId Unique device identifier
+ * @param deviceName Human-readable device name
+ * @return Boolean indicating success (true) or failure (false)
+ * 
+ * Requirements: 1.3, 2.3, 4.4, 4.5
+ */
+suspend fun DementiaAPI.registerDeviceToken(
+    token: String,
+    deviceId: String,
+    deviceName: String
+): Boolean {
+    Log.d("DementiaAPI", "Starting device token registration - DeviceId: $deviceId, DeviceName: $deviceName")
+    
+    return try {
+        // Get authentication token with fallback handling
+        val authToken = getIdToken(forceRefresh = false, autoRedirect = false)
+        if (authToken == null) {
+            Log.e("DementiaAPI", "Failed to get authentication token for device registration")
+            return false
+        }
+        
+        // Create device registration request
+        val request = DeviceRegistrationRequest(
+            token = token,
+            deviceId = deviceId,
+            deviceName = deviceName
+        )
+        
+        Log.d("DementiaAPI", "Making device registration API call")
+        
+        // Execute API call
+        val response = registerDevice("Bearer $authToken", request)
+        
+        // Handle response
+        if (response.isSuccessful) {
+            Log.i("DementiaAPI", "Device token registration successful - DeviceId: $deviceId")
+            true
+        } else {
+            val errorBody = response.errorBody()?.string()
+            val statusCode = response.code()
+            Log.e("DementiaAPI", "Device token registration failed - Status: $statusCode, Error: $errorBody, DeviceId: $deviceId")
+            
+            // Log specific error types for troubleshooting
+            when (statusCode) {
+                401 -> Log.e("DementiaAPI", "Authentication failed during device registration")
+                403 -> Log.e("DementiaAPI", "Authorization denied for device registration")
+                400 -> Log.e("DementiaAPI", "Bad request during device registration - check request format")
+                500 -> Log.e("DementiaAPI", "Server error during device registration")
+                else -> Log.e("DementiaAPI", "Unexpected error during device registration - Status: $statusCode")
+            }
+            
+            false
+        }
+    } catch (e: Exception) {
+        Log.e("DementiaAPI", "Exception during device token registration - DeviceId: $deviceId", e)
+        
+        // Log specific exception types for better troubleshooting
+        when (e) {
+            is java.net.UnknownHostException -> Log.e("DementiaAPI", "Network connectivity issue during device registration")
+            is java.net.SocketTimeoutException -> Log.e("DementiaAPI", "Request timeout during device registration")
+            is javax.net.ssl.SSLException -> Log.e("DementiaAPI", "SSL/TLS error during device registration")
+            else -> Log.e("DementiaAPI", "Unexpected exception type during device registration: ${e.javaClass.simpleName}")
+        }
+        
+        false
+    }
 }
 
 fun redirectToLogin() {

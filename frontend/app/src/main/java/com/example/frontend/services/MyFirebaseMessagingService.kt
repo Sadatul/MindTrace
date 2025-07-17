@@ -8,14 +8,54 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.frontend.MainActivity
 import com.example.frontend.R
+import com.example.frontend.api.DeviceRegistrationManager
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
+    
+    // Create a coroutine scope for background operations
+    private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    
+    /**
+     * Called when a new FCM token is generated.
+     * Updates the token with the backend if user is authenticated.
+     * Requirements: 2.1, 2.2, 2.4, 4.1, 4.2
+     */
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        Log.d(TAG, "Refreshed token: $token")
-        // Send the token to your server or handle it as needed
+        Log.i(TAG, "FCM token refreshed")
+        
+        // Check authentication state before attempting registration
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser == null) {
+            Log.d(TAG, "User not authenticated, skipping FCM token update until next login")
+            return
+        }
+        
+        Log.d(TAG, "User authenticated, proceeding with FCM token update")
+        
+        // Run token update on background thread
+        serviceScope.launch {
+            try {
+                val deviceRegistrationManager = DeviceRegistrationManager(applicationContext)
+                val success = deviceRegistrationManager.updateFCMToken(token)
+                
+                if (success) {
+                    Log.i(TAG, "FCM token update completed successfully")
+                } else {
+                    Log.e(TAG, "FCM token update failed - will retry on next login")
+                }
+                
+            } catch (e: Exception) {
+                Log.e(TAG, "Exception occurred during FCM token update", e)
+            }
+        }
     }
 
 
