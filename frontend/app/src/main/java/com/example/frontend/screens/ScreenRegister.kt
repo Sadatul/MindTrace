@@ -152,6 +152,9 @@ fun ScreenRegister(
                 onOtpChange = { otp ->
                     viewModel.updatePatientFormData(uiState.patientFormData.copy(otp = otp))
                 },
+                onPrimaryInfoChange = {contact, otp ->
+                    viewModel.updatePatientFormData(uiState.patientFormData.copy(primaryContact = contact, otp = otp))
+                },
                 onDismiss = {
                     Log.d(TAG, "PatientRegisterDialog dismissed (Cancel/Back).")
                     viewModel.dismissPatientForm()

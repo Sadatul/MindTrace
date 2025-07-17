@@ -26,6 +26,7 @@ fun PatientRegisterDialog(
     onGenderChange: (String) -> Unit,
     onPrimaryContactChange: (String) -> Unit,
     onOtpChange: (String) -> Unit,
+    onPrimaryInfoChange: (String, String) -> Unit,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
@@ -38,8 +39,7 @@ fun PatientRegisterDialog(
             if (parts.size == 2) {
                 val caregiverId = parts[0]
                 val extractedOtp = parts[1]
-                onPrimaryContactChange(caregiverId)
-                onOtpChange(extractedOtp)
+                onPrimaryInfoChange(caregiverId, extractedOtp)
                 qrScannerActive = false
                 qrScanned = true
             } else {
