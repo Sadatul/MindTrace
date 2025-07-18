@@ -444,6 +444,7 @@ fun PatientInfoCard(
             InfoRowContent(label = "Name", value = name, icon = Icons.Filled.AccountCircle)
             InfoRowContent(label = "Email", value = email, icon = Icons.Filled.Email)
             InfoRowContent(label = "Date of Birth", value = dob, icon = Icons.Filled.CalendarToday)
+            /*
             if (fcmToken != null) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -487,6 +488,7 @@ fun PatientInfoCard(
                     }
                 }
             }
+             */
             InfoRowContent(
                 label = "Gender",
                 value = when (gender.uppercase()) {
