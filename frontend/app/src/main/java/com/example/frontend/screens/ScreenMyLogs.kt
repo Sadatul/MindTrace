@@ -1,7 +1,20 @@
 package com.example.frontend.screens
 
+import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
+import android.os.Build.VERSION
+import android.os.Build.VERSION_CODES
+import android.provider.Settings
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -19,6 +32,8 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.runtime.Composable
@@ -44,6 +59,25 @@ import com.example.frontend.api.models.PatientLog
 import com.example.frontend.R
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.frontend.screens.components.DialogLog
+
+// Helper function to check if notification permission is granted
+fun checkNotificationPermission(context: Context): Boolean {
+    return if (VERSION.SDK_INT >= VERSION_CODES.TIRAMISU) {
+        ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED
+    } else {
+        // For versions below Android 13, notification permissions were granted by default
+        true
+    }
+}
+
+// Helper function to determine if we should request notification permission
+fun shouldRequestNotificationPermission(): Boolean {
+    // Only request notification permission on Android 13 (API 33) and above
+    return VERSION.SDK_INT >= VERSION_CODES.TIRAMISU
+}
 
 @RequiresApi(Build.VERSION_CODES.O)
 fun formatTimestamp(timestamp: String): String {
@@ -75,7 +109,9 @@ fun MyLogs(
     endDate: LocalDate? = null,
     onStartDateChange: (LocalDate?) -> Unit = {},
     onEndDateChange: (LocalDate?) -> Unit = {},
-    onClearDateFilters: () -> Unit = {}
+    onClearDateFilters: () -> Unit = {},
+    hasNotificationPermission: Boolean = true, // Add notification permission status
+    onRequestNotificationPermission: () -> Unit = {} // Add callback to request permission
 ) {
     Scaffold(
         topBar = {
@@ -252,6 +288,52 @@ fun MyLogs(
         Column(modifier = Modifier
             .fillMaxSize()
             .padding(innerPadding)) {
+            
+            // Notification Permission Warning Banner for patients
+            if (isPatient && !hasNotificationPermission) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.NotificationsOff,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "Notifications are disabled. You won't receive important reminders.",
+                                style = typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
+                        Button(
+                            onClick = onRequestNotificationPermission,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.error,
+                                contentColor = MaterialTheme.colorScheme.onError
+                            )
+                        ) {
+                            Text("Enable")
+                        }
+                    }
+                }
+            }
+            
             // Date Filter Section
             Card(
                 modifier = Modifier
@@ -569,6 +651,26 @@ fun MyLogsScreen(
     var logToDelete by remember { mutableStateOf<String?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     
+    // Notification permission handling
+    val context = LocalContext.current
+    var hasNotificationPermission by remember {
+        mutableStateOf(checkNotificationPermission(context))
+    }
+    
+    // Permission request launcher
+    val requestPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        hasNotificationPermission = isGranted
+    }
+    
+    // Request notification permission when the screen is first displayed for patients
+    LaunchedEffect(isPatient) {
+        if (isPatient && !hasNotificationPermission && shouldRequestNotificationPermission()) {
+            requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+    
     // Load logs when the composable is first displayed or when partnerId changes
     LaunchedEffect(partnerId) {
         viewModel.loadLogs(partnerId)
@@ -621,7 +723,24 @@ fun MyLogsScreen(
                 endDate = endDate,
                 onStartDateChange = { date -> viewModel.setStartDate(date) },
                 onEndDateChange = { date -> viewModel.setEndDate(date) },
-                onClearDateFilters = { viewModel.clearDateFilters() }
+                onClearDateFilters = { viewModel.clearDateFilters() },
+                hasNotificationPermission = hasNotificationPermission,
+                onRequestNotificationPermission = {
+                    Log.d("ScreenMyLogs", "Enable button clicked, requesting notification permission")
+                    
+                    if (VERSION.SDK_INT >= VERSION_CODES.TIRAMISU) {
+                        // Open app settings directly
+                        // This is the most reliable way to ensure users can enable notifications
+                        // especially if they've previously denied the permission
+                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.fromParts("package", context.packageName, null)
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        context.startActivity(intent)
+                        
+                        Log.d("ScreenMyLogs", "Opening app settings for notification permission")
+                    }
+                }
             )
             
             // Snackbar positioned at the bottom

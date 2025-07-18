@@ -72,6 +72,7 @@ services:
       - LOKI_URL=http://loki:3100/loki/api/v1/push
       - name=app-mindtrace
       - HOSTNAME=azurevm
+      - RABBITMQ_HOST=rabbitmq
     secrets:
       - db-url
       - db-username
@@ -85,6 +86,8 @@ services:
       - qdrant-api-key
       - qdrant-host
       - bot-token
+      - rabbitmq-password
+      - rabbitmq-user
 
     networks:
       - host_network
@@ -102,6 +105,20 @@ services:
         condition: on-failure
         delay: 30s
         max_attempts: 3
+
+  rabbitmq:
+    hostname: 'sadatul'
+    image: sadatul/rabbitmq_mindtrace:latest
+    environment:
+      - RABBITMQ_DEFAULT_USER=my-user
+      - RABBITMQ_DEFAULT_PASS=my-pass
+    ports:
+      - 5672:5672
+      - 15672:15672
+    networks:
+      - host_network
+    deploy:
+      replicas: 1
 
   prometheus:
     image: prom/prometheus:latest
@@ -218,4 +235,8 @@ secrets:
   qdrant-host:
     external: true
   bot-token:
+    external: true
+  rabbitmq-password:
+    external: true
+  rabbitmq-user:
     external: true

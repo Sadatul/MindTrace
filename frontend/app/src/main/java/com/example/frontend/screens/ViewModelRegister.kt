@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.frontend.R
 import com.example.frontend.api.AuthManagerResponse
 import com.example.frontend.api.CaregiverRegisterRequest
+import com.example.frontend.api.DeviceRegistrationManager
 import com.example.frontend.api.PatientRegisterRequest
 import com.example.frontend.api.RetrofitInstance
 import com.example.frontend.api.getIdToken
@@ -38,9 +39,13 @@ class ViewModelRegister : ViewModel() {
 
     private val firebaseAuth = Firebase.auth
     private lateinit var googleSignInClient: GoogleSignInClient
+    private var appContext: Context? = null
 
     fun initializeGoogleSignInClient(context: Context) {
         Log.d(TAG, "Initializing GoogleSignInClient.")
+        // Store the application context for later use
+        this.appContext = context.applicationContext
+        
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(context.getString(R.string.default_web_client_id))
             .requestEmail()
@@ -311,10 +316,15 @@ class ViewModelRegister : ViewModel() {
                                 // Fetch and cache user info for existing user
                                 val userBody = RetrofitInstance.dementiaAPI.getSelfUserInfo() ?: return@launch
                                 Log.d(TAG, "Cached existing user info: $userBody")
+                                
+                                // Register FCM token with backend on successful login
+                                appContext?.let { registerDeviceToken(it) }
+                                
                                 if (userBody.role == "CAREGIVER") {
                                     onNavigateToDashboard(userBody.role)
-                                }else
+                                } else {
                                     onNavigateToDashboard("PATIENT")
+                                }
                             }
                             else -> {
                                 setError("Backend returned unknown status: ${parsedBody.status}. Check logs.")
@@ -408,6 +418,10 @@ class ViewModelRegister : ViewModel() {
                     // Fetch and cache user info after successful registration
                     val userInfo = RetrofitInstance.dementiaAPI.getSelfUserInfo()
                     Log.d(TAG, "Cached user info after caregiver registration: $userInfo")
+                    
+                    // Register FCM token with backend after successful registration
+                    appContext?.let { registerDeviceToken(it) }
+                    
                     onNavigateToDashboard("CAREGIVER")
                 } else {
                     registrationApiFailed = true
@@ -438,6 +452,33 @@ class ViewModelRegister : ViewModel() {
         }
     }
 
+    /**
+     * Registers the device FCM token with the backend.
+     * Called after successful login or user registration.
+     * 
+     * Requirements: 1.1, 1.2, 1.3, 4.1
+     */
+    private fun registerDeviceToken(context: Context) {
+        Log.d(TAG, "Registering device FCM token after successful authentication")
+        
+        viewModelScope.launch {
+            try {
+                val deviceRegistrationManager = DeviceRegistrationManager(context)
+                val success = deviceRegistrationManager.registerDeviceOnLogin()
+                
+                if (success) {
+                    Log.i(TAG, "Device FCM token registration completed successfully")
+                } else {
+                    // Log error but don't block user flow (requirement 1.3)
+                    Log.e(TAG, "Device FCM token registration failed - will retry on next login")
+                }
+            } catch (e: Exception) {
+                // Log error but don't block user flow (requirement 1.3)
+                Log.e(TAG, "Exception during device FCM token registration", e)
+            }
+        }
+    }
+    
     fun handlePatientRegistration(onNavigateToDashboard: (String) -> Unit) {
         Log.d(TAG, "handlePatientRegistration called.")
         val formData = _uiState.value.patientFormData
@@ -498,6 +539,10 @@ class ViewModelRegister : ViewModel() {
                     // Fetch and cache user info after successful registration
                     val userInfo = RetrofitInstance.dementiaAPI.getSelfUserInfo()
                     Log.d(TAG, "Cached user info after patient registration: $userInfo")
+                    
+                    // Register FCM token with backend after successful registration
+                    appContext?.let { registerDeviceToken(it) }
+                    
                     // Always navigate to PatientLogs after patient registration
                     onNavigateToDashboard("PATIENT")
                 } else {

@@ -89,7 +89,8 @@ dependencies {
 
     // Firebase Bill of Materials (BoM) - Manages versions of Firebase libraries
     implementation(platform("com.google.firebase:firebase-bom:33.15.0")) // Use the latest compatible version
-
+    implementation("com.google.firebase:firebase-messaging-ktx")
+    
     // Firebase Authentication
     implementation("com.google.firebase:firebase-auth-ktx") // Firebase Authentication library (Kotlin extensions)
 
@@ -114,4 +115,7 @@ dependencies {
     implementation("androidx.camera:camera-lifecycle:1.3.1")
     implementation("androidx.camera:camera-view:1.3.1")
     implementation("com.google.mlkit:barcode-scanning:17.2.0")
+
+    // Encrypted SharedPreferences for secure storage
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 }

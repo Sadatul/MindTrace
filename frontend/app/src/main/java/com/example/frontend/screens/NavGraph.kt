@@ -69,7 +69,7 @@ fun SetupNavGraph(navController: NavHostController) {
                 onNavigateToChat = { navController.navigate(Screen.Chat) },
                 onNavigateToCaregivers = { navController.navigate(Screen.MyCaregivers) },
                 onSignOut = {
-                    RetrofitInstance.dementiaAPI.signOutUser()
+                    RetrofitInstance.dementiaAPI.signOutUser(context)
                     showCloseAppDialog = true
                 },
                 onLoginWithAnotherAccount = {
@@ -88,7 +88,7 @@ fun SetupNavGraph(navController: NavHostController) {
                 onNavigateToChat = { navController.navigate(Screen.Chat) },
                 onNavigateToPatients = { navController.navigate(Screen.MyPatients) },
                 onSignOut = {
-                    RetrofitInstance.dementiaAPI.signOutUser()
+                    RetrofitInstance.dementiaAPI.signOutUser(context)
                     showCloseAppDialog = true
                 },
                 onLoginWithAnotherAccount = {

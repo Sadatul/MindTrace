@@ -1,0 +1,32 @@
+meta {
+  name: LogOut
+  type: http
+  seq: 8
+}
+
+delete {
+  url: {{host}}/v1/auth/logout?deviceId=123456
+  body: none
+  auth: bearer
+}
+
+params:query {
+  deviceId: 123456
+}
+
+auth:bearer {
+  token: eyJhbGciOiJSUzI1NiIsImtpZCI6IjQ3YWU0OWM0YzlkM2ViODVhNTI1NDA3MmMzMGQyZThlNzY2MWVmZTEiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiU2FkYXR1bCBpc2xhbSBTYWRpIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0lENEktWEJheGJweGFuR09TZmR4MWhKclFRSUM1aERfMjVEYXp4LU1YWHJJT2I5QT1zOTYtYyIsInNjcCI6IlBBVElFTlQiLCJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vdGVzdC1hdXRoLWNhMjhjIiwiYXVkIjoidGVzdC1hdXRoLWNhMjhjIiwiYXV0aF90aW1lIjoxNzUyMjA3NjIyLCJ1c2VyX2lkIjoic2o0c1dHcWFGcWNnUEhndEVJVUhIeDVxTDM4MyIsInN1YiI6InNqNHNXR3FhRnFjZ1BIZ3RFSVVISHg1cUwzODMiLCJpYXQiOjE3NTIyMDc2MjIsImV4cCI6MTc1MjIxMTIyMiwiZW1haWwiOiJzYWRhdHVsaXNsYW1zYWRpQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7Imdvb2dsZS5jb20iOlsiMTE1NzA3MTgyMDI2OTUyNzAyMDAxIl0sImVtYWlsIjpbInNhZGF0dWxpc2xhbXNhZGlAZ21haWwuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoiZ29vZ2xlLmNvbSJ9fQ.lDndKGBtExiFnA4VxHR-dkbgLhnwU5GT1d6VbMvSS6-sOWucdSHawalnB6mNYsq3QP1hS7344rKzFioyXWaQ63FfocJHukHm-ZVYZjosvts8o9JYtlkrTLSmgizI4u45rPjXVbF3wZHGR2-DzBWBxIxT-Nrzcv8hS0CKH6EGkv1LcsmudICOgPfgyaI_UxnaAJhHWHDdkc87UUntpJp_Fj0dfi530eQRM9OT1uKDrLIN6oPNABmWrycB7yolchVZRObNAAvAFSXhoX5bpukK5ubIcEkhmqUyIElF5ih9SFDgMgnkBQbQWRfN9n8muUIg-13aJcA6bAdm1LyqujLLRA
+}
+
+docs {
+  **Desc**: Used to logout\
+  **Authorization**: ALL \
+  **Response Bodies**:
+  ```
+  status: 204
+  ```
+  **Note**:
+  * Must be called on every logouut.
+  * Must be passed the deviceId. Generate deviceId ask sadi or chatgpt.
+  
+}
