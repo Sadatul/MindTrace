@@ -139,7 +139,6 @@ fun ScreenRegister(
                 email = uiState.patientFormData.email,
                 dob = uiState.patientFormData.dob,
                 gender = uiState.patientFormData.gender,
-                otp = uiState.patientFormData.otp,
                 profilePictureUrl = uiState.firebaseCredentials?.photoUrl,
                 onDobChange = { dob ->
                     viewModel.updatePatientFormData(uiState.patientFormData.copy(dob = dob))
@@ -152,6 +151,9 @@ fun ScreenRegister(
                 },
                 onOtpChange = { otp ->
                     viewModel.updatePatientFormData(uiState.patientFormData.copy(otp = otp))
+                },
+                onPrimaryInfoChange = {contact, otp ->
+                    viewModel.updatePatientFormData(uiState.patientFormData.copy(primaryContact = contact, otp = otp))
                 },
                 onDismiss = {
                     Log.d(TAG, "PatientRegisterDialog dismissed (Cancel/Back).")
