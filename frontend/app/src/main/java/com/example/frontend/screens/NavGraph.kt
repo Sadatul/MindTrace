@@ -14,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -28,6 +29,7 @@ import kotlin.system.exitProcess
 @Composable
 fun SetupNavGraph(navController: NavHostController) {
     var showCloseAppDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     val startDestination by produceState<Screen?>(initialValue = null) {
         value = getStartDestination()
@@ -73,7 +75,7 @@ fun SetupNavGraph(navController: NavHostController) {
                     showCloseAppDialog = true
                 },
                 onLoginWithAnotherAccount = {
-                    RetrofitInstance.dementiaAPI.signOutUser()
+                    RetrofitInstance.dementiaAPI.signOutUser(context)
                     navController.navigate(Screen.Register) {
                         popUpTo(navController.graph.startDestinationId) {
                             inclusive = true
@@ -92,7 +94,7 @@ fun SetupNavGraph(navController: NavHostController) {
                     showCloseAppDialog = true
                 },
                 onLoginWithAnotherAccount = {
-                    RetrofitInstance.dementiaAPI.signOutUser()
+                    RetrofitInstance.dementiaAPI.signOutUser(context)
                     navController.navigate(Screen.Register) {
                         popUpTo(navController.graph.startDestinationId) {
                             inclusive = true
