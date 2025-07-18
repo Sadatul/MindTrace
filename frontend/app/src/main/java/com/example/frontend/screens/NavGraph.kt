@@ -73,7 +73,7 @@ fun SetupNavGraph(navController: NavHostController) {
                     showCloseAppDialog = true
                 },
                 onLoginWithAnotherAccount = {
-                    // Simply navigate to main registration screen
+                    RetrofitInstance.dementiaAPI.signOutUser()
                     navController.navigate(Screen.Register) {
                         popUpTo(navController.graph.startDestinationId) {
                             inclusive = true
@@ -92,7 +92,7 @@ fun SetupNavGraph(navController: NavHostController) {
                     showCloseAppDialog = true
                 },
                 onLoginWithAnotherAccount = {
-                    // Simply navigate to main registration screen
+                    RetrofitInstance.dementiaAPI.signOutUser()
                     navController.navigate(Screen.Register) {
                         popUpTo(navController.graph.startDestinationId) {
                             inclusive = true
