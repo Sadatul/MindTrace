@@ -45,12 +45,6 @@ fun SetupNavGraph(navController: NavHostController) {
     }
 
     NavHost(navController = navController, startDestination = startDestination!!) {
-        composable<Screen.Main> {
-            MainScreen(
-                toRegisterCaregiverScreen = { navController.navigate(Screen.Register) },
-                toChatScreen = { navController.navigate(Screen.Chat) }
-            )
-        }
         composable<Screen.Register> {
             ScreenRegister(
                 onNavigateToDashboard = { role ->
@@ -61,7 +55,7 @@ fun SetupNavGraph(navController: NavHostController) {
                             else -> throw IllegalArgumentException("Unknown role: $role")
                         }
                     navController.navigate(destination) {
-                        popUpTo(Screen.Main) { inclusive = true }
+                        popUpTo(Screen.Register) { inclusive = true }
                     }
                 }
             )

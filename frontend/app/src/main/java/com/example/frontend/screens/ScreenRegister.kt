@@ -9,7 +9,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.frontend.screens.components.CaregiverRegisterDialog
@@ -20,7 +19,7 @@ import com.example.frontend.screens.components.RegisterScreenUI
 import com.example.frontend.screens.components.RoleSelectionDialog
 import androidx.compose.foundation.layout.fillMaxSize
 import kotlinx.coroutines.launch
-
+import androidx.compose.ui.Modifier
 private const val TAG = "ScreenRegister"
 
 @Composable
@@ -60,7 +59,8 @@ fun ScreenRegister(
                     Log.d(TAG, "Launching Google Sign-In Intent...")
                     signInLauncher.launch(viewModel.getGoogleSignInIntent())
                 }
-            }
+            },
+            showWelcomeAnimation = true
         )
 
         if (uiState.showRegisterPrompt) {
