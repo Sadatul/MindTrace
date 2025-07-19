@@ -70,9 +70,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -91,7 +89,6 @@ fun RegisterDialog(
     gender: String, // Expect "M", "F", or empty from parent
     profilePictureUrl: String?,
     additionalFields: @Composable () -> Unit = {},
-    infoMessage: String,
     onDobChange: (String) -> Unit, // Callback with "yyyy-MM-dd"
     onGenderChange: (String) -> Unit, // Callback with gender code "M" or "F"
     onDismiss: () -> Unit,
@@ -362,28 +359,6 @@ fun RegisterDialog(
                 additionalFields()
 
                 Spacer(modifier = Modifier.height(24.dp))
-
-                // Info Message
-                if (infoMessage.isNotBlank()) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = darkSurfaceVariant
-                        ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                    ) {
-                        Text(
-                            text = infoMessage,
-                            style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 20.sp),
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(20.dp),
-                            color = darkOnSurface,
-                            fontWeight = FontWeight.Normal
-                        )
-                    }
-                }
 
                 // Extra space at bottom for better scrolling
                 Spacer(modifier = Modifier.height(100.dp))

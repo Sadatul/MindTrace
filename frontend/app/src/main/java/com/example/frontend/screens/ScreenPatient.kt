@@ -3,6 +3,7 @@ package com.example.frontend.screens
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -61,7 +62,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -498,24 +501,35 @@ fun PatientInfoCard(
                 icon = Icons.Filled.Person
             )
 
-            // QR Code Row below info fields (no button background, larger icon/text)
+            // QR Code Column below info fields (only icon is clickable, text below icon)
             if (userId != null) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 18.dp, bottom = 8.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.QrCode,
-                        contentDescription = "Show QR Code",
+                    Box(
+                        contentAlignment = Alignment.Center,
                         modifier = Modifier
-                            .size(38.dp)
-                            .clickable { showQrDialog = true },
-                        tint = colorResource(R.color.info_blue)
-                    )
-                    Spacer(modifier = Modifier.width(14.dp))
+                            .size(68.dp)
+                            .shadow(10.dp, CircleShape, clip = false)
+                            .background(Color.White, shape = CircleShape)
+                            .border(
+                                width = 2.dp,
+                                color = colorResource(R.color.info_blue).copy(alpha = 0.7f),
+                                shape = CircleShape
+                            )
+                            .clickable { showQrDialog = true }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.QrCode,
+                            contentDescription = "Show QR Code",
+                            modifier = Modifier.size(40.dp),
+                            tint = Color.Black
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         "My QR Code",
                         fontWeight = FontWeight.Bold,

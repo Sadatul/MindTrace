@@ -149,9 +149,6 @@ fun ScreenRegister(
                 onPrimaryContactChange = { contact ->
                     viewModel.updatePatientFormData(uiState.patientFormData.copy(primaryContact = contact))
                 },
-                onOtpChange = { otp ->
-                    viewModel.updatePatientFormData(uiState.patientFormData.copy(otp = otp))
-                },
                 onPrimaryInfoChange = {contact, otp ->
                     viewModel.updatePatientFormData(uiState.patientFormData.copy(primaryContact = contact, otp = otp))
                 },
