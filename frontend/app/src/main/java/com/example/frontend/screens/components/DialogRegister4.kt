@@ -33,7 +33,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.foundation.rememberScrollState
@@ -92,7 +91,8 @@ fun RegisterDialog(
     onDobChange: (String) -> Unit, // Callback with "yyyy-MM-dd"
     onGenderChange: (String) -> Unit, // Callback with gender code "M" or "F"
     onDismiss: () -> Unit,
-    onConfirm: () -> Unit
+    onConfirm: () -> Unit,
+    enabled: Boolean = true
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     var showGenderDropdown by remember { mutableStateOf(false) }
@@ -143,6 +143,9 @@ fun RegisterDialog(
     val darkOnSurface = colorResource(R.color.dark_on_surface)
     val darkOnPrimary = colorResource(R.color.dark_on_primary)
     val darkSurfaceVariant = colorResource(R.color.dark_surface_variant)
+
+    // Validation logic for enabling Register button
+    // isFormValid is now passed as 'enabled' param
 
     Box(
         modifier = Modifier
@@ -208,20 +211,30 @@ fun RegisterDialog(
                                 color = darkOnSurface
                             )
                         }
-                        Button(
+                        OutlinedButton(
                             onClick = onConfirm,
+                            enabled = enabled,
                             modifier = Modifier
                                 .weight(1f)
                                 .height(56.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = darkPrimary,
-                                contentColor = darkOnPrimary
-                            )
+                            colors = if (enabled) {
+                                ButtonDefaults.outlinedButtonColors(
+                                    contentColor = darkOnSurface,
+                                    containerColor = colorResource(R.color.dark_background).copy(alpha = 0f)
+                                )
+                            } else {
+                                ButtonDefaults.outlinedButtonColors(
+                                    contentColor = Color.White.copy(alpha = 0.4f),
+                                    containerColor = colorResource(R.color.dark_background).copy(alpha = 0f)
+                                )
+                            },
+                            border = androidx.compose.foundation.BorderStroke(1.dp, darkOnSurface.copy(alpha = 0.5f))
                         ) {
                             Text(
                                 "Register",
                                 style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                color = if (enabled) darkOnSurface else Color.White.copy(alpha = 0.4f)
                             )
                         }
                     }
