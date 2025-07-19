@@ -24,7 +24,6 @@ fun CaregiverRegisterDialog(
         additionalFields = {
             // No additional fields for caregiver
         },
-        infoMessage = "Complete your caregiver profile by providing your date of birth and gender information.",
         onDobChange = onDobChange,
         onGenderChange = onGenderChange,
         onDismiss = onDismiss,

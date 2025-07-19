@@ -2,6 +2,7 @@ package com.example.frontend.screens
 
 import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -60,6 +61,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -560,15 +562,11 @@ fun CaregiverInfoCard(
                 colorResource(R.color.dark_on_surface)
             )
             if (userId.isNotBlank()) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 18.dp, bottom = 8.dp)
-                        .clickable(enabled = !isLoadingQrData) {
-                            generateQrCodeData()
-                        }
                 ) {
                     if (isLoadingQrData) {
                         CircularProgressIndicator(
@@ -577,14 +575,30 @@ fun CaregiverInfoCard(
                             strokeWidth = 3.dp
                         )
                     } else {
-                        Icon(
-                            imageVector = Icons.Default.QrCode,
-                            contentDescription = "Show QR Code",
-                            modifier = Modifier.size(38.dp),
-                            tint = colorResource(R.color.info_blue)
-                        )
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(68.dp)
+                                .shadow(10.dp, CircleShape, clip = false)
+                                .background(Color.White, shape = CircleShape)
+                                .border(
+                                    width = 2.dp,
+                                    color = colorResource(R.color.info_blue).copy(alpha = 0.7f),
+                                    shape = CircleShape
+                                )
+                                .clickable(enabled = !isLoadingQrData) {
+                                    generateQrCodeData()
+                                }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.QrCode,
+                                contentDescription = "Show QR Code",
+                                modifier = Modifier.size(40.dp),
+                                tint = Color.Black
+                            )
+                        }
                     }
-                    Spacer(modifier = Modifier.width(14.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         if (isLoadingQrData) "Generating QR Code..." else "My QR Code",
                         fontWeight = FontWeight.Bold,
