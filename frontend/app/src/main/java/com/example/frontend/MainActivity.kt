@@ -3,7 +3,6 @@ package com.example.frontend
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -62,7 +61,7 @@ class MainActivity : ComponentActivity() {
             )
 
             channel.vibrationPattern = heavyVibrationPattern
-            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
         }
     }
