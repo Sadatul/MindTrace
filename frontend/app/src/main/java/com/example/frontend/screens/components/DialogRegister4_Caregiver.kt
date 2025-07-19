@@ -14,6 +14,7 @@ fun CaregiverRegisterDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
+    val isFormValid = name.isNotBlank() && email.isNotBlank() && dob.isNotBlank() && gender.isNotBlank()
     RegisterDialog(
         title = "Caregiver Registration",
         name = name,
@@ -27,6 +28,7 @@ fun CaregiverRegisterDialog(
         onDobChange = onDobChange,
         onGenderChange = onGenderChange,
         onDismiss = onDismiss,
-        onConfirm = onConfirm
+        onConfirm = onConfirm,
+        enabled = isFormValid
     )
 }

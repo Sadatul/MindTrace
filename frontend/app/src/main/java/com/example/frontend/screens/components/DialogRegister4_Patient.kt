@@ -57,6 +57,8 @@ fun PatientRegisterDialog(
         }
     }
 
+    // Patient must also have caregiver linked (qrScanned)
+    val isFormValid = name.isNotBlank() && email.isNotBlank() && dob.isNotBlank() && gender.isNotBlank() && qrScanned
     RegisterDialog(
         title = "Patient Registration",
         name = name,
@@ -65,7 +67,6 @@ fun PatientRegisterDialog(
         gender = gender,
         profilePictureUrl = profilePictureUrl,
         additionalFields = {
-            // Row: People icon, text, larger QR scan icon, no background
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -82,7 +83,7 @@ fun PatientRegisterDialog(
                 Spacer(modifier = Modifier.width(16.dp))
                 if (!qrScanned) {
                     Text(
-                        text = "Link Caregiver",
+                        text = "Scan Primary Contact QR",
                         color = Color.White,
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                     )
@@ -96,7 +97,7 @@ fun PatientRegisterDialog(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "Linked!",
+                            text = "Primary Contact Linked",
                             color = Color.White,
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                         )
@@ -123,6 +124,7 @@ fun PatientRegisterDialog(
         onDobChange = onDobChange,
         onGenderChange = onGenderChange,
         onDismiss = onDismiss,
-        onConfirm = onConfirm
+        onConfirm = onConfirm,
+        enabled = isFormValid
     )
 }
