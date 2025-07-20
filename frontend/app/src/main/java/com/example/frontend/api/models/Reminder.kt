@@ -34,8 +34,8 @@ data class ReminderSchedule(
 
     val repeatMode: RepeatMode,        // Determines which mode is active
 
-    val daysOfWeek: List<DayOfWeek>?,  // Kotlin's built-in enum: MONDAY, TUESDAY, etc.
-    val dayOfMonth: Int?,              // 1–31
+    val daysOfWeek: List<DayOfWeek>?,  // Kotlin's built-in enum: MONDAY, TUESDAY, etc. or null if not specified
+    val daysOfMonth: List<Int>?,              // [1, 15, 28] or null if not specified
     val month: Int?,                   // 1–12 (nullable if not specified)
 
     val isRecurring: Boolean           // Toggle: recurring or one-time
@@ -52,10 +52,10 @@ data class ReminderSchedule(
         val second = 0
         val minuteStr = minute.toString()
         val hourStr = get24Hour().toString()
+        val monthStr = month?.toString() ?: if (isRecurring) "*" else "?"
 
         val dayOfMonthStr: String
         val dayOfWeekStr: String
-        val monthStr: String = month?.toString() ?: if (isRecurring) "*" else "?"
 
         when (repeatMode) {
             RepeatMode.DAY_OF_WEEK -> {
@@ -71,7 +71,13 @@ data class ReminderSchedule(
 
             RepeatMode.DAY_OF_MONTH -> {
                 dayOfWeekStr = "?"
-                dayOfMonthStr = dayOfMonth?.toString() ?: if (isRecurring) "*" else "?"
+                dayOfMonthStr = if (!daysOfMonth.isNullOrEmpty()) {
+                    daysOfMonth.joinToString(",")
+                } else if (isRecurring) {
+                    "*"
+                } else {
+                    "?"
+                }
             }
         }
 
@@ -91,7 +97,9 @@ data class ReminderSchedule(
         when (repeatMode) {
             RepeatMode.DAY_OF_WEEK -> {
                 val days = if (!daysOfWeek.isNullOrEmpty()) {
-                    daysOfWeek.joinToString(", ") { it.name.lowercase().replaceFirstChar { c -> c.uppercase() } }
+                    daysOfWeek.joinToString(", ") {
+                        it.name.lowercase().replaceFirstChar { c -> c.uppercase() }
+                    }
                 } else {
                     "day"
                 }
@@ -99,9 +107,16 @@ data class ReminderSchedule(
             }
 
             RepeatMode.DAY_OF_MONTH -> {
-                base.append("month on day ${dayOfMonth ?: "?"}")
+                val daysStr = if (!daysOfMonth.isNullOrEmpty()) {
+                    "days " + daysOfMonth.joinToString(", ")
+                } else {
+                    "unspecified days"
+                }
+
+                base.append("month on $daysStr")
                 if (month != null) {
-                    val monthName = java.time.Month.of(month).name.lowercase().replaceFirstChar { it.uppercase() }
+                    val monthName = java.time.Month.of(month)
+                        .name.lowercase().replaceFirstChar { it.uppercase() }
                     base.append(" of $monthName")
                 }
                 base.append(" at $timeStr")
@@ -123,6 +138,7 @@ data class ReminderSchedule(
             val monthStr = parts[4]
             val dowStr = parts[5]
 
+            // Parse hour and period
             val hour24 = hourStr.toIntOrNull() ?: return null
             val period: TimePeriod
             val hour12: Int = when {
@@ -150,23 +166,23 @@ data class ReminderSchedule(
 
             val repeatMode: RepeatMode
             val daysOfWeek: List<DayOfWeek>?
-            val dayOfMonth: Int?
+            val daysOfMonth: List<Int>?
             val month: Int?
 
             if (dowStr != "?" && dowStr != "*") {
                 repeatMode = RepeatMode.DAY_OF_WEEK
-                daysOfWeek = dowStr.split(",").mapNotNull { dayStr ->
+                daysOfWeek = dowStr.split(",").mapNotNull { abbr ->
                     try {
-                        DayOfWeek.valueOf(dayStr.uppercase())
+                        DayOfWeek.valueOf(abbr.uppercase())
                     } catch (e: Exception) {
                         null
                     }
                 }
-                dayOfMonth = null
+                daysOfMonth = null
             } else {
                 repeatMode = RepeatMode.DAY_OF_MONTH
                 daysOfWeek = null
-                dayOfMonth = domStr.toIntOrNull()
+                daysOfMonth = domStr.split(",").mapNotNull { it.toIntOrNull() }
             }
 
             month = if (monthStr != "*" && monthStr != "?") monthStr.toIntOrNull() else null
@@ -177,7 +193,7 @@ data class ReminderSchedule(
                 period = period,
                 repeatMode = repeatMode,
                 daysOfWeek = daysOfWeek,
-                dayOfMonth = dayOfMonth,
+                daysOfMonth = daysOfMonth,
                 month = month,
                 isRecurring = isRecurring
             )

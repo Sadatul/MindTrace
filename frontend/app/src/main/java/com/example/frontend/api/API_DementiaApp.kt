@@ -498,14 +498,22 @@ suspend fun DementiaAPI.updateLog(id: String, updateLog: RequestUpdateLog): Bool
 
 suspend fun DementiaAPI.storeReminder(requestStoreReminder: RequestStoreReminder): Boolean {
     val token = getIdToken() ?: return false
-    val response = storeReminderWithAuth(firebaseIdToken = "Bearer $token", requestStoreReminder.toRaw())
+    val response =
+        storeReminderWithAuth(firebaseIdToken = "Bearer $token", requestStoreReminder.toRaw())
     return response.isSuccessful
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-suspend fun DementiaAPI.getReminders(userId: String, start: String?, end: String?, page: Int, size: Int): List<Reminder> {
+suspend fun DementiaAPI.getReminders(
+    userId: String,
+    start: String?,
+    end: String?,
+    page: Int,
+    size: Int
+): List<Reminder> {
     val token = getIdToken() ?: return listOf()
-    val response = getRemindersWithAuth(firebaseIdToken = "Bearer $token", userId, start, end, page, size)
+    val response =
+        getRemindersWithAuth(firebaseIdToken = "Bearer $token", userId, start, end, page, size)
     val rawReminders = response.body() ?: return listOf()
     return rawReminders.map { it.toWrapper() }
 }

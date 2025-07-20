@@ -19,6 +19,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import androidx.navigation.toRoute
 import com.example.frontend.api.RetrofitInstance
 import com.example.frontend.api.getSelfUserInfo
 import com.example.frontend.api.signOutUser
@@ -153,6 +154,12 @@ fun SetupNavGraph(navController: NavHostController) {
                 partnerId = partnerId
             )
         }
+
+        composable<Screen.Reminder> { backStackEntry ->
+            val (userId) = backStackEntry.toRoute<Screen.Reminder>()
+
+            ScreenReminder(userId)
+        }
     }
 
     if (showCloseAppDialog) {
@@ -166,6 +173,7 @@ fun SetupNavGraph(navController: NavHostController) {
 suspend fun getStartDestination(): Screen {
     val userInfo = RetrofitInstance.dementiaAPI.getSelfUserInfo(autoRedirect = false)
     return if (userInfo == null) Screen.Register
-    else if (userInfo.role == "PATIENT") Screen.PatientLogs // Changed from DashBoardPatient
+//    else if (userInfo.role == "PATIENT") Screen.PatientLogs // Changed from DashBoardPatient
+    else if (userInfo.role == "PATIENT") Screen.Reminder(userInfo.id)  // For easier debugging of reminder screen
     else Screen.DashboardCareGiver
 }
