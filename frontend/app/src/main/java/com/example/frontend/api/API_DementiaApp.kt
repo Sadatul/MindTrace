@@ -18,6 +18,8 @@ import com.example.frontend.api.models.RequestStoreReminderRaw
 import com.example.frontend.api.models.RequestUpdateLog
 import com.example.frontend.api.models.RequestUpdateLogRaw
 import com.example.frontend.api.models.ResponseChat
+import com.example.frontend.api.models.ResponseGetReminders
+import com.example.frontend.api.models.ResponseGetRemindersRaw
 import com.example.frontend.api.models.ResponseLogMetadata
 import com.example.frontend.api.models.ResponseLogsMetadataRaw
 import com.example.frontend.screens.NavigationManager
@@ -238,18 +240,18 @@ interface DementiaAPI {
     @GET("/v1/reminders")
     suspend fun getRemindersWithAuth(
         @Header("Authorization") firebaseIdToken: String,
-        @Query("userId") userId: String,
+        @Query("userId") userId: String?,
         @Query("start") start: String?,
         @Query("end") end: String?,
         @Query("page") page: Int,
         @Query("size") size: Int
-    ): Response<List<ReminderRaw>>
+    ): Response<ResponseGetRemindersRaw>?
 
     @GET("/v1/reminders/{id}")
     suspend fun getReminderWithAuth(
         @Header("Authorization") firebaseIdToken: String,
         @Path("id") id: String
-    ): Response<ReminderRaw>
+    ): Response<ReminderRaw>?
 
     @DELETE("/v1/reminders/{id}")
     suspend fun deleteReminderWithAuth(
@@ -496,8 +498,11 @@ suspend fun DementiaAPI.updateLog(id: String, updateLog: RequestUpdateLog): Bool
     return response.isSuccessful
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 suspend fun DementiaAPI.storeReminder(requestStoreReminder: RequestStoreReminder): Boolean {
     val token = getIdToken() ?: return false
+    Log.d("SCREEN_REMINDER", token)
+    Log.d("SCREEN_REMINDER", requestStoreReminder.toRaw().toString())
     val response =
         storeReminderWithAuth(firebaseIdToken = "Bearer $token", requestStoreReminder.toRaw())
     return response.isSuccessful
@@ -505,23 +510,24 @@ suspend fun DementiaAPI.storeReminder(requestStoreReminder: RequestStoreReminder
 
 @RequiresApi(Build.VERSION_CODES.O)
 suspend fun DementiaAPI.getReminders(
-    userId: String,
+    userId: String?,
     start: String?,
     end: String?,
     page: Int,
     size: Int
-): List<Reminder> {
-    val token = getIdToken() ?: return listOf()
+): ResponseGetReminders? {
+    val token = getIdToken() ?: return null
     val response =
         getRemindersWithAuth(firebaseIdToken = "Bearer $token", userId, start, end, page, size)
-    val rawReminders = response.body() ?: return listOf()
-    return rawReminders.map { it.toWrapper() }
+            ?: return null
+    val rawResponse = response.body() ?: return null
+    return rawResponse.toWrapper()
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
 suspend fun DementiaAPI.getReminder(id: String): Reminder? {
     val token = getIdToken() ?: return null
-    val response = getReminderWithAuth(firebaseIdToken = "Bearer $token", id)
+    val response = getReminderWithAuth(firebaseIdToken = "Bearer $token", id) ?: return null
     val reminder = response.body() ?: return null
     return reminder.toWrapper()
 }

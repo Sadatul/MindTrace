@@ -69,6 +69,9 @@ fun SetupNavGraph(navController: NavHostController) {
                     RetrofitInstance.dementiaAPI.signOutUser(context)
                     showCloseAppDialog = true
                 },
+                onNavigateToReminders = {
+                    navController.navigate(Screen.Reminder(null))
+                },
                 onLoginWithAnotherAccount = {
                     RetrofitInstance.dementiaAPI.signOutUser(context)
                     navController.navigate(Screen.Register) {
@@ -173,7 +176,6 @@ fun SetupNavGraph(navController: NavHostController) {
 suspend fun getStartDestination(): Screen {
     val userInfo = RetrofitInstance.dementiaAPI.getSelfUserInfo(autoRedirect = false)
     return if (userInfo == null) Screen.Register
-//    else if (userInfo.role == "PATIENT") Screen.PatientLogs // Changed from DashBoardPatient
-    else if (userInfo.role == "PATIENT") Screen.Reminder(userInfo.id)  // For easier debugging of reminder screen
+    else if (userInfo.role == "PATIENT") Screen.PatientLogs // Changed from DashBoardPatient
     else Screen.DashboardCareGiver
 }

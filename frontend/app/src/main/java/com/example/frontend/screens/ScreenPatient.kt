@@ -95,6 +95,7 @@ fun ScreenPatient(
     onNavigateToCaregivers: () -> Unit = {},
     onSignOut: () -> Unit = {},
     onLoginWithAnotherAccount: () -> Unit = {},
+    onNavigateToReminders: () -> Unit,
     onBack: () -> Boolean
 ) {
     val configuration = LocalConfiguration.current
@@ -237,7 +238,7 @@ fun ScreenPatient(
         floatingActionButton = {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 // My Caregivers Button
                 Surface(
@@ -270,7 +271,39 @@ fun ScreenPatient(
                         )
                     }
                 }
-                Spacer(modifier = Modifier.width(spacerWidth))
+                
+                // My Reminders Button
+                Surface(
+                    shape = RoundedCornerShape(24.dp),
+                    color = colorResource(R.color.gradient_patient_start),
+                    shadowElevation = 20.dp,
+                    modifier = Modifier
+                        .size(width = fabWidth, height = fabHeight)
+                        .clickable(onClick = onNavigateToReminders)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(vertical = 10.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CalendarToday,
+                            contentDescription = "My Reminders",
+                            modifier = Modifier.size(iconSize),
+                            tint = colorResource(R.color.white)
+                        )
+                        Text(
+                            text = "My Reminders",
+                            color = colorResource(R.color.white),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(top = 6.dp)
+                        )
+                    }
+                }
+                
                 // ASK AI Button
                 Surface(
                     shape = RoundedCornerShape(24.dp),
