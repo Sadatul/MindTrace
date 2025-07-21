@@ -331,6 +331,11 @@ fun CreateReminderDialog(
         confirmButton = {
             Button(
                 onClick = {
+
+                    if (repeatMode == null) {
+                        repeatMode = RepeatMode.DAY_OF_WEEK
+                    }
+
                     if (title.isNotBlank() && description.isNotBlank()) {
                         scope.launch {
                             isLoading = true
@@ -338,7 +343,7 @@ fun CreateReminderDialog(
                                 hour = hour,
                                 minute = minute,
                                 period = period,
-                                repeatMode = repeatMode ?: RepeatMode.DAY_OF_WEEK,
+                                repeatMode = repeatMode!!,
                                 daysOfWeek = if (repeatMode == RepeatMode.DAY_OF_WEEK) selectedDaysOfWeek.toList() else null,
                                 daysOfMonth = if (repeatMode == RepeatMode.DAY_OF_MONTH) selectedDaysOfMonth.toList() else null,
                                 month = selectedMonth,
