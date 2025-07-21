@@ -51,6 +51,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -587,40 +588,57 @@ fun TimeWheelPicker(
         }
     }
     
-    LaunchedEffect(selectedItem) {
-        val currentFirstVisibleIndex = listState.firstVisibleItemIndex
-        val currentCenterIndex = currentFirstVisibleIndex + 1 // Adjust for center position
-        val currentItem = infiniteItems.getOrNull(currentCenterIndex % infiniteItems.size) ?: selectedItem
-        
-        if (currentItem != selectedItem) {
-            // Find the nearest index with the selected item
-            val targetIndex = infiniteItems.drop(currentFirstVisibleIndex)
-                .indexOfFirst { it == selectedItem }
-                .let { 
-                    if (it >= 0) currentFirstVisibleIndex + it 
-                    else initialIndex
+    // Monitor scroll state to detect selection changes and update selection
+    LaunchedEffect(Unit) {
+        snapshotFlow { 
+            listState.firstVisibleItemIndex to listState.isScrollInProgress 
+        }.collect { (firstVisibleIndex, isScrolling) ->
+            if (!isScrolling) {
+                // With contentPadding of itemHeight (48dp) and 3 visible items (144dp total height)
+                // The center item should be at firstVisibleItemIndex (since padding pushes first item to center)
+                val centerIndex = firstVisibleIndex
+                val centerItem = infiniteItems.getOrNull(centerIndex)
+                centerItem?.let { item ->
+                    if (item != selectedItem) {
+                        onItemSelected(item)
+                    }
                 }
-            
-            listState.animateScrollToItem(maxOf(0, targetIndex - 1))
+            }
         }
     }
     
-    // Monitor scroll state to detect selection changes
-    LaunchedEffect(listState.isScrollInProgress) {
-        if (!listState.isScrollInProgress) {
-            val centerIndex = listState.firstVisibleItemIndex + 1
-            val centerItem = infiniteItems.getOrNull(centerIndex % infiniteItems.size)
-            centerItem?.let { item ->
-                if (item != selectedItem) {
-                    onItemSelected(item)
+    // Scroll to selected item when it changes externally
+    LaunchedEffect(selectedItem) {
+        val currentCenterIndex = listState.firstVisibleItemIndex
+        val currentCenterItem = infiniteItems.getOrNull(currentCenterIndex)
+        
+        if (currentCenterItem != selectedItem) {
+            // Find the closest index with the selected item
+            val startSearch = maxOf(0, currentCenterIndex - items.size)
+            val endSearch = minOf(infiniteItems.size - 1, currentCenterIndex + items.size)
+            
+            var targetIndex = -1
+            var minDistance = Int.MAX_VALUE
+            
+            for (i in startSearch..endSearch) {
+                if (infiniteItems[i] == selectedItem) {
+                    val distance = kotlin.math.abs(i - currentCenterIndex)
+                    if (distance < minDistance) {
+                        minDistance = distance
+                        targetIndex = i
+                    }
                 }
+            }
+            
+            if (targetIndex >= 0) {
+                listState.animateScrollToItem(targetIndex)
             }
         }
     }
     
     // Initialize scroll position
     LaunchedEffect(Unit) {
-        listState.scrollToItem(maxOf(0, initialIndex - 1))
+        listState.scrollToItem(initialIndex)
     }
     
     Column(
@@ -658,14 +676,17 @@ fun TimeWheelPicker(
             ) {
                 items(infiniteItems.size) { index ->
                     val item = infiniteItems[index]
-                    val centerIndex = listState.firstVisibleItemIndex + 1
+                    val isSelected = item == selectedItem
+                    val centerIndex = listState.firstVisibleItemIndex
                     val distanceFromCenter = kotlin.math.abs(index - centerIndex)
-                    val isSelected = distanceFromCenter == 0
-                    val alpha = when (distanceFromCenter) {
-                        0 -> 1f
-                        1 -> 0.7f
+                    
+                    // Make the currently selected item prominent regardless of scroll position
+                    val alpha = when {
+                        isSelected -> 1f
+                        distanceFromCenter <= 1 -> 0.7f
                         else -> 0.3f
                     }
+                    
                     val coroutineScope = rememberCoroutineScope()
                     
                     Text(
@@ -676,7 +697,7 @@ fun TimeWheelPicker(
                             .clickable { 
                                 onItemSelected(item)
                                 coroutineScope.launch {
-                                    listState.animateScrollToItem(maxOf(0, index - 1))
+                                    listState.animateScrollToItem(index)
                                 }
                             }
                             .alpha(alpha)
