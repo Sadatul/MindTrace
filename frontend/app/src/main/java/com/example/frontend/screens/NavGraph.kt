@@ -66,10 +66,6 @@ fun SetupNavGraph(navController: NavHostController) {
                 onNavigateToCaregivers = { navController.navigate(Screen.MyCaregivers) },
                 onSignOut = {
                     RetrofitInstance.dementiaAPI.signOutUser(context)
-                    showCloseAppDialog = true
-                },
-                onLoginWithAnotherAccount = {
-                    RetrofitInstance.dementiaAPI.signOutUser(context)
                     navController.navigate(Screen.Register) {
                         popUpTo(navController.graph.startDestinationId) {
                             inclusive = true
@@ -84,10 +80,6 @@ fun SetupNavGraph(navController: NavHostController) {
                 onNavigateToChat = { navController.navigate(Screen.Chat) },
                 onNavigateToPatients = { navController.navigate(Screen.MyPatients) },
                 onSignOut = {
-                    RetrofitInstance.dementiaAPI.signOutUser(context)
-                    showCloseAppDialog = true
-                },
-                onLoginWithAnotherAccount = {
                     RetrofitInstance.dementiaAPI.signOutUser(context)
                     navController.navigate(Screen.Register) {
                         popUpTo(navController.graph.startDestinationId) {

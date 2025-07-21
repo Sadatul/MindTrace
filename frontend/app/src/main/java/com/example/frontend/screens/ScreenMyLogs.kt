@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.os.Build.VERSION
 import android.os.Build.VERSION_CODES
 import android.provider.Settings
@@ -13,6 +12,7 @@ import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.background
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.compose.foundation.border
@@ -49,6 +49,8 @@ import java.time.format.DateTimeFormatter
 import java.time.ZonedDateTime
 import java.time.LocalDate
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -79,7 +81,7 @@ fun shouldRequestNotificationPermission(): Boolean {
     return VERSION.SDK_INT >= VERSION_CODES.TIRAMISU
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+@RequiresApi(VERSION_CODES.O)
 fun formatTimestamp(timestamp: String): String {
     return try {
         val zonedDateTime = ZonedDateTime.parse(timestamp)
@@ -90,7 +92,7 @@ fun formatTimestamp(timestamp: String): String {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+@RequiresApi(VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyLogs(
@@ -99,7 +101,8 @@ fun MyLogs(
     profilePicture: String? = null,
     onBack: () -> Unit = {},
     onAskAi: () -> Unit = {},
-    onMyProfile: (() -> Unit)? = null, // Only for patient
+    onMyReminders: () -> Unit = {}, // Callback for My Reminders button
+    onMyProfile: () -> Unit = {}, // Callback for My Profile button
     isPatient: Boolean = false, // Add isPatient parameter
     isViewOnly: Boolean = false, // Add view-only mode for caregivers
     onAddLog: () -> Unit = {}, // Callback for Add Log
@@ -132,78 +135,42 @@ fun MyLogs(
                         }
                     }
                 },
-                actions = {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(end = 16.dp)
+        actions = {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(end = 16.dp)
+            ) {
+                if (profilePicture != null) {
+                    AsyncImage(
+                        model = profilePicture,
+                        contentDescription = "Profile Picture",
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .border(2.dp, colorResource(R.color.white), CircleShape),
+                        contentScale = ContentScale.Crop,
+                        placeholder = painterResource(R.drawable.ic_launcher_foreground),
+                        error = painterResource(R.drawable.ic_launcher_foreground)
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .border(2.dp, colorResource(R.color.white), CircleShape),
+                        contentAlignment = Alignment.Center
                     ) {
-                        // Profile Picture or Google icon
-                        if (profilePicture != null) {
-                            AsyncImage(
-                                model = profilePicture,
-                                contentDescription = "Profile Picture",
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .clip(CircleShape)
-                                    .border(2.dp, colorResource(R.color.white), CircleShape),
-                                contentScale = ContentScale.Crop,
-                                placeholder = painterResource(R.drawable.ic_launcher_foreground),
-                                error = painterResource(R.drawable.ic_launcher_foreground)
-                            )
-                        } else {
-                            // Google-style profile icon
-                            Box(
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .clip(CircleShape)
-                                    .border(2.dp, colorResource(R.color.white), CircleShape),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Person,
-                                    contentDescription = "Default Profile",
-                                    modifier = Modifier.size(28.dp),
-                                    tint = colorResource(R.color.white)
-                                )
-                            }
-                        }
-                        
-                        // Three-dot menu ONLY for patients viewing their own logs
-                        if (isPatient) {
-                            var menuExpanded by remember { mutableStateOf(false) }
-                            IconButton(
-                                onClick = { menuExpanded = true },
-                                modifier = Modifier.size(48.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.MoreVert,
-                                    contentDescription = "Menu",
-                                    tint = colorResource(R.color.white),
-                                    modifier = Modifier.size(28.dp)
-                                )
-                            }
-                            DropdownMenu(
-                                expanded = menuExpanded,
-                                onDismissRequest = { menuExpanded = false }
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text("My Profile") },
-                                    onClick = {
-                                        menuExpanded = false
-                                        onMyProfile?.invoke()
-                                    },
-                                    leadingIcon = {
-                                        Icon(
-                                            imageVector = Icons.Filled.Person,
-                                            contentDescription = null
-                                        )
-                                    }
-                                )
-                            }
-                        }
+                        Icon(
+                            imageVector = Icons.Filled.Person,
+                            contentDescription = "Default Profile",
+                            modifier = Modifier.size(28.dp),
+                            tint = colorResource(R.color.white)
+                        )
                     }
-                },
+                }
+            }
+        },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = colorResource(R.color.card_patient),
                     titleContentColor = colorResource(R.color.white),
@@ -213,82 +180,189 @@ fun MyLogs(
             )
         },
         floatingActionButton = {
-            // Only show FABs if not in view-only mode
             if (!isViewOnly) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(end = 24.dp, bottom = 24.dp),
+                    contentAlignment = Alignment.BottomEnd
                 ) {
                     Surface(
                         shape = RoundedCornerShape(24.dp),
                         color = colorResource(R.color.gradient_patient_start),
-                        shadowElevation = 16.dp,
+                        shadowElevation = 10.dp,
                         modifier = Modifier
-                            .size(width = 100.dp, height = 80.dp)
-                            .clickable(onClick = onAddLog) // Wire up to onAddLog
+                            .height(52.dp)
+                            .width(150.dp)
+                            .clickable(onClick = onAddLog)
                     ) {
-                        Column(
+                        Row(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(vertical = 8.dp),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
+                                .padding(horizontal = 18.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.Add,
                                 contentDescription = "Add Log",
-                                modifier = Modifier.size(32.dp),
+                                modifier = Modifier.size(24.dp),
                                 tint = colorResource(R.color.white)
                             )
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "Add Log",
                                 color = colorResource(R.color.white),
-                                style = typography.titleMedium.copy(fontSize = typography.bodyLarge.fontSize),
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(top = 4.dp)
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.width(24.dp))
-                    Surface(
-                        shape = RoundedCornerShape(24.dp),
-                        color = colorResource(R.color.gradient_patient_start),
-                        shadowElevation = 16.dp,
-                        modifier = Modifier
-                            .size(width = 100.dp, height = 80.dp)
-                            .clickable(onClick = onAskAi)
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(vertical = 8.dp),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.Chat,
-                                contentDescription = "ASK AI",
-                                modifier = Modifier.size(32.dp),
-                                tint = colorResource(R.color.white)
-                            )
-                            Text(
-                                text = "ASK AI",
-                                color = colorResource(R.color.white),
-                                style = typography.titleMedium.copy(fontSize = typography.bodyLarge.fontSize),
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(top = 4.dp)
+                                style = typography.titleMedium,
+                                fontWeight = FontWeight.Bold
                             )
                         }
                     }
                 }
             }
-        }, floatingActionButtonPosition = FabPosition.Center,
+        }, floatingActionButtonPosition = FabPosition.End,
+        bottomBar = {
+            if (!isViewOnly) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.Black)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(90.dp)
+                            .background(Color.Black)
+                            .padding(horizontal = 24.dp)
+                            .align(Alignment.BottomCenter),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // My Reminders Button (left)
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(72.dp)
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(
+                                    Brush.linearGradient(
+                                        colors = listOf(
+                                            colorResource(R.color.info_blue),
+                                            colorResource(R.color.gradient_patient_end)
+                                        )
+                                    )
+                                )
+                                .border(2.dp, colorResource(R.color.white), RoundedCornerShape(20.dp))
+                                .clickable(onClick = onMyReminders),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Notifications,
+                                    contentDescription = "My Reminders",
+                                    modifier = Modifier.size(28.dp),
+                                    tint = colorResource(R.color.white)
+                                )
+                                Text(
+                                    text = "My Reminders",
+                                    style = typography.titleMedium,
+                                    color = colorResource(R.color.white),
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(top = 4.dp)
+                                )
+                            }
+                        }
+                        // My Profile Button (center, round, even smaller)
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp)
+                                .aspectRatio(1f)
+                                .clip(CircleShape)
+                                .background(
+                                    Brush.linearGradient(
+                                        colors = listOf(
+                                            colorResource(R.color.info_blue),
+                                            colorResource(R.color.gradient_patient_start)
+                                        )
+                                    )
+                                )
+                                .border(2.dp, colorResource(R.color.white), CircleShape)
+                                .clickable(onClick = onMyProfile),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Person,
+                                    contentDescription = "My Profile",
+                                    modifier = Modifier.size(28.dp),
+                                    tint = colorResource(R.color.white)
+                                )
+                                Text(
+                                    text = "My Profile",
+                                    style = typography.labelMedium,
+                                    color = colorResource(R.color.white),
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(top = 1.dp)
+                                )
+                            }
+                        }
+                        // Ask AI Button (right)
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(72.dp)
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(
+                                    Brush.linearGradient(
+                                        colors = listOf(
+                                            colorResource(R.color.info_blue),
+                                            colorResource(R.color.gradient_patient_start)
+                                        )
+                                    )
+                                )
+                                .border(2.dp, colorResource(R.color.white), RoundedCornerShape(20.dp))
+                                .clickable(onClick = onAskAi),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.Chat,
+                                    contentDescription = "Ask AI",
+                                    modifier = Modifier.size(28.dp),
+                                    tint = colorResource(R.color.white)
+                                )
+                                Text(
+                                    text = "Ask AI",
+                                    style = typography.titleMedium,
+                                    color = colorResource(R.color.white),
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(top = 4.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
         containerColor = colorResource(R.color.dark_surface)
     ) { innerPadding ->
         Column(modifier = Modifier
             .fillMaxSize()
             .padding(innerPadding)) {
-            
+
             // Notification Permission Warning Banner for patients
             if (isPatient && !hasNotificationPermission) {
                 Card(
@@ -333,7 +407,7 @@ fun MyLogs(
                     }
                 }
             }
-            
+
             // Date Filter Section
             Card(
                 modifier = Modifier
@@ -354,7 +428,7 @@ fun MyLogs(
                             style = typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        
+
                         if (startDate != null || endDate != null) {
                             TextButton(
                                 onClick = onClearDateFilters,
@@ -372,9 +446,9 @@ fun MyLogs(
                             }
                         }
                     }
-                    
+
                     Spacer(modifier = Modifier.height(12.dp))
-                    
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -386,7 +460,7 @@ fun MyLogs(
                             onDateChange = onStartDateChange,
                             modifier = Modifier.weight(1f)
                         )
-                        
+
                         // End Date Picker
                         DatePickerButton(
                             label = "End Date",
@@ -397,7 +471,7 @@ fun MyLogs(
                     }
                 }
             }
-            
+
             // Main Content
             Box(modifier = Modifier
                 .fillMaxSize()
@@ -428,7 +502,7 @@ fun MyLogs(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+@RequiresApi(VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DatePickerButton(
@@ -438,7 +512,7 @@ private fun DatePickerButton(
     modifier: Modifier = Modifier
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
-    
+
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(
@@ -462,7 +536,7 @@ private fun DatePickerButton(
                     style = typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
-                
+
                 if (selectedDate != null) {
                     IconButton(
                         onClick = { onDateChange(null) },
@@ -477,7 +551,7 @@ private fun DatePickerButton(
                     }
                 }
             }
-            
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -495,20 +569,20 @@ private fun DatePickerButton(
                 Text(
                     text = selectedDate?.format(DateTimeFormatter.ofPattern("MMM d, yyyy")) ?: "Select date",
                     style = typography.bodyMedium,
-                    color = if (selectedDate != null) 
-                        MaterialTheme.colorScheme.onSurface 
-                    else 
+                    color = if (selectedDate != null)
+                        MaterialTheme.colorScheme.onSurface
+                    else
                         MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
             }
         }
     }
-    
+
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(
             initialSelectedDateMillis = selectedDate?.toEpochDay()?.times(24 * 60 * 60 * 1000)
         )
-        
+
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
@@ -535,7 +609,7 @@ private fun DatePickerButton(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+@RequiresApi(VERSION_CODES.O)
 @Composable
 private fun LogItem(
     log: PatientLog,
@@ -544,7 +618,7 @@ private fun LogItem(
     onDeleteLog: () -> Unit = {}
 ) {
     var showMenu by remember { mutableStateOf(false) }
-    
+
     Card(modifier = Modifier
         .fillMaxWidth()
         .padding(horizontal = 12.dp, vertical = 4.dp)) {
@@ -558,7 +632,7 @@ private fun LogItem(
                 Text(text = log.description, style = typography.bodyMedium)
                 Text(text = formatTimestamp(log.createdAt), style = typography.bodySmall)
             }
-            
+
             // Only show the menu if not in view-only mode
             if (!isViewOnly) {
                 Box {
@@ -569,7 +643,7 @@ private fun LogItem(
                             tint = colorResource(R.color.gradient_patient_start)
                         )
                     }
-                    
+
                     DropdownMenu(
                         expanded = showMenu,
                         onDismissRequest = { showMenu = false }
@@ -609,13 +683,13 @@ private fun LogItem(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+@RequiresApi(VERSION_CODES.O)
 @Composable
 fun MyLogsScreen(
     partnerId: String? = null,
     onBack: () -> Unit = {},
     onAskAi: () -> Unit = {},
-    onMyProfile: (() -> Unit)? = null,
+    onMyProfile: () -> Unit = {},
     isPatient: Boolean,
     viewModel: ViewModelLogs = viewModel()
 ) {
@@ -626,56 +700,56 @@ fun MyLogsScreen(
     val editingLog by viewModel.editingLog.collectAsState()
     val startDateString by viewModel.startDate.collectAsState()
     val endDateString by viewModel.endDate.collectAsState()
-    
+
     // Convert date strings to LocalDate
-    val startDate = startDateString?.let { 
+    val startDate = startDateString?.let {
         try {
             ZonedDateTime.parse(it).toLocalDate()
         } catch (_: Exception) {
             null
         }
     }
-    val endDate = endDateString?.let { 
+    val endDate = endDateString?.let {
         try {
             ZonedDateTime.parse(it).toLocalDate()
         } catch (_: Exception) {
             null
         }
     }
-    
+
     // Determine if this is view-only mode (caregiver viewing patient's logs)
     val isViewOnly = !isPatient && partnerId != null
-    
+
     var showAddLogDialog by remember { mutableStateOf(false) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     var logToDelete by remember { mutableStateOf<String?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
-    
+
     // Notification permission handling
     val context = LocalContext.current
     var hasNotificationPermission by remember {
         mutableStateOf(checkNotificationPermission(context))
     }
-    
+
     // Permission request launcher
     val requestPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         hasNotificationPermission = isGranted
     }
-    
+
     // Request notification permission when the screen is first displayed for patients
     LaunchedEffect(isPatient) {
         if (isPatient && !hasNotificationPermission && shouldRequestNotificationPermission()) {
             requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
-    
+
     // Load logs when the composable is first displayed or when partnerId changes
     LaunchedEffect(partnerId) {
         viewModel.loadLogs(partnerId)
     }
-    
+
     // Show error message if any
     errorMessage?.let { message ->
         LaunchedEffect(message) {
@@ -683,7 +757,7 @@ fun MyLogsScreen(
             viewModel.clearError()
         }
     }
-    
+
     if (isLoading) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -702,18 +776,18 @@ fun MyLogsScreen(
                 onMyProfile = onMyProfile,
                 isPatient = isPatient,
                 isViewOnly = isViewOnly, // Pass view-only mode
-                onAddLog = { 
+                onAddLog = {
                     // Only allow if not in view-only mode
                     if (!isViewOnly) {
-                        showAddLogDialog = true 
+                        showAddLogDialog = true
                     }
                 },
-                onEditLog = { log -> 
+                onEditLog = { log ->
                     if (!isViewOnly) {
                         viewModel.startEditingLog(log)
                     }
                 },
-                onDeleteLog = { logId -> 
+                onDeleteLog = { logId ->
                     if (!isViewOnly) {
                         logToDelete = logId
                         showDeleteConfirmDialog = true
@@ -727,7 +801,7 @@ fun MyLogsScreen(
                 hasNotificationPermission = hasNotificationPermission,
                 onRequestNotificationPermission = {
                     Log.d("ScreenMyLogs", "Enable button clicked, requesting notification permission")
-                    
+
                     if (VERSION.SDK_INT >= VERSION_CODES.TIRAMISU) {
                         // Open app settings directly
                         // This is the most reliable way to ensure users can enable notifications
@@ -737,12 +811,12 @@ fun MyLogsScreen(
                             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         }
                         context.startActivity(intent)
-                        
+
                         Log.d("ScreenMyLogs", "Opening app settings for notification permission")
                     }
                 }
             )
-            
+
             // Snackbar positioned at the bottom
             Box(
                 modifier = Modifier
@@ -754,7 +828,7 @@ fun MyLogsScreen(
             }
         }
     }
-    
+
     // Add Log Dialog - only show if not in view-only mode
     if (showAddLogDialog && !isViewOnly) {
         DialogLog(
@@ -766,7 +840,7 @@ fun MyLogsScreen(
             }
         )
     }
-    
+
     // Edit Log Dialog - only show if not in view-only mode
     if (!isViewOnly) {
         editingLog?.let { log ->
@@ -783,11 +857,11 @@ fun MyLogsScreen(
             )
         }
     }
-    
+
     // Delete Confirmation Dialog - only show if not in view-only mode
     if (showDeleteConfirmDialog && !isViewOnly) {
         AlertDialog(
-            onDismissRequest = { 
+            onDismissRequest = {
                 showDeleteConfirmDialog = false
                 logToDelete = null
             },
@@ -818,13 +892,13 @@ fun MyLogsScreen(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+@RequiresApi(VERSION_CODES.O)
 @Composable
 fun ScreenMyLogs(
     partnerId: String? = null,
     onBack: () -> Unit = {},
     onAskAi: () -> Unit = {},
-    onMyProfile: (() -> Unit)? = null,
+    onMyProfile: () -> Unit = {},
     isPatient: Boolean,
 ) {
     MyLogsScreen(
