@@ -33,7 +33,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -41,6 +40,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -300,23 +300,52 @@ fun CreateReminderDialog(
                     onPeriodChange = { period = it }
                 )
 
-                Row(
+                Card(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Checkbox(
-                        checked = isRecurring,
-                        onCheckedChange = { 
-                            isRecurring = it
-                            if (!it) {
-                                repeatMode = null
-                                selectedDaysOfWeek = emptySet()
-                                selectedDaysOfMonth = emptySet()
-                                selectedMonth = null
-                            }
-                        }
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isRecurring) 
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                        else 
+                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
                     )
-                    Text("Recurring reminder")
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "Recurring reminder",
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 16.sp,
+                                color = if (isRecurring) 
+                                    MaterialTheme.colorScheme.primary
+                                else 
+                                    MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = if (isRecurring) "Reminder will repeat" else "One-time reminder",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(
+                            checked = isRecurring,
+                            onCheckedChange = { 
+                                isRecurring = it
+                                if (!it) {
+                                    repeatMode = null
+                                    selectedDaysOfWeek = emptySet()
+                                    selectedDaysOfMonth = emptySet()
+                                    selectedMonth = null
+                                }
+                            }
+                        )
+                    }
                 }
 
                 if (isRecurring) {
