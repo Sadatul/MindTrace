@@ -51,41 +51,48 @@ data class ReminderSchedule(
     @RequiresApi(Build.VERSION_CODES.O)
     fun toCronExpression(): String {
         val second = 0
-        val minuteStr = minute.toString()
-        val hourStr = get24Hour().toString()
+        val minuteStr = "%02d".format(minute)
+        val hourStr = "%02d".format(get24Hour())
         val monthStr = month?.toString() ?: "*"
 
         val dayOfMonthStr: String
         val dayOfWeekStr: String
 
-        when (repeatMode) {
-            RepeatMode.DAY_OF_WEEK -> {
-                dayOfWeekStr = if (!daysOfWeek.isNullOrEmpty()) {
-                    // Convert Java DayOfWeek to Spring cron format (0=SUN, 1=MON, ..., 6=SAT)
-                    daysOfWeek.joinToString(",") { 
-                        when (it) {
-                            DayOfWeek.SUNDAY -> "0"
-                            DayOfWeek.MONDAY -> "1"
-                            DayOfWeek.TUESDAY -> "2"
-                            DayOfWeek.WEDNESDAY -> "3"
-                            DayOfWeek.THURSDAY -> "4"
-                            DayOfWeek.FRIDAY -> "5"
-                            DayOfWeek.SATURDAY -> "6"
-                            else -> "1" // fallback to Monday
+        if (!isRecurring) {
+            // One-time schedule: cron is still required in recurring form
+            // Fallback to running every day (safe and valid)
+            dayOfMonthStr = "*"
+            dayOfWeekStr = "?"
+        } else {
+            when (repeatMode) {
+                RepeatMode.DAY_OF_WEEK -> {
+                    // Only daysOfWeek is set (guaranteed by assumption)
+                    dayOfWeekStr = if (daysOfWeek!!.isNotEmpty()) {
+                        daysOfWeek.joinToString(",") {
+                            when (it) {
+                                DayOfWeek.SUNDAY -> "0"
+                                DayOfWeek.MONDAY -> "1"
+                                DayOfWeek.TUESDAY -> "2"
+                                DayOfWeek.WEDNESDAY -> "3"
+                                DayOfWeek.THURSDAY -> "4"
+                                DayOfWeek.FRIDAY -> "5"
+                                DayOfWeek.SATURDAY -> "6"
+                            }
                         }
+                    } else {
+                        "*"  // Run every day of the week
                     }
-                } else {
-                    "*"
+                    dayOfMonthStr = "?"
                 }
-                dayOfMonthStr = "*"
-            }
 
-            RepeatMode.DAY_OF_MONTH -> {
-                dayOfWeekStr = "*"
-                dayOfMonthStr = if (!daysOfMonth.isNullOrEmpty()) {
-                    daysOfMonth.joinToString(",")
-                } else {
-                    "*"
+                RepeatMode.DAY_OF_MONTH -> {
+                    // Only daysOfMonth is set (guaranteed by assumption)
+                    dayOfMonthStr = if (daysOfMonth!!.isNotEmpty()) {
+                        daysOfMonth.joinToString(",")
+                    } else {
+                        "*"  // Run every day of the month
+                    }
+                    dayOfWeekStr = "?"
                 }
             }
         }
@@ -168,11 +175,10 @@ data class ReminderSchedule(
 
     companion object {
         @RequiresApi(Build.VERSION_CODES.O)
-        fun fromCronExpression(cron: String): ReminderSchedule? {
+        fun fromCronExpression(cron: String, isRecurring: Boolean): ReminderSchedule? {
             val parts = cron.trim().split(" ")
             if (parts.size != 6) return null
 
-            val secondStr = parts[0]
             val minuteStr = parts[1]
             val hourStr = parts[2]
             val domStr = parts[3]
@@ -182,7 +188,7 @@ data class ReminderSchedule(
             // Parse hour and period
             val hour24 = hourStr.toIntOrNull() ?: return null
             val period: TimePeriod
-            val hour12: Int = when {
+            val hour12 = when {
                 hour24 == 0 -> {
                     period = TimePeriod.AM
                     12
@@ -195,26 +201,28 @@ data class ReminderSchedule(
                     period = TimePeriod.PM
                     12
                 }
-                else -> {
+                hour24 in 13..23 -> {
                     period = TimePeriod.PM
                     hour24 - 12
                 }
+                else -> return null
             }
 
             val minute = minuteStr.toIntOrNull() ?: return null
-
-            val isRecurring = (domStr != "*" && domStr.isNotEmpty()) || (dowStr != "*" && dowStr.isNotEmpty())
+            if (minute !in 0..59) return null
 
             val repeatMode: RepeatMode
             val daysOfWeek: List<DayOfWeek>?
             val daysOfMonth: List<Int>?
             val month: Int?
 
-            if (dowStr != "*" && dowStr.isNotEmpty()) {
+            if (dowStr != "?") {
+                // DAY_OF_WEEK mode
                 repeatMode = RepeatMode.DAY_OF_WEEK
-                daysOfWeek = dowStr.split(",").mapNotNull { dayNum ->
-                    try {
-                        // Convert Spring cron format (0=SUN, 1=MON, ..., 6=SAT) to Java DayOfWeek
+                daysOfWeek = if (dowStr == "*") {
+                    emptyList()
+                } else {
+                    dowStr.split(",").mapNotNull { dayNum ->
                         when (dayNum.trim()) {
                             "0" -> DayOfWeek.SUNDAY
                             "1" -> DayOfWeek.MONDAY
@@ -225,22 +233,26 @@ data class ReminderSchedule(
                             "6" -> DayOfWeek.SATURDAY
                             else -> null
                         }
-                    } catch (e: Exception) {
-                        null
                     }
-                }.filterNotNull()
+                }
                 daysOfMonth = null
             } else {
+                // DAY_OF_MONTH mode
                 repeatMode = RepeatMode.DAY_OF_MONTH
                 daysOfWeek = null
-                daysOfMonth = if (domStr != "*" && domStr.isNotEmpty()) {
-                    domStr.split(",").mapNotNull { it.trim().toIntOrNull() }
-                } else {
+                daysOfMonth = if (domStr == "*" || domStr == "?") {
                     emptyList()
+                } else {
+                    domStr.split(",").mapNotNull { it.trim().toIntOrNull() }
+                        .filter { it in 1..31 }
                 }
             }
 
-            month = if (monthStr != "*" && monthStr.isNotEmpty()) monthStr.toIntOrNull() else null
+            month = if (monthStr != "*" && monthStr.isNotEmpty()) {
+                monthStr.toIntOrNull()?.takeIf { it in 1..12 }
+            } else {
+                null
+            }
 
             return ReminderSchedule(
                 hour = hour12,
@@ -271,7 +283,7 @@ data class Reminder(val id: String, val reminderType: ReminderType, val title: S
 data class ReminderRaw(val id: String, val reminderType: String, val title: String, val description: String, val cronExpression: String, val createdAt: String, val isRecurring: Boolean, val nextExecution: String, val zoneId: String) {
     @RequiresApi(Build.VERSION_CODES.O)
     fun toWrapper(): Reminder {
-        return Reminder(id, reminderStringToType(reminderType), title, description, ReminderSchedule.fromCronExpression(cronExpression)!!, convertUtcToLocal(createdAt), convertUtcToLocal(nextExecution))
+        return Reminder(id, reminderStringToType(reminderType), title, description, ReminderSchedule.fromCronExpression(cronExpression, isRecurring)!!, convertUtcToLocal(createdAt), convertUtcToLocal(nextExecution))
     }
 }
 
