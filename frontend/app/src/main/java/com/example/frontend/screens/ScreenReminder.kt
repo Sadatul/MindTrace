@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
@@ -559,13 +560,67 @@ fun TimeWheelPicker(
     label: String,
     formatter: (Int) -> String = { it.toString() }
 ) {
+    val itemHeight = 48.dp
+    val visibleItemsCount = 3
+    val wheelHeight = itemHeight * visibleItemsCount
+    
+    // Create infinite wrapping list
+    val infiniteItems = remember(items) {
+        // Repeat items multiple times for infinite scrolling effect
+        val repeatCount = 1000
+        List(items.size * repeatCount) { index ->
+            items[index % items.size]
+        }
+    }
+    
     val listState = rememberLazyListState()
+    val snapBehavior = rememberSnapFlingBehavior(lazyListState = listState)
+    
+    // Calculate initial scroll position to center the selected item
+    val initialIndex = remember(items, selectedItem) {
+        val baseIndex = infiniteItems.size / 2
+        val selectedIndex = items.indexOf(selectedItem)
+        if (selectedIndex >= 0) {
+            baseIndex - (baseIndex % items.size) + selectedIndex
+        } else {
+            baseIndex
+        }
+    }
     
     LaunchedEffect(selectedItem) {
-        val index = items.indexOf(selectedItem)
-        if (index >= 0) {
-            listState.animateScrollToItem(maxOf(0, index - 1))
+        val currentFirstVisibleIndex = listState.firstVisibleItemIndex
+        val currentCenterIndex = currentFirstVisibleIndex + 1 // Adjust for center position
+        val currentItem = infiniteItems.getOrNull(currentCenterIndex % infiniteItems.size) ?: selectedItem
+        
+        if (currentItem != selectedItem) {
+            // Find the nearest index with the selected item
+            val targetIndex = infiniteItems.drop(currentFirstVisibleIndex)
+                .indexOfFirst { it == selectedItem }
+                .let { 
+                    if (it >= 0) currentFirstVisibleIndex + it 
+                    else initialIndex
+                }
+            
+            listState.animateScrollToItem(maxOf(0, targetIndex - 1))
         }
+    }
+    
+    // Monitor scroll state to detect selection changes
+    LaunchedEffect(listState.isScrollInProgress) {
+        if (!listState.isScrollInProgress) {
+            val centerIndex = listState.firstVisibleItemIndex + 1
+            val centerItem = infiniteItems.getOrNull(centerIndex % infiniteItems.size)
+            centerItem?.let { item ->
+                if (item != selectedItem) {
+                    onItemSelected(item)
+                }
+            }
+        }
+    }
+    
+    // Initialize scroll position
+    LaunchedEffect(Unit) {
+        listState.scrollToItem(maxOf(0, initialIndex - 1))
     }
     
     Column(
@@ -582,7 +637,7 @@ fun TimeWheelPicker(
         
         Box(
             modifier = Modifier
-                .height(120.dp)
+                .height(wheelHeight)
                 .clip(RoundedCornerShape(12.dp))
                 .background(
                     brush = Brush.verticalGradient(
@@ -597,44 +652,62 @@ fun TimeWheelPicker(
             LazyColumn(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(vertical = 40.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                contentPadding = PaddingValues(vertical = itemHeight),
+                flingBehavior = snapBehavior,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                items(items) { item ->
-                    val isSelected = item == selectedItem
-                    val isNearSelected = kotlin.math.abs(items.indexOf(item) - items.indexOf(selectedItem)) <= 1
+                items(infiniteItems.size) { index ->
+                    val item = infiniteItems[index]
+                    val centerIndex = listState.firstVisibleItemIndex + 1
+                    val distanceFromCenter = kotlin.math.abs(index - centerIndex)
+                    val isSelected = distanceFromCenter == 0
+                    val alpha = when (distanceFromCenter) {
+                        0 -> 1f
+                        1 -> 0.7f
+                        else -> 0.3f
+                    }
+                    val coroutineScope = rememberCoroutineScope()
                     
                     Text(
                         text = formatter(item),
                         modifier = Modifier
-                            .clickable { onItemSelected(item) }
-                            .padding(vertical = 8.dp, horizontal = 16.dp)
-                            .alpha(
-                                when {
-                                    isSelected -> 1f
-                                    isNearSelected -> 0.7f
-                                    else -> 0.3f
+                            .height(itemHeight)
+                            .fillMaxWidth()
+                            .clickable { 
+                                onItemSelected(item)
+                                coroutineScope.launch {
+                                    listState.animateScrollToItem(maxOf(0, index - 1))
                                 }
-                            ),
+                            }
+                            .alpha(alpha)
+                            .padding(vertical = 12.dp),
                         fontSize = if (isSelected) 24.sp else 18.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                         color = if (isSelected) 
                             MaterialTheme.colorScheme.primary 
                         else 
                             MaterialTheme.colorScheme.onSurface,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        maxLines = 1
                     )
                 }
             }
             
-            // Selection indicator
+            // Selection indicator box in center
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
                     .fillMaxWidth()
-                    .height(2.dp)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+                    .height(itemHeight)
+                    .background(
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        RoundedCornerShape(8.dp)
+                    )
+                    .border(
+                        2.dp, 
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                        RoundedCornerShape(8.dp)
+                    )
             )
         }
     }
