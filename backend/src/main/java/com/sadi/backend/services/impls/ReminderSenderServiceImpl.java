@@ -25,7 +25,7 @@ public class ReminderSenderServiceImpl implements ReminderSenderService {
     public void sendReminder(ReminderDTO req) {
         log.debug("Sending Reminder Request {}", req);
         List<String> tokens = getTokens(req);
-
+        if (tokens.isEmpty()) return;
         MulticastMessage messages = messageFactory(req, tokens);
 
         try {
