@@ -78,6 +78,7 @@ import java.time.Month
 fun ScreenReminder(userId: String?) {
     var showCreateForm by remember { mutableStateOf(false) }
     var reminders by remember { mutableStateOf<List<Reminder>>(emptyList()) }
+    var showDeleteDialog by remember { mutableStateOf<Reminder?>(null) }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(userId) {
@@ -122,13 +123,7 @@ fun ScreenReminder(userId: String?) {
                     ReminderCard(
                         reminder = reminder,
                         onDelete = {
-                            scope.launch {
-                                if (RetrofitInstance.dementiaAPI.deleteReminder(reminder.id)) {
-                                    loadReminders(userId) { loadedReminders ->
-                                        reminders = loadedReminders
-                                    }
-                                }
-                            }
+                            showDeleteDialog = reminder
                         }
                     )
                 }
@@ -146,6 +141,39 @@ fun ScreenReminder(userId: String?) {
                     loadReminders(userId) { loadedReminders ->
                         reminders = loadedReminders
                     }
+                }
+            }
+        )
+    }
+
+    showDeleteDialog?.let { reminderToDelete ->
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = null },
+            title = { Text("Delete Reminder") },
+            text = { 
+                Text("Are you sure you want to delete \"${reminderToDelete.title}\"? This action cannot be undone.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        scope.launch {
+                            if (RetrofitInstance.dementiaAPI.deleteReminder(reminderToDelete.id)) {
+                                loadReminders(userId) { loadedReminders ->
+                                    reminders = loadedReminders
+                                }
+                            }
+                            showDeleteDialog = null
+                        }
+                    }
+                ) {
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDeleteDialog = null }
+                ) {
+                    Text("Cancel")
                 }
             }
         )
