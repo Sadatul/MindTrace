@@ -51,6 +51,7 @@ fun SetupNavGraph(navController: NavHostController) {
                 navController.navigate(Screen.PatientLogs(null))
             },
             onReminders = {
+                navController.navigate(Screen.Reminder(null))
             },
             onPatientProfile = {
                 navController.navigate(Screen.DashBoardPatient)
@@ -138,6 +139,9 @@ fun SetupNavGraph(navController: NavHostController) {
                 onShowLogs = { partner ->
                     navController.navigate(Screen.PatientLogs(partner.id))
                 },
+                onShowReminders = {userId ->
+                    navController.navigate(Screen.Reminder(userId))
+                },
                 navigationBar = navigationBar
             )
         }
@@ -156,7 +160,7 @@ fun SetupNavGraph(navController: NavHostController) {
         composable<Screen.Reminder> { backStackEntry ->
             val (userId) = backStackEntry.toRoute<Screen.Reminder>()
 
-            ScreenReminder(userId)
+            ScreenReminder(userId, navigationBar)
         }
     }
 

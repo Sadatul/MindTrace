@@ -41,6 +41,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -77,7 +78,7 @@ import java.time.Month
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun ScreenReminder(userId: String?) {
+fun ScreenReminder(userId: String?, navigationBar: NavigationBarComponent) {
     var showCreateForm by remember { mutableStateOf(false) }
     var reminders by remember { mutableStateOf<List<Reminder>>(emptyList()) }
     var showDeleteDialog by remember { mutableStateOf<Reminder?>(null) }
@@ -89,45 +90,53 @@ fun ScreenReminder(userId: String?) {
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Reminders",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
-            FloatingActionButton(
-                onClick = { showCreateForm = true },
-                modifier = Modifier.size(56.dp)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Reminder")
-            }
+    Scaffold(
+        bottomBar = {
+            if (userId == null) navigationBar.PatientNavigationBar(selectedScreen = Screen.Reminder(null))
+            else navigationBar.CaregiverNavigationBar(selectedScreen = Screen.Reminder(null))
         }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Reminders",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                FloatingActionButton(
+                    onClick = { showCreateForm = true },
+                    modifier = Modifier.size(56.dp)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Add Reminder")
+                }
+            }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        if (reminders.isEmpty()) {
-            Text(
-                text = "No reminders yet. Tap + to create one.",
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-        } else {
-            LazyColumn {
-                items(reminders) { reminder ->
-                    ReminderCard(
-                        reminder = reminder,
-                        onDelete = {
-                            showDeleteDialog = reminder
-                        }
-                    )
+            if (reminders.isEmpty()) {
+                Text(
+                    text = "No reminders yet. Tap + to create one.",
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+            } else {
+                LazyColumn {
+                    items(reminders) { reminder ->
+                        ReminderCard(
+                            reminder = reminder,
+                            onDelete = {
+                                showDeleteDialog = reminder
+                            }
+                        )
+                    }
                 }
             }
         }

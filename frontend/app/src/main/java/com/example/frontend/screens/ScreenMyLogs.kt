@@ -216,7 +216,8 @@ fun MyLogs(
         },
         floatingActionButtonPosition = FabPosition.End,
         bottomBar = {
-            navigationBar.PatientNavigationBar(Screen.PatientLogs(null))
+            if (isPatient) navigationBar.PatientNavigationBar(Screen.PatientLogs(null))
+            else navigationBar.CaregiverNavigationBar(Screen.PatientLogs(null))
 
         },
         containerColor = colorResource(R.color.dark_surface)

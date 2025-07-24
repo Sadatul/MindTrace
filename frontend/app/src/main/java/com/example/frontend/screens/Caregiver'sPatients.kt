@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 fun ScreenMyPatients(
     onNavigateBack: () -> Unit,
     onShowLogs: (PartnerInfo) -> Unit,// Add callback for logs
+    onShowReminders: (userId: String) -> Unit,
     navigationBar: NavigationBarComponent
 ) {
     var currentUser: UserInfo? by remember { mutableStateOf(null) }
@@ -55,6 +56,7 @@ fun ScreenMyPatients(
             showDeletedPartners = showDeletedPartners,
             onToggleDeleted = { showDeletedPartners = !showDeletedPartners },
             onShowLogs = onShowLogs,
+            onShowReminders = onShowReminders,
             navigationBar = navigationBar
         )
     }
