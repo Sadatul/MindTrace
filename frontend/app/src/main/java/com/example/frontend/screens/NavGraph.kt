@@ -113,9 +113,6 @@ fun SetupNavGraph(navController: NavHostController) {
         }
         composable<Screen.Chat> {
             ChatScreen(
-                onNavigateBack = {
-                    navController.popBackStack()
-                },
                 onCancelDialog = {
                     navController.popBackStack()
                 },
