@@ -1,10 +1,7 @@
 package com.example.frontend.screens
 
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,18 +19,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.ContactPhone
-import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.QrCode
-import androidx.compose.material.icons.filled.Report
 import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -44,12 +36,10 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
@@ -62,17 +52,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -82,8 +67,8 @@ import com.example.frontend.R
 import com.example.frontend.api.PrimaryContact
 import com.example.frontend.api.RetrofitInstance
 import com.example.frontend.api.UserInfo
-import com.example.frontend.api.getFCMToken
 import com.example.frontend.api.getSelfUserInfo
+import com.example.frontend.api.SelfUserInfoCache
 
 private const val TAG = "ScreenPatient"
 
@@ -91,53 +76,42 @@ private const val TAG = "ScreenPatient"
 @Composable
 fun ScreenPatient(
     errorMsg: String? = null,
-    onNavigateToChat: () -> Unit = {},
-    onNavigateToCaregivers: () -> Unit = {},
     onSignOut: () -> Unit = {},
-    onLoginWithAnotherAccount: () -> Unit = {},
-    onNavigateToReminders: () -> Unit,
-    onBack: () -> Boolean
+    onBack: () -> Boolean,
+    navigationBar: NavigationBarComponent,
+    onNavigateToCaregivers: () -> Unit = {}
 ) {
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
     val screenWidth = configuration.screenWidthDp.dp
-    
-    // Comprehensive responsive sizing
-    val fabWidth = (screenWidth * 0.28f).coerceAtMost(140.dp).coerceAtLeast(100.dp)
-    val fabHeight = (screenHeight * 0.11f).coerceAtMost(100.dp).coerceAtLeast(80.dp)
-    val iconSize = (fabWidth * 0.35f).coerceAtMost(48.dp).coerceAtLeast(32.dp)
-    
-    // Spacing between floating action buttons
-    val spacerWidth = when {
-        screenWidth >= 400.dp -> 24.dp
-        screenWidth >= 360.dp -> 18.dp
-        else -> 12.dp
-    }
-    
+
     // Content padding and spacing
     val horizontalPadding = when {
         screenWidth < 360.dp -> 12.dp
         screenWidth < 400.dp -> 16.dp
         else -> 20.dp
     }
-    
+
     // Responsive bottom padding for dual floating action buttons
     val bottomPadding = when {
         screenHeight < 600.dp -> 160.dp
-        screenHeight < 800.dp -> 180.dp  
+        screenHeight < 800.dp -> 180.dp
         else -> 200.dp
     }
-    
-    var userInfo: UserInfo? by remember { mutableStateOf(null) }
-    var fcmToken: String? by remember { mutableStateOf(null) }
+
+    var userInfo: UserInfo? by remember { mutableStateOf(SelfUserInfoCache.getUserInfo()) }
     var isLoading by remember { mutableStateOf(true) }
     var showProfileMenu by remember { mutableStateOf(false) }
+    var showQrDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         isLoading = true
         try {
-            userInfo = RetrofitInstance.dementiaAPI.getSelfUserInfo()
-            fcmToken = RetrofitInstance.dementiaAPI.getFCMToken()
+            val freshUserInfo = RetrofitInstance.dementiaAPI.getSelfUserInfo()
+            if (freshUserInfo != null) {
+                userInfo = freshUserInfo
+                SelfUserInfoCache.setUserInfo(freshUserInfo)
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error fetching user info", e)
         } finally {
@@ -187,9 +161,9 @@ fun ScreenPatient(
                                 text = {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Icon(
-                                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                                            imageVector = Icons.Default.People, // Using People icon for "another account"
                                             contentDescription = "Sign Out",
-                                            tint = colorResource(R.color.warning_orange),
+                                            tint = colorResource(R.color.dark_primary),
                                             modifier = Modifier.size(20.dp)
                                         )
                                         Spacer(modifier = Modifier.width(12.dp))
@@ -199,31 +173,9 @@ fun ScreenPatient(
                                             fontWeight = FontWeight.Medium
                                         )
                                     }
-                                },
-                                onClick = {
-                                    showProfileMenu = false
-                                    onSignOut()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            imageVector = Icons.Default.People, // Using People icon for "another account"
-                                            contentDescription = "Login with Another Account",
-                                            tint = colorResource(R.color.dark_primary),
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(12.dp))
-                                        Text(
-                                            "Login with Another Account",
-                                            color = colorResource(R.color.dark_on_surface),
-                                            fontWeight = FontWeight.Medium
-                                        )
-                                    }
                                 }, onClick = {
                                     showProfileMenu = false
-                                    onLoginWithAnotherAccount()
+                                    onSignOut()
                                 }
                             )
                         }
@@ -235,108 +187,43 @@ fun ScreenPatient(
                 )
             )
         },
+        bottomBar = {
+            navigationBar.PatientNavigationBar(Screen.DashBoardPatient)
+        },
         floatingActionButton = {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(end = 24.dp, bottom = 24.dp),
+                contentAlignment = Alignment.BottomEnd
             ) {
-                // My Caregivers Button
-                Surface(
-                    shape = RoundedCornerShape(24.dp),
-                    color = colorResource(R.color.gradient_patient_start),
-                    shadowElevation = 20.dp,
-                    modifier = Modifier
-                        .size(width = fabWidth, height = fabHeight)
-                        .clickable(onClick = onNavigateToCaregivers)
+                androidx.compose.material3.FloatingActionButton(
+                    onClick = onNavigateToCaregivers,
+                    containerColor = colorResource(R.color.gradient_patient_start),
+                    contentColor = colorResource(R.color.white)
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(vertical = 10.dp),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(horizontal = 12.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.People,
                             contentDescription = "My Caregivers",
-                            modifier = Modifier.size(iconSize),
+                            modifier = Modifier.size(24.dp),
                             tint = colorResource(R.color.white)
                         )
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "My Caregivers",
-                            color = colorResource(R.color.white),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(top = 6.dp)
-                        )
-                    }
-                }
-                
-                // My Reminders Button
-                Surface(
-                    shape = RoundedCornerShape(24.dp),
-                    color = colorResource(R.color.gradient_patient_start),
-                    shadowElevation = 20.dp,
-                    modifier = Modifier
-                        .size(width = fabWidth, height = fabHeight)
-                        .clickable(onClick = onNavigateToReminders)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(vertical = 10.dp),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CalendarToday,
-                            contentDescription = "My Reminders",
-                            modifier = Modifier.size(iconSize),
-                            tint = colorResource(R.color.white)
-                        )
-                        Text(
-                            text = "My Reminders",
-                            color = colorResource(R.color.white),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(top = 6.dp)
-                        )
-                    }
-                }
-                
-                // ASK AI Button
-                Surface(
-                    shape = RoundedCornerShape(24.dp),
-                    color = colorResource(R.color.gradient_patient_start),
-                    shadowElevation = 20.dp,
-                    modifier = Modifier
-                        .size(width = fabWidth, height = fabHeight)
-                        .clickable(onClick = onNavigateToChat)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(vertical = 10.dp),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Chat,
-                            contentDescription = "ASK AI",
-                            modifier = Modifier.size(iconSize),
-                            tint = colorResource(R.color.white)
-                        )
-                        Text(
-                            text = "ASK AI",
-                            color = colorResource(R.color.white),
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(top = 6.dp)
+                            color = colorResource(R.color.white),
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
             }
-        }, floatingActionButtonPosition = FabPosition.Center
+        }
     ) {
         innerPadding ->
         Box(
@@ -377,8 +264,6 @@ fun ScreenPatient(
                         email = userInfo!!.email,
                         gender = userInfo!!.gender,
                         dob = userInfo!!.dob,
-                        userId = userInfo!!.id,
-                        fcmToken = fcmToken,
                         // Primary contact information (caregiver)
                         primaryContact = userInfo!!.primaryContact
                     )
@@ -408,6 +293,29 @@ fun ScreenPatient(
                     }
                 }
             }
+            if (showQrDialog && userInfo != null) {
+                AlertDialog(
+                    onDismissRequest = { showQrDialog = false },
+                    title = {
+                        Text("Your QR Code", fontWeight = FontWeight.Bold)
+                    },
+                    text = {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            com.example.frontend.screens.components.QRCode(
+                                data = userInfo!!.id,
+                                modifier = Modifier.size(240.dp)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text("QR Code to share your ID", style = MaterialTheme.typography.bodyMedium)
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { showQrDialog = false }) {
+                            Text("CLOSE")
+                        }
+                    }
+                )
+            }
         }
     }
 }
@@ -419,14 +327,9 @@ fun PatientInfoCard(
     email: String,
     gender: String,
     dob: String,
-    userId: String?,
-    fcmToken: String?,
     // Primary contact information (caregiver)
     primaryContact: PrimaryContact?,
 ) {
-    var showQrDialog by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-    val clipboardManager = LocalClipboardManager.current
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -536,43 +439,6 @@ fun PatientInfoCard(
                 icon = Icons.Filled.Person
             )
 
-            // QR Code Column below info fields (only icon is clickable, text below icon)
-            if (userId != null) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 18.dp, bottom = 8.dp)
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .size(68.dp)
-                            .shadow(10.dp, CircleShape, clip = false)
-                            .background(Color.White, shape = CircleShape)
-                            .border(
-                                width = 2.dp,
-                                color = colorResource(R.color.info_blue).copy(alpha = 0.7f),
-                                shape = CircleShape
-                            )
-                            .clickable { showQrDialog = true }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.QrCode,
-                            contentDescription = "Show QR Code",
-                            modifier = Modifier.size(40.dp),
-                            tint = Color.Black
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        "My QR Code",
-                        fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.titleLarge,
-                        color = colorResource(R.color.info_blue)
-                    )
-                }
-            }
             // Primary Contact Information (Caregiver)
             if (primaryContact != null) {
                 Spacer(modifier = Modifier.height(12.dp))
@@ -628,30 +494,7 @@ fun PatientInfoCard(
                 )
             }
         }
-        // QR Code Dialog
-        if (showQrDialog && userId != null) {
-            AlertDialog(
-                onDismissRequest = { showQrDialog = false },
-                title = {
-                    Text("Your QR Code", fontWeight = FontWeight.Bold)
-                },
-                text = {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        com.example.frontend.screens.components.QRCode(
-                            data = userId,
-                            modifier = Modifier.size(240.dp)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("Scan this code to share your ID", style = MaterialTheme.typography.bodyMedium)
-                    }
-                },
-                confirmButton = {
-                    TextButton(onClick = { showQrDialog = false }) {
-                        Text("CLOSE")
-                    }
-                }
-            )
-        }
+
     }
 }
 
@@ -670,15 +513,16 @@ private fun InfoRowContent(label: String, value: String, icon: ImageVector) {
         Spacer(modifier = Modifier.width(16.dp))
         Column {
             Text(
-                label,
-                style = MaterialTheme.typography.labelSmall,
-                color = colorResource(R.color.dark_on_surface).copy(alpha = 0.7f)
+                text = label,
+                color = colorResource(R.color.dark_on_surface),
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Medium
             )
             Text(
-                value,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-                color = colorResource(R.color.dark_on_surface)
+                text = value,
+                color = colorResource(R.color.dark_on_surface),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Normal
             )
         }
     }
@@ -686,12 +530,15 @@ private fun InfoRowContent(label: String, value: String, icon: ImageVector) {
 
 @Composable
 fun ErrorDisplay(errorMsg: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = colorResource(R.color.error_red).copy(alpha = 0.1f) // Softer error background
-        ),
-        shape = RoundedCornerShape(12.dp)
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(
+                colorResource(R.color.error_red).copy(alpha = 0.1f) // Softer error background
+            ),
+        contentAlignment = Alignment.CenterStart
     ) {
         Row(
             modifier = Modifier

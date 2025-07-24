@@ -83,7 +83,8 @@ private const val TAG = "ScreenChat"
 @Composable
 fun ChatScreen(
     onNavigateBack: () -> Unit = {},
-    onCancelDialog: () -> Unit = {}
+    onCancelDialog: () -> Unit = {},
+    navigationBar: NavigationBarComponent
 ) {
     var messages by remember { mutableStateOf(listOf<ChatMessage>()) }
     var showLastChatDialog by remember { mutableStateOf(false) }
@@ -97,6 +98,7 @@ fun ChatScreen(
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
     val pageSize = 20    // Load user info from cache
+
     LaunchedEffect(Unit) {
         userInfo = SelfUserInfoCache.getUserInfo()
         Log.d(TAG, "Loaded user info from cache: ${userInfo?.name}")
@@ -215,13 +217,21 @@ fun ChatScreen(
                             )
                         }
                     }
-                },                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                },   
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = colorResource(R.color.gradient_caregiver_start), // Different color for the bar
                     titleContentColor = colorResource(R.color.white),
                     navigationIconContentColor = colorResource(R.color.white),
                     actionIconContentColor = colorResource(R.color.white)
                 )
             )
+        },
+        bottomBar = {
+            when (userInfo?.role) {
+                "CAREGIVER" -> navigationBar.CaregiverNavigationBar(Screen.Chat)
+                "PATIENT" -> navigationBar.PatientNavigationBar(Screen.Chat)
+                else -> navigationBar.PatientNavigationBar(Screen.Chat) // fallback
+            }
         }
     ) { innerPadding ->
         Box(
