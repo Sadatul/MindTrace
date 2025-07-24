@@ -75,6 +75,7 @@ data class PrimaryContact(
     val createdAt: String
 )
 
+
 data class UserInfo(
     val id: String,
     val name: String,
@@ -86,6 +87,10 @@ data class UserInfo(
     val primaryContact: PrimaryContact?,
     val createdAt: String,
     val telegramChatId: String?
+)
+
+data class TelegramUUIDResponse(
+    val value: String
 )
 
 data class RequestPatientAdd(
@@ -141,6 +146,11 @@ interface DementiaAPI {
         @Header("Authorization") firebaseIdToken: String,
         @Body request: RequestChat
     ): Response<ResponseBody>
+
+    @GET("/v1/telegram/register")
+    suspend fun getTelegramUUID(
+        @Header("Authorization") firebaseIdToken: String
+    ): Response<TelegramUUIDResponse> 
 
     @GET("/v1/users")
     suspend fun getUserInfo(

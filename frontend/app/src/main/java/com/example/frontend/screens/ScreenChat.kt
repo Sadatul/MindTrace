@@ -94,6 +94,7 @@ fun ChatScreen(
     var currentPage by remember { mutableIntStateOf(0) }
     var hasMorePages by remember { mutableStateOf(true) }
     var userInfo: UserInfo? by remember { mutableStateOf(null) }
+    val context = androidx.compose.ui.platform.LocalContext.current
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
     val pageSize = 20    // Load user info from cache
@@ -211,11 +212,28 @@ fun ChatScreen(
                         androidx.compose.material3.AlertDialog(
                             onDismissRequest = { showTelegramDialog = false },
                             title = { Text("Confirmation") },
-                            text = { Text("You want to chat with telegram?") },
+                            text = { Text("You want to chat with Telegram Bot?") },
                             confirmButton = {
                                 androidx.compose.material3.TextButton(onClick = {
                                     showTelegramDialog = false
-                                    // TODO: Implement Telegram chat action here
+                                    scope.launch {
+                                        try {
+                                            val token = RetrofitInstance.dementiaAPI.getIdToken()
+                                            val response = RetrofitInstance.dementiaAPI.getTelegramUUID("Bearer $token")
+                                            if (response.isSuccessful) {
+                                                val uuid = response.body()?.value
+                                                if (uuid != null) {
+                                                    val telegramUrl = "https://t.me/mindtracebot?start=$uuid"
+                                                    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(telegramUrl))
+                                                    context.startActivity(intent)
+                                                }
+                                            } else {
+                                                Log.e(TAG, "Telegram UUID API error: ${response.code()} - ${response.errorBody()?.string()}")
+                                            }
+                                        } catch (e: Exception) {
+                                            Log.e(TAG, "Telegram UUID API exception", e)
+                                        }
+                                    }
                                 }) {
                                     Text("Yes")
                                 }
