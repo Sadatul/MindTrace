@@ -134,7 +134,7 @@ fun SetupNavGraph(navController: NavHostController) {
                     navController.popBackStack()
                 },
                 onShowLogs = { partner ->
-                    navController.navigate("patient_logs?partnerId=${partner.id}")
+                    navController.navigate(Screen.PatientLogs(partner.id))
                 }
             )
         }
