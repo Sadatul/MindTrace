@@ -12,7 +12,6 @@ import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.background
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.compose.foundation.border
@@ -25,14 +24,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.typography
@@ -49,8 +46,6 @@ import java.time.format.DateTimeFormatter
 import java.time.ZonedDateTime
 import java.time.LocalDate
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -218,57 +213,11 @@ fun MyLogs(
                     }
                 }
             }
-        }, floatingActionButtonPosition = FabPosition.End,
+        },
+        floatingActionButtonPosition = FabPosition.End,
         bottomBar = {
             navigationBar.PatientNavigationBar(Screen.PatientLogs(null))
-//            NavigationBar(
-//                windowInsets = WindowInsets(0.dp)
-//            ) {
-//                NavigationBarItem(
-//                    icon = {
-//                        Icon(
-//                            imageVector = Icons.Filled.Notifications,
-//                            contentDescription = "My Logs"
-//                        )
-//                    },
-//                    label = { Text("Logs") },
-//                    selected = true,
-//                    onClick = {}
-//                )
-//                NavigationBarItem(
-//                    icon = {
-//                        Icon(
-//                            imageVector = Icons.Filled.Notifications,
-//                            contentDescription = "My Reminders"
-//                        )
-//                    },
-//                    label = { Text("Reminders") },
-//                    selected = false,
-//                    onClick = onMyReminders
-//                )
-//                NavigationBarItem(
-//                    icon = {
-//                        Icon(
-//                            imageVector = Icons.Filled.Person,
-//                            contentDescription = "My Profile"
-//                        )
-//                    },
-//                    label = { Text("Profile") },
-//                    selected = false,
-//                    onClick = { onMyProfile(isViewOnly) }
-//                )
-//                NavigationBarItem(
-//                    icon = {
-//                        Icon(
-//                            imageVector = Icons.AutoMirrored.Filled.Chat,
-//                            contentDescription = "Ask AI"
-//                        )
-//                    },
-//                    label = { Text("Ask AI") },
-//                    selected = false,
-//                    onClick = onAskAi
-//                )
-//            }
+
         },
         containerColor = colorResource(R.color.dark_surface)
     ) { innerPadding ->

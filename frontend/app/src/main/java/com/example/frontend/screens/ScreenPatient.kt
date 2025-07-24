@@ -2,8 +2,6 @@ package com.example.frontend.screens
 
 import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,7 +10,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -24,13 +21,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.ContactPhone
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -53,13 +48,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -76,7 +69,6 @@ import com.example.frontend.api.RetrofitInstance
 import com.example.frontend.api.UserInfo
 import com.example.frontend.api.getSelfUserInfo
 import com.example.frontend.api.SelfUserInfoCache
-import kotlinx.coroutines.launch
 
 private const val TAG = "ScreenPatient"
 
@@ -84,11 +76,10 @@ private const val TAG = "ScreenPatient"
 @Composable
 fun ScreenPatient(
     errorMsg: String? = null,
-    onNavigateToChat: () -> Unit = {},
-    onNavigateToCaregivers: () -> Unit = {},
     onSignOut: () -> Unit = {},
     onBack: () -> Boolean,
-    navigationBar: NavigationBarComponent
+    navigationBar: NavigationBarComponent,
+    onNavigateToCaregivers: () -> Unit = {}
 ) {
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
@@ -198,243 +189,43 @@ fun ScreenPatient(
         },
         bottomBar = {
             navigationBar.PatientNavigationBar(Screen.DashBoardPatient)
+        },
+        floatingActionButton = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(end = 24.dp, bottom = 24.dp),
+                contentAlignment = Alignment.BottomEnd
+            ) {
+                androidx.compose.material3.FloatingActionButton(
+                    onClick = onNavigateToCaregivers,
+                    containerColor = colorResource(R.color.gradient_patient_start),
+                    contentColor = colorResource(R.color.white)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(horizontal = 12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.People,
+                            contentDescription = "My Caregivers",
+                            modifier = Modifier.size(24.dp),
+                            tint = colorResource(R.color.white)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "My Caregivers",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = colorResource(R.color.white),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
         }
-//        bottomBar = {
-//            Box(
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .background(colorResource(R.color.dark_surface))
-//            ) {
-//                Row(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .height(90.dp)
-//                        .background(
-//                            brush = Brush.horizontalGradient(
-//                                colors = listOf(
-//                                    colorResource(id = R.color.gradient_patient_start),
-//                                    colorResource(id = R.color.gradient_patient_end)
-//                                )
-//                            )
-//                        )
-//                        .padding(horizontal = 24.dp)
-//                        .align(Alignment.BottomCenter),
-//                    horizontalArrangement = Arrangement.SpaceBetween,
-//                    verticalAlignment = Alignment.CenterVertically
-//                ) {
-//                    // My Caregivers Button (icon on top, text below)
-//                    Box(
-//                        modifier = Modifier
-//                            .weight(1f)
-//                            .height(72.dp)
-//                            .clip(RoundedCornerShape(20.dp))
-//                            .background(
-//                                Brush.verticalGradient(
-//                                    colors = listOf(
-//                                        colorResource(R.color.gradient_patient_start),
-//                                        colorResource(R.color.dark_surface)
-//                                    )
-//                                )
-//                            )
-//                            .border(2.dp, colorResource(R.color.info_blue), RoundedCornerShape(20.dp))
-//                            .clickable(onClick = onNavigateToCaregivers),
-//                        contentAlignment = Alignment.Center
-//                    ) {
-//                        Column(
-//                            horizontalAlignment = Alignment.CenterHorizontally,
-//                            verticalArrangement = Arrangement.Center,
-//                            modifier = Modifier.fillMaxWidth()
-//                        ) {
-//                            Icon(
-//                                imageVector = Icons.Default.People,
-//                                contentDescription = "My Caregivers",
-//                                modifier = Modifier.size(28.dp),
-//                                tint = colorResource(R.color.white)
-//                            )
-//                            Text(
-//                                text = "My Caregivers",
-//                                style = MaterialTheme.typography.titleMedium,
-//                                color = colorResource(R.color.white),
-//                                fontWeight = FontWeight.Bold,
-//                                modifier = Modifier.padding(top = 4.dp)
-//                            )
-//                        }
-//                    }
-//                    // Central QR Code Button
-//                    val showQrDialogBottomBar = remember { mutableStateOf(false) }
-//                    val qrCodeDataBottomBar = remember { mutableStateOf<String?>(null) }
-//                    val isLoadingQrDataBottomBar = remember { mutableStateOf(false) }
-//                    val qrErrorBottomBar = remember { mutableStateOf<String?>(null) }
-//                    val coroutineScope = rememberCoroutineScope()
-//
-//                    fun handleQrDialogCloseBottomBar() {
-//                        showQrDialogBottomBar.value = false
-//                        qrCodeDataBottomBar.value = null
-//                        qrErrorBottomBar.value = null
-//                    }
-//
-//                    fun generateQrCodeDataBottomBar(userId: String) {
-//                        coroutineScope.launch {
-//                            isLoadingQrDataBottomBar.value = true
-//                            qrErrorBottomBar.value = null
-//                            try {
-//                                qrCodeDataBottomBar.value = userId
-//                                showQrDialogBottomBar.value = true
-//                            } catch (e: Exception) {
-//                                qrErrorBottomBar.value = "Error generating QR code: ${e.message}"
-//                                Log.e(TAG, "Error generating QR code data", e)
-//                            } finally {
-//                                isLoadingQrDataBottomBar.value = false
-//                            }
-//                        }
-//                    }
-//
-//                    Column(
-//                        horizontalAlignment = Alignment.CenterHorizontally,
-//                        modifier = Modifier
-//                            .padding(horizontal = 16.dp)
-//                    ) {
-//                        Box(
-//                            modifier = Modifier
-//                                .offset(y = (-24).dp)
-//                                .size(72.dp)
-//                                .clip(CircleShape)
-//                                .background(Color.White)
-//                                .border(
-//                                    width = 3.dp,
-//                                    color = colorResource(R.color.info_blue),
-//                                    shape = CircleShape
-//                                )
-//                                .clickable {
-//                                    if (!isLoadingQrDataBottomBar.value && userInfo?.id != null) {
-//                                        generateQrCodeDataBottomBar(userInfo!!.id)
-//                                    }
-//                                },
-//                            contentAlignment = Alignment.Center
-//                        ) {
-//                            if (isLoadingQrDataBottomBar.value) {
-//                                CircularProgressIndicator(
-//                                    modifier = Modifier.size(40.dp),
-//                                    color = colorResource(R.color.info_blue),
-//                                    strokeWidth = 3.dp
-//                                )
-//                            } else {
-//                                Icon(
-//                                    imageVector = Icons.Default.QrCode,
-//                                    contentDescription = "My QR",
-//                                    modifier = Modifier.size(44.dp),
-//                                    tint = colorResource(R.color.info_blue)
-//                                )
-//                            }
-//                        }
-//                        Text(
-//                            text = "My QR",
-//                            style = MaterialTheme.typography.titleMedium,
-//                            color = Color.White,
-//                            fontWeight = FontWeight.ExtraBold,
-//                            modifier = Modifier
-//                                .offset(y = (-16).dp)
-//                                .align(Alignment.CenterHorizontally)
-//                        )
-//                        if (qrErrorBottomBar.value != null) {
-//                            Card(
-//                                modifier = Modifier
-//                                    .fillMaxWidth()
-//                                    .padding(top = 8.dp),
-//                                colors = CardDefaults.cardColors(
-//                                    containerColor = colorResource(R.color.error_red).copy(alpha = 0.1f)
-//                                ),
-//                                shape = RoundedCornerShape(8.dp)
-//                            ) {
-//                                Row(
-//                                    modifier = Modifier
-//                                        .padding(12.dp)
-//                                        .fillMaxWidth(),
-//                                    verticalAlignment = Alignment.CenterVertically
-//                                ) {
-//                                    Icon(
-//                                        Icons.Filled.ReportProblem,
-//                                        contentDescription = "Error",
-//                                        tint = colorResource(R.color.error_red),
-//                                        modifier = Modifier.size(20.dp)
-//                                    )
-//                                    Spacer(modifier = Modifier.width(8.dp))
-//                                    Text(
-//                                        text = qrErrorBottomBar.value ?: "",
-//                                        color = colorResource(R.color.error_red),
-//                                        style = MaterialTheme.typography.bodySmall,
-//                                        fontWeight = FontWeight.Medium,
-//                                    )
-//                                }
-//                            }
-//                        }
-//                        if (showQrDialogBottomBar.value && qrCodeDataBottomBar.value != null) {
-//                            AlertDialog(
-//                                onDismissRequest = { handleQrDialogCloseBottomBar() },
-//                                title = {
-//                                    Text("Your QR Code", fontWeight = FontWeight.Bold)
-//                                },
-//                                text = {
-//                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-//                                        com.example.frontend.screens.components.QRCode(
-//                                            data = qrCodeDataBottomBar.value!!,
-//                                            modifier = Modifier.size(240.dp)
-//                                        )
-//                                        Spacer(modifier = Modifier.height(8.dp))
-//                                        Text("QR Code to share your ID", style = MaterialTheme.typography.bodyMedium)
-//                                    }
-//                                },
-//                                confirmButton = {
-//                                    TextButton(onClick = { handleQrDialogCloseBottomBar() }) {
-//                                        Text("CLOSE")
-//                                    }
-//                                }
-//                            )
-//                        }
-//                    }
-//                    // ASK AI Button (icon on top, text below)
-//                    Box(
-//                        modifier = Modifier
-//                            .weight(1f)
-//                            .height(72.dp)
-//                            .clip(RoundedCornerShape(20.dp))
-//                            .background(
-//                                Brush.verticalGradient(
-//                                    colors = listOf(
-//                                        colorResource(R.color.gradient_patient_start),
-//                                        colorResource(R.color.dark_surface)
-//                                    )
-//                                )
-//                            )
-//                            .border(2.dp, colorResource(R.color.info_blue), RoundedCornerShape(20.dp))
-//                            .clickable(onClick = onNavigateToChat),
-//                        contentAlignment = Alignment.Center
-//                    ) {
-//                        Column(
-//                            horizontalAlignment = Alignment.CenterHorizontally,
-//                            verticalArrangement = Arrangement.Center,
-//                            modifier = Modifier.fillMaxWidth()
-//                        ) {
-//                            Icon(
-//                                imageVector = Icons.Filled.Chat,
-//                                contentDescription = "Ask AI",
-//                                modifier = Modifier.size(28.dp),
-//                                tint = colorResource(R.color.white)
-//                            )
-//                            Text(
-//                                text = "Ask AI",
-//                                style = MaterialTheme.typography.titleMedium,
-//                                color = colorResource(R.color.white),
-//                                fontWeight = FontWeight.Bold,
-//                                modifier = Modifier.padding(top = 4.dp)
-//                            )
-//                        }
-//                    }
-//                }
-//            }
-//        }
     ) {
-            innerPadding ->
+        innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()

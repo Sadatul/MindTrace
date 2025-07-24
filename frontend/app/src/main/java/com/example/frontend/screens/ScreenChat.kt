@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,19 +29,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -223,7 +217,8 @@ fun ChatScreen(
                             )
                         }
                     }
-                },                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                },   
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = colorResource(R.color.gradient_caregiver_start), // Different color for the bar
                     titleContentColor = colorResource(R.color.white),
                     navigationIconContentColor = colorResource(R.color.white),
@@ -232,7 +227,11 @@ fun ChatScreen(
             )
         },
         bottomBar = {
-            navigationBar.PatientNavigationBar(Screen.Chat)
+            when (userInfo?.role) {
+                "CAREGIVER" -> navigationBar.CaregiverNavigationBar(Screen.Chat)
+                "PATIENT" -> navigationBar.PatientNavigationBar(Screen.Chat)
+                else -> navigationBar.PatientNavigationBar(Screen.Chat) // fallback
+            }
         }
     ) { innerPadding ->
         Box(

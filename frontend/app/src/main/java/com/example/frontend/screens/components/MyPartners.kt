@@ -203,8 +203,11 @@ fun ScreenMyPartners(
             )
         },
         bottomBar = {
-            if (role == "PATIENT") navigationBar.PatientNavigationBar(Screen.MyCaregivers)
-            else TODO("caregiver flow should go here")
+            if (role == "PATIENT") {
+                navigationBar.PatientNavigationBar(Screen.MyCaregivers)
+            } else if (role == "CAREGIVER") {
+                navigationBar.CaregiverNavigationBar(Screen.MyPatients)
+            }
         }
     ) { innerPadding ->
         Box(
