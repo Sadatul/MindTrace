@@ -92,13 +92,13 @@ data class NavigationBarComponent(
                     Icon(
                         imageVector = Icons.Filled.Notifications,
                         contentDescription = "My Logs",
-                        modifier = Modifier.size(32.dp),
+                        modifier = Modifier.size(30.dp),
                     )
                 },
                 label = {
                     Text(
                         "My Logs",
-                        fontSize = 14.sp,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                     )
                 },
@@ -110,13 +110,13 @@ data class NavigationBarComponent(
                     Icon(
                         imageVector = Icons.Default.CalendarToday,
                         contentDescription = "My Reminders",
-                        modifier = Modifier.size(32.dp),
+                        modifier = Modifier.size(30.dp),
                     )
                 },
                 label = {
                     Text(
                         "Reminders",
-                        fontSize = 14.sp,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                     )
                 },
@@ -143,7 +143,7 @@ data class NavigationBarComponent(
                 label = {
                     Text(
                         "My QR",
-                        fontSize = 14.sp,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -155,13 +155,13 @@ data class NavigationBarComponent(
                     Icon(
                         imageVector = Icons.Filled.Person,
                         contentDescription = "Profile",
-                        modifier = Modifier.size(32.dp),
+                        modifier = Modifier.size(30.dp),
                     )
                 },
                 label = {
                     Text(
                         "Profile",
-                        fontSize = 14.sp,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                     )
                 },
@@ -175,13 +175,13 @@ data class NavigationBarComponent(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Chat,
                         contentDescription = "Ask AI",
-                        modifier = Modifier.size(32.dp),
+                        modifier = Modifier.size(30.dp),
                     )
                 },
                 label = {
                     Text(
                         "Ask AI",
-                        fontSize = 14.sp,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                     )
                 },
@@ -251,13 +251,13 @@ data class NavigationBarComponent(
                     Icon(
                         imageVector = Icons.Filled.Person,
                         contentDescription = "Profile",
-                        modifier = Modifier.size(32.dp),
+                        modifier = Modifier.size(30.dp),
                     )
                 },
                 label = {
                     Text(
                         "Profile",
-                        fontSize = 14.sp,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                     )
                 },
@@ -286,7 +286,7 @@ data class NavigationBarComponent(
                 label = {
                     Text(
                         "QR Code",
-                        fontSize = 14.sp,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                     )
                 },
@@ -298,13 +298,13 @@ data class NavigationBarComponent(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Chat,
                         contentDescription = "Ask AI",
-                        modifier = Modifier.size(32.dp),
+                        modifier = Modifier.size(30.dp),
                     )
                 },
                 label = {
                     Text(
                         "Ask AI",
-                        fontSize = 14.sp,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                     )
                 },
