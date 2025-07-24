@@ -337,3 +337,4 @@ data class NavigationBarComponent(
         }
     }
 }
+
