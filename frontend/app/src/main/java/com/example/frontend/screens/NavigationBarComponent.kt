@@ -44,7 +44,7 @@ data class NavigationBarComponent(
     val onReminders: () -> Unit,
     val onPatientProfile: (isPatient: Boolean) -> Unit,
     val onChatScreen: () -> Unit,
-    val onCaregiverProfile: (isCaregiver: Boolean) -> Unit
+    val onCaregiverProfile: (isCaregiver: Boolean) -> Unit,
 ) {
     @Composable
     fun PatientNavigationBar(selectedScreen: Screen) {
@@ -90,7 +90,7 @@ data class NavigationBarComponent(
             NavigationBarItem(
                 icon = {
                     Icon(
-                        imageVector = Icons.Filled.Notifications,
+                        imageVector = Icons.Default.CalendarToday,
                         contentDescription = "My Logs",
                         modifier = Modifier.size(30.dp),
                     )
@@ -108,7 +108,7 @@ data class NavigationBarComponent(
             NavigationBarItem(
                 icon = {
                     Icon(
-                        imageVector = Icons.Default.CalendarToday,
+                        imageVector = Icons.Filled.Notifications,
                         contentDescription = "My Reminders",
                         modifier = Modifier.size(30.dp),
                     )
@@ -120,7 +120,7 @@ data class NavigationBarComponent(
                         fontWeight = FontWeight.Bold,
                     )
                 },
-                selected = false,
+                selected = selectedScreen is Screen.Reminder,
                 onClick = onReminders
             )
             NavigationBarItem(

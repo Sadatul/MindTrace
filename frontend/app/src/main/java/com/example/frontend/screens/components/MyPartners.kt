@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -62,6 +63,7 @@ fun ScreenMyPartners(
     showDeletedPartners: Boolean = false,
     onToggleDeleted: () -> Unit = {},
     onShowLogs: ((PartnerInfo) -> Unit)? = null, // Make optional for patient flow
+    onShowReminders: ((userId: String) -> Unit)? = null,
     navigationBar: NavigationBarComponent
 ) {
     val configuration = LocalConfiguration.current
@@ -319,6 +321,9 @@ fun ScreenMyPartners(
                                     onShowLogs = {
                                         println("Selected partner for logs: id=${partner.id}, name=${partner.name}, profilePicture=${partner.profilePicture}")
                                         onShowLogs?.invoke(partner)
+                                    },
+                                    onShowReminders = { userId ->
+                                        if (onShowReminders != null) onShowReminders(userId)
                                     }
                                 )
                             }
@@ -540,7 +545,8 @@ fun PartnerCard(
     partner: PartnerInfo,
     role: String,
     onDelete: () -> Unit,
-    onShowLogs: (PartnerInfo) -> Unit // Add callback for showing logs
+    onShowLogs: (PartnerInfo) -> Unit, // Add callback for showing logs
+    onShowReminders: (userId: String) -> Unit // Add callback for showing reminders
 ) {
     var showMenu by remember { mutableStateOf(false) }
     val isDeleted = partner.removedAt != null
@@ -637,6 +643,19 @@ fun PartnerCard(
                                     leadingIcon = {
                                         Icon(
                                             imageVector = Icons.Default.CalendarToday,
+                                            contentDescription = null
+                                        )
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Show Reminders") },
+                                    onClick = {
+                                        showMenu = false
+                                        onShowReminders(partner.id)
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Filled.Notifications,
                                             contentDescription = null
                                         )
                                     }
