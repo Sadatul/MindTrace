@@ -87,7 +87,8 @@ fun ScreenPatient(
     onNavigateToChat: () -> Unit = {},
     onNavigateToCaregivers: () -> Unit = {},
     onSignOut: () -> Unit = {},
-    onBack: () -> Boolean
+    onBack: () -> Boolean,
+    navigationBar: NavigationBarComponent
 ) {
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
@@ -110,6 +111,7 @@ fun ScreenPatient(
     var userInfo: UserInfo? by remember { mutableStateOf(SelfUserInfoCache.getUserInfo()) }
     var isLoading by remember { mutableStateOf(true) }
     var showProfileMenu by remember { mutableStateOf(false) }
+    var showQrDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         isLoading = true
@@ -195,241 +197,244 @@ fun ScreenPatient(
             )
         },
         bottomBar = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(colorResource(R.color.dark_surface))
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(90.dp)
-                        .background(
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(
-                                    colorResource(id = R.color.gradient_patient_start),
-                                    colorResource(id = R.color.gradient_patient_end)
-                                )
-                            )
-                        )
-                        .padding(horizontal = 24.dp)
-                        .align(Alignment.BottomCenter),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // My Caregivers Button (icon on top, text below)
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(72.dp)
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(
-                                Brush.verticalGradient(
-                                    colors = listOf(
-                                        colorResource(R.color.gradient_patient_start),
-                                        colorResource(R.color.dark_surface)
-                                    )
-                                )
-                            )
-                            .border(2.dp, colorResource(R.color.info_blue), RoundedCornerShape(20.dp))
-                            .clickable(onClick = onNavigateToCaregivers),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.People,
-                                contentDescription = "My Caregivers",
-                                modifier = Modifier.size(28.dp),
-                                tint = colorResource(R.color.white)
-                            )
-                            Text(
-                                text = "My Caregivers",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = colorResource(R.color.white),
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(top = 4.dp)
-                            )
-                        }
-                    }
-                    // Central QR Code Button
-                    val showQrDialogBottomBar = remember { mutableStateOf(false) }
-                    val qrCodeDataBottomBar = remember { mutableStateOf<String?>(null) }
-                    val isLoadingQrDataBottomBar = remember { mutableStateOf(false) }
-                    val qrErrorBottomBar = remember { mutableStateOf<String?>(null) }
-                    val coroutineScope = rememberCoroutineScope()
-
-                    fun handleQrDialogCloseBottomBar() {
-                        showQrDialogBottomBar.value = false
-                        qrCodeDataBottomBar.value = null
-                        qrErrorBottomBar.value = null
-                    }
-
-                    fun generateQrCodeDataBottomBar(userId: String) {
-                        coroutineScope.launch {
-                            isLoadingQrDataBottomBar.value = true
-                            qrErrorBottomBar.value = null
-                            try {
-                                qrCodeDataBottomBar.value = userId
-                                showQrDialogBottomBar.value = true
-                            } catch (e: Exception) {
-                                qrErrorBottomBar.value = "Error generating QR code: ${e.message}"
-                                Log.e(TAG, "Error generating QR code data", e)
-                            } finally {
-                                isLoadingQrDataBottomBar.value = false
-                            }
-                        }
-                    }
-
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .offset(y = (-24).dp)
-                                .size(72.dp)
-                                .clip(CircleShape)
-                                .background(Color.White)
-                                .border(
-                                    width = 3.dp,
-                                    color = colorResource(R.color.info_blue),
-                                    shape = CircleShape
-                                )
-                                .clickable {
-                                    if (!isLoadingQrDataBottomBar.value && userInfo?.id != null) {
-                                        generateQrCodeDataBottomBar(userInfo!!.id)
-                                    }
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (isLoadingQrDataBottomBar.value) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(40.dp),
-                                    color = colorResource(R.color.info_blue),
-                                    strokeWidth = 3.dp
-                                )
-                            } else {
-                                Icon(
-                                    imageVector = Icons.Default.QrCode,
-                                    contentDescription = "My QR",
-                                    modifier = Modifier.size(44.dp),
-                                    tint = colorResource(R.color.info_blue)
-                                )
-                            }
-                        }
-                        Text(
-                            text = "My QR",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = Color.White,
-                            fontWeight = FontWeight.ExtraBold,
-                            modifier = Modifier
-                                .offset(y = (-16).dp)
-                                .align(Alignment.CenterHorizontally)
-                        )
-                        if (qrErrorBottomBar.value != null) {
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 8.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = colorResource(R.color.error_red).copy(alpha = 0.1f)
-                                ),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .padding(12.dp)
-                                        .fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        Icons.Filled.ReportProblem,
-                                        contentDescription = "Error",
-                                        tint = colorResource(R.color.error_red),
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = qrErrorBottomBar.value ?: "",
-                                        color = colorResource(R.color.error_red),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        fontWeight = FontWeight.Medium,
-                                    )
-                                }
-                            }
-                        }
-                        if (showQrDialogBottomBar.value && qrCodeDataBottomBar.value != null) {
-                            AlertDialog(
-                                onDismissRequest = { handleQrDialogCloseBottomBar() },
-                                title = {
-                                    Text("Your QR Code", fontWeight = FontWeight.Bold)
-                                },
-                                text = {
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        com.example.frontend.screens.components.QRCode(
-                                            data = qrCodeDataBottomBar.value!!,
-                                            modifier = Modifier.size(240.dp)
-                                        )
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text("QR Code to share your ID", style = MaterialTheme.typography.bodyMedium)
-                                    }
-                                },
-                                confirmButton = {
-                                    TextButton(onClick = { handleQrDialogCloseBottomBar() }) {
-                                        Text("CLOSE")
-                                    }
-                                }
-                            )
-                        }
-                    }
-                    // ASK AI Button (icon on top, text below)
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(72.dp)
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(
-                                Brush.verticalGradient(
-                                    colors = listOf(
-                                        colorResource(R.color.gradient_patient_start),
-                                        colorResource(R.color.dark_surface)
-                                    )
-                                )
-                            )
-                            .border(2.dp, colorResource(R.color.info_blue), RoundedCornerShape(20.dp))
-                            .clickable(onClick = onNavigateToChat),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Chat,
-                                contentDescription = "Ask AI",
-                                modifier = Modifier.size(28.dp),
-                                tint = colorResource(R.color.white)
-                            )
-                            Text(
-                                text = "Ask AI",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = colorResource(R.color.white),
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(top = 4.dp)
-                            )
-                        }
-                    }
-                }
-            }
+            navigationBar.PatientNavigationBar(Screen.DashBoardPatient)
         }
+//        bottomBar = {
+//            Box(
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .background(colorResource(R.color.dark_surface))
+//            ) {
+//                Row(
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .height(90.dp)
+//                        .background(
+//                            brush = Brush.horizontalGradient(
+//                                colors = listOf(
+//                                    colorResource(id = R.color.gradient_patient_start),
+//                                    colorResource(id = R.color.gradient_patient_end)
+//                                )
+//                            )
+//                        )
+//                        .padding(horizontal = 24.dp)
+//                        .align(Alignment.BottomCenter),
+//                    horizontalArrangement = Arrangement.SpaceBetween,
+//                    verticalAlignment = Alignment.CenterVertically
+//                ) {
+//                    // My Caregivers Button (icon on top, text below)
+//                    Box(
+//                        modifier = Modifier
+//                            .weight(1f)
+//                            .height(72.dp)
+//                            .clip(RoundedCornerShape(20.dp))
+//                            .background(
+//                                Brush.verticalGradient(
+//                                    colors = listOf(
+//                                        colorResource(R.color.gradient_patient_start),
+//                                        colorResource(R.color.dark_surface)
+//                                    )
+//                                )
+//                            )
+//                            .border(2.dp, colorResource(R.color.info_blue), RoundedCornerShape(20.dp))
+//                            .clickable(onClick = onNavigateToCaregivers),
+//                        contentAlignment = Alignment.Center
+//                    ) {
+//                        Column(
+//                            horizontalAlignment = Alignment.CenterHorizontally,
+//                            verticalArrangement = Arrangement.Center,
+//                            modifier = Modifier.fillMaxWidth()
+//                        ) {
+//                            Icon(
+//                                imageVector = Icons.Default.People,
+//                                contentDescription = "My Caregivers",
+//                                modifier = Modifier.size(28.dp),
+//                                tint = colorResource(R.color.white)
+//                            )
+//                            Text(
+//                                text = "My Caregivers",
+//                                style = MaterialTheme.typography.titleMedium,
+//                                color = colorResource(R.color.white),
+//                                fontWeight = FontWeight.Bold,
+//                                modifier = Modifier.padding(top = 4.dp)
+//                            )
+//                        }
+//                    }
+//                    // Central QR Code Button
+//                    val showQrDialogBottomBar = remember { mutableStateOf(false) }
+//                    val qrCodeDataBottomBar = remember { mutableStateOf<String?>(null) }
+//                    val isLoadingQrDataBottomBar = remember { mutableStateOf(false) }
+//                    val qrErrorBottomBar = remember { mutableStateOf<String?>(null) }
+//                    val coroutineScope = rememberCoroutineScope()
+//
+//                    fun handleQrDialogCloseBottomBar() {
+//                        showQrDialogBottomBar.value = false
+//                        qrCodeDataBottomBar.value = null
+//                        qrErrorBottomBar.value = null
+//                    }
+//
+//                    fun generateQrCodeDataBottomBar(userId: String) {
+//                        coroutineScope.launch {
+//                            isLoadingQrDataBottomBar.value = true
+//                            qrErrorBottomBar.value = null
+//                            try {
+//                                qrCodeDataBottomBar.value = userId
+//                                showQrDialogBottomBar.value = true
+//                            } catch (e: Exception) {
+//                                qrErrorBottomBar.value = "Error generating QR code: ${e.message}"
+//                                Log.e(TAG, "Error generating QR code data", e)
+//                            } finally {
+//                                isLoadingQrDataBottomBar.value = false
+//                            }
+//                        }
+//                    }
+//
+//                    Column(
+//                        horizontalAlignment = Alignment.CenterHorizontally,
+//                        modifier = Modifier
+//                            .padding(horizontal = 16.dp)
+//                    ) {
+//                        Box(
+//                            modifier = Modifier
+//                                .offset(y = (-24).dp)
+//                                .size(72.dp)
+//                                .clip(CircleShape)
+//                                .background(Color.White)
+//                                .border(
+//                                    width = 3.dp,
+//                                    color = colorResource(R.color.info_blue),
+//                                    shape = CircleShape
+//                                )
+//                                .clickable {
+//                                    if (!isLoadingQrDataBottomBar.value && userInfo?.id != null) {
+//                                        generateQrCodeDataBottomBar(userInfo!!.id)
+//                                    }
+//                                },
+//                            contentAlignment = Alignment.Center
+//                        ) {
+//                            if (isLoadingQrDataBottomBar.value) {
+//                                CircularProgressIndicator(
+//                                    modifier = Modifier.size(40.dp),
+//                                    color = colorResource(R.color.info_blue),
+//                                    strokeWidth = 3.dp
+//                                )
+//                            } else {
+//                                Icon(
+//                                    imageVector = Icons.Default.QrCode,
+//                                    contentDescription = "My QR",
+//                                    modifier = Modifier.size(44.dp),
+//                                    tint = colorResource(R.color.info_blue)
+//                                )
+//                            }
+//                        }
+//                        Text(
+//                            text = "My QR",
+//                            style = MaterialTheme.typography.titleMedium,
+//                            color = Color.White,
+//                            fontWeight = FontWeight.ExtraBold,
+//                            modifier = Modifier
+//                                .offset(y = (-16).dp)
+//                                .align(Alignment.CenterHorizontally)
+//                        )
+//                        if (qrErrorBottomBar.value != null) {
+//                            Card(
+//                                modifier = Modifier
+//                                    .fillMaxWidth()
+//                                    .padding(top = 8.dp),
+//                                colors = CardDefaults.cardColors(
+//                                    containerColor = colorResource(R.color.error_red).copy(alpha = 0.1f)
+//                                ),
+//                                shape = RoundedCornerShape(8.dp)
+//                            ) {
+//                                Row(
+//                                    modifier = Modifier
+//                                        .padding(12.dp)
+//                                        .fillMaxWidth(),
+//                                    verticalAlignment = Alignment.CenterVertically
+//                                ) {
+//                                    Icon(
+//                                        Icons.Filled.ReportProblem,
+//                                        contentDescription = "Error",
+//                                        tint = colorResource(R.color.error_red),
+//                                        modifier = Modifier.size(20.dp)
+//                                    )
+//                                    Spacer(modifier = Modifier.width(8.dp))
+//                                    Text(
+//                                        text = qrErrorBottomBar.value ?: "",
+//                                        color = colorResource(R.color.error_red),
+//                                        style = MaterialTheme.typography.bodySmall,
+//                                        fontWeight = FontWeight.Medium,
+//                                    )
+//                                }
+//                            }
+//                        }
+//                        if (showQrDialogBottomBar.value && qrCodeDataBottomBar.value != null) {
+//                            AlertDialog(
+//                                onDismissRequest = { handleQrDialogCloseBottomBar() },
+//                                title = {
+//                                    Text("Your QR Code", fontWeight = FontWeight.Bold)
+//                                },
+//                                text = {
+//                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+//                                        com.example.frontend.screens.components.QRCode(
+//                                            data = qrCodeDataBottomBar.value!!,
+//                                            modifier = Modifier.size(240.dp)
+//                                        )
+//                                        Spacer(modifier = Modifier.height(8.dp))
+//                                        Text("QR Code to share your ID", style = MaterialTheme.typography.bodyMedium)
+//                                    }
+//                                },
+//                                confirmButton = {
+//                                    TextButton(onClick = { handleQrDialogCloseBottomBar() }) {
+//                                        Text("CLOSE")
+//                                    }
+//                                }
+//                            )
+//                        }
+//                    }
+//                    // ASK AI Button (icon on top, text below)
+//                    Box(
+//                        modifier = Modifier
+//                            .weight(1f)
+//                            .height(72.dp)
+//                            .clip(RoundedCornerShape(20.dp))
+//                            .background(
+//                                Brush.verticalGradient(
+//                                    colors = listOf(
+//                                        colorResource(R.color.gradient_patient_start),
+//                                        colorResource(R.color.dark_surface)
+//                                    )
+//                                )
+//                            )
+//                            .border(2.dp, colorResource(R.color.info_blue), RoundedCornerShape(20.dp))
+//                            .clickable(onClick = onNavigateToChat),
+//                        contentAlignment = Alignment.Center
+//                    ) {
+//                        Column(
+//                            horizontalAlignment = Alignment.CenterHorizontally,
+//                            verticalArrangement = Arrangement.Center,
+//                            modifier = Modifier.fillMaxWidth()
+//                        ) {
+//                            Icon(
+//                                imageVector = Icons.Filled.Chat,
+//                                contentDescription = "Ask AI",
+//                                modifier = Modifier.size(28.dp),
+//                                tint = colorResource(R.color.white)
+//                            )
+//                            Text(
+//                                text = "Ask AI",
+//                                style = MaterialTheme.typography.titleMedium,
+//                                color = colorResource(R.color.white),
+//                                fontWeight = FontWeight.Bold,
+//                                modifier = Modifier.padding(top = 4.dp)
+//                            )
+//                        }
+//                    }
+//                }
+//            }
+//        }
     ) {
-        innerPadding ->
+            innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -496,6 +501,29 @@ fun ScreenPatient(
                         Spacer(modifier = Modifier.height(20.dp)) // Add space if user info is present
                     }
                 }
+            }
+            if (showQrDialog && userInfo != null) {
+                AlertDialog(
+                    onDismissRequest = { showQrDialog = false },
+                    title = {
+                        Text("Your QR Code", fontWeight = FontWeight.Bold)
+                    },
+                    text = {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            com.example.frontend.screens.components.QRCode(
+                                data = userInfo!!.id,
+                                modifier = Modifier.size(240.dp)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text("QR Code to share your ID", style = MaterialTheme.typography.bodyMedium)
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { showQrDialog = false }) {
+                            Text("CLOSE")
+                        }
+                    }
+                )
             }
         }
     }

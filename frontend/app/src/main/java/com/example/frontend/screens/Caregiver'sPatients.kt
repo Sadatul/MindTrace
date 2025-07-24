@@ -53,7 +53,8 @@ fun ScreenMyPatients(
             isLoading = isLoading,
             showDeletedPartners = showDeletedPartners,
             onToggleDeleted = { showDeletedPartners = !showDeletedPartners },
-            onShowLogs = onShowLogs // Pass callback
+            onShowLogs = onShowLogs, // Pass callback
+            navigationBar = TODO("Caregiver flow should go here")
         )
     }
 }

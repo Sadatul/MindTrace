@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -29,14 +30,19 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -83,7 +89,8 @@ private const val TAG = "ScreenChat"
 @Composable
 fun ChatScreen(
     onNavigateBack: () -> Unit = {},
-    onCancelDialog: () -> Unit = {}
+    onCancelDialog: () -> Unit = {},
+    navigationBar: NavigationBarComponent
 ) {
     var messages by remember { mutableStateOf(listOf<ChatMessage>()) }
     var showLastChatDialog by remember { mutableStateOf(false) }
@@ -97,6 +104,7 @@ fun ChatScreen(
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
     val pageSize = 20    // Load user info from cache
+
     LaunchedEffect(Unit) {
         userInfo = SelfUserInfoCache.getUserInfo()
         Log.d(TAG, "Loaded user info from cache: ${userInfo?.name}")
@@ -222,6 +230,9 @@ fun ChatScreen(
                     actionIconContentColor = colorResource(R.color.white)
                 )
             )
+        },
+        bottomBar = {
+            navigationBar.PatientNavigationBar(Screen.Chat)
         }
     ) { innerPadding ->
         Box(

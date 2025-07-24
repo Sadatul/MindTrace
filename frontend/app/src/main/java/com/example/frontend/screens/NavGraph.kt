@@ -18,7 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.navArgument
+import androidx.navigation.toRoute
 import com.example.frontend.api.RetrofitInstance
 import com.example.frontend.api.getSelfUserInfo
 import com.example.frontend.api.signOutUser
@@ -40,11 +40,26 @@ fun SetupNavGraph(navController: NavHostController) {
             CircularProgressIndicator()
         }
         return
-    }else{
+    } else{
         Log.d("start"," $startDestination")
     }
 
     NavHost(navController = navController, startDestination = startDestination!!) {
+
+        val navigationBar = NavigationBarComponent(
+            onPatientLogs = {
+                navController.navigate(Screen.PatientLogs(null))
+            },
+            onReminders = {
+            },
+            onPatientProfile = {
+                navController.navigate(Screen.DashBoardPatient)
+            },
+            onChatScreen = {
+                navController.navigate(Screen.Chat)
+            },
+        )
+        
         composable<Screen.Register> {
             ScreenRegister(
                 onNavigateToDashboard = { role ->
@@ -72,9 +87,12 @@ fun SetupNavGraph(navController: NavHostController) {
                         }
                         launchSingleTop = true
                     }
-                }
-            ) { navController.popBackStack() }
+                },
+                onBack = { navController.popBackStack() },
+                navigationBar = navigationBar
+            )
         }
+
         composable<Screen.DashboardCareGiver> {
             ScreenCareGiver(
                 onNavigateToChat = { navController.navigate(Screen.Chat) },
@@ -97,14 +115,17 @@ fun SetupNavGraph(navController: NavHostController) {
                 },
                 onCancelDialog = {
                     navController.popBackStack()
-                }
+                },
+                navigationBar = navigationBar
             )
         }
+
         composable<Screen.MyCaregivers> {
             ScreenMyCaregivers(
                 onNavigateBack = {
                     navController.popBackStack()
-                }
+                },
+                navigationBar = navigationBar
             )
         }
         composable<Screen.MyPatients> {
@@ -118,33 +139,36 @@ fun SetupNavGraph(navController: NavHostController) {
             )
         }
         // Add composable for Screen.PatientLogs so it can be used as a start destination
-        composable<Screen.PatientLogs> {
+        composable<Screen.PatientLogs> { backStackEntry ->
+            val (partnerId) = backStackEntry.toRoute<Screen.PatientLogs>()
             ScreenMyLogs(
                 onBack = { navController.popBackStack() },
-                onAskAi = { navController.navigate(Screen.Chat) },
-                onMyProfile = { navController.navigate(Screen.DashBoardPatient) },
-                isPatient = true,
-                partnerId = null
-            )
-        }
-        composable(
-            route = "patient_logs?partnerId={partnerId}",
-            arguments = listOf(
-                navArgument("partnerId") {
-                    nullable = true
-                    defaultValue = null
-                }
-            )
-        ) { backStackEntry ->
-            val partnerId = backStackEntry.arguments?.getString("partnerId")
-            ScreenMyLogs(
-                onBack = { navController.popBackStack() },
-                onAskAi = { navController.navigate(Screen.Chat) },
-                onMyProfile = { navController.navigate(Screen.DashBoardPatient) },
                 isPatient = partnerId == null,
-                partnerId = partnerId
+                partnerId = partnerId,
+                navigationBar = navigationBar
             )
         }
+
+//        composable(
+//            route = "patient_logs?partnerId={partnerId}",
+//            arguments = listOf(
+//                navArgument("partnerId") {
+//                    nullable = true
+//                    defaultValue = null
+//                }
+//            )
+//        ) { backStackEntry ->
+//            val partnerId = backStackEntry.arguments?.getString("partnerId")
+//            ScreenMyLogs(
+//                onBack = { navController.popBackStack() },
+//                onAskAi = { navController.navigate(Screen.Chat) },
+//                onMyProfile = { isPatient ->
+//                    navController.navigate(if(isPatient) Screen.DashBoardPatient else Screen.DashboardCareGiver)
+//                },
+//                isPatient = partnerId == null,
+//                partnerId = partnerId
+//            )
+//        }
     }
 
     if (showCloseAppDialog) {
@@ -158,6 +182,6 @@ fun SetupNavGraph(navController: NavHostController) {
 suspend fun getStartDestination(): Screen {
     val userInfo = RetrofitInstance.dementiaAPI.getSelfUserInfo(autoRedirect = false)
     return if (userInfo == null) Screen.Register
-    else if (userInfo.role == "PATIENT") Screen.PatientLogs // Changed from DashBoardPatient
+    else if (userInfo.role == "PATIENT") Screen.PatientLogs(null) // Changed from DashBoardPatient
     else Screen.DashboardCareGiver
 }

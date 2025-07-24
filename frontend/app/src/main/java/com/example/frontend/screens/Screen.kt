@@ -23,5 +23,5 @@ sealed class Screen {
     data object MyPatients: Screen()
 
     @Serializable
-    data object PatientLogs: Screen()
+    data class PatientLogs(val partnerId: String?): Screen()
 }

@@ -45,6 +45,8 @@ import com.example.frontend.api.getPartners
 import com.example.frontend.api.models.PartnerInfo
 import com.example.frontend.api.removePatient
 import com.example.frontend.api.sendCaregiverRemovalOTP
+import com.example.frontend.screens.NavigationBarComponent
+import com.example.frontend.screens.Screen
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -59,7 +61,8 @@ fun ScreenMyPartners(
     isLoading: Boolean = false,
     showDeletedPartners: Boolean = false,
     onToggleDeleted: () -> Unit = {},
-    onShowLogs: ((PartnerInfo) -> Unit)? = null // Make optional for patient flow
+    onShowLogs: ((PartnerInfo) -> Unit)? = null, // Make optional for patient flow
+    navigationBar: NavigationBarComponent
 ) {
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
@@ -198,6 +201,10 @@ fun ScreenMyPartners(
                 contentColor = if (isLoading) Color.White.copy(alpha = 0.5f) else Color.White,
                 shape = RoundedCornerShape(24.dp)
             )
+        },
+        bottomBar = {
+            if (role == "PATIENT") navigationBar.PatientNavigationBar(Screen.MyCaregivers)
+            else TODO("caregiver flow should go here")
         }
     ) { innerPadding ->
         Box(
