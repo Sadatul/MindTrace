@@ -2,8 +2,6 @@ package com.example.frontend.screens
 
 import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,7 +10,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -23,14 +20,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.QrCode
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -42,22 +36,19 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -74,28 +65,21 @@ import com.example.frontend.R
 import com.example.frontend.api.RetrofitInstance
 import com.example.frontend.api.SelfUserInfoCache
 import com.example.frontend.api.UserInfo
-import com.example.frontend.api.getIdToken
 import com.example.frontend.api.getSelfUserInfo
-import kotlinx.coroutines.launch
 
 private const val TAG = "ScreenCareGiver"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScreenCareGiver(
-    onNavigateToChat: () -> Unit,
     onNavigateToPatients: () -> Unit,
-    onSignOut: () -> Unit
+    onSignOut: () -> Unit,
+    navigationBar: NavigationBarComponent
 ) {
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
     val screenWidth = configuration.screenWidthDp.dp
 
-    val mainButtonHeight = when {
-        screenHeight < 600.dp -> 60.dp
-        screenHeight < 800.dp -> 66.dp
-        else -> 72.dp
-    }
 
     // Spacing and padding
     val verticalSpacing = when {
@@ -121,7 +105,6 @@ fun ScreenCareGiver(
     var errorMsg by remember { mutableStateOf<String?>(null) }
     var showProfileMenu by remember { mutableStateOf(false) }
 
-    val snackbarHostState = remember { SnackbarHostState() }
     var userInfo: UserInfo? by remember { mutableStateOf(null) }
 
 
@@ -207,249 +190,40 @@ fun ScreenCareGiver(
                 )
             )
         },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         bottomBar = {
+            navigationBar.CaregiverNavigationBar(Screen.DashboardCareGiver)
+        },
+        floatingActionButton = {
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .background(colorResource(R.color.dark_surface))
+                    .fillMaxSize()
+                    .padding(end = 24.dp, bottom = 24.dp),
+                contentAlignment = Alignment.BottomEnd
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(90.dp)
-                        .background(
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(
-                                    colorResource(id = R.color.gradient_caregiver_start),
-                                    colorResource(id = R.color.gradient_caregiver_end)
-                                )
-                            )
-                        )
-                        .padding(horizontal = 24.dp)
-                        .align(Alignment.BottomCenter),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                androidx.compose.material3.FloatingActionButton(
+                    onClick = onNavigateToPatients,
+                    containerColor = Color(0xFF1976D2), // Vibrant blue
+                    contentColor = Color.White,
+                    modifier = Modifier.shadow(8.dp, RoundedCornerShape(24.dp))
                 ) {
-                    // My Patients Button (icon on top, text below)
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(mainButtonHeight)
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(
-                                Brush.horizontalGradient(
-                                    colors = listOf(
-                                        colorResource(R.color.gradient_caregiver_start),
-                                        colorResource(R.color.gradient_caregiver_end)
-                                    )
-                                )
-                            )
-                            .border(2.dp, colorResource(R.color.info_blue), RoundedCornerShape(20.dp))
-                            .clickable(onClick = onNavigateToPatients),
-                        contentAlignment = Alignment.Center
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(horizontal = 12.dp)
                     ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.People,
-                                contentDescription = "My Patients",
-                                modifier = Modifier.size(28.dp),
-                                tint = colorResource(R.color.white)
-                            )
-                            Text(
-                                text = "My Patients",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = colorResource(R.color.white),
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(top = 4.dp)
-                            )
-                        }
-                    }
-                    val showQrDialogBottomBar = remember { mutableStateOf(false) }
-                    val qrCodeDataBottomBar = remember { mutableStateOf<String?>(null) }
-                    val isLoadingQrDataBottomBar = remember { mutableStateOf(false) }
-                    val qrErrorBottomBar = remember { mutableStateOf<String?>(null) }
-                    val coroutineScope = rememberCoroutineScope()
-
-                    fun handleQrDialogCloseBottomBar() {
-                        showQrDialogBottomBar.value = false
-                        qrCodeDataBottomBar.value = null
-                        qrErrorBottomBar.value = null
-                    }
-
-                    fun generateQrCodeDataBottomBar(userId: String) {
-                        coroutineScope.launch {
-                            isLoadingQrDataBottomBar.value = true
-                            qrErrorBottomBar.value = null
-                            try {
-                                val caregiverAuthToken = RetrofitInstance.dementiaAPI.getIdToken()
-                                val response = RetrofitInstance.dementiaAPI.getOtp("Bearer $caregiverAuthToken")
-
-                                if (response.isSuccessful && response.body() != null) {
-                                    val otp = response.body()!!.otp
-                                    if (otp != null) {
-                                        qrCodeDataBottomBar.value = "$userId|$otp"
-                                        showQrDialogBottomBar.value = true
-                                    } else {
-                                        qrErrorBottomBar.value = "Failed to generate registration code"
-                                    }
-                                } else {
-                                    qrErrorBottomBar.value = "Failed to fetch registration code: ${response.message()}"
-                                }
-                            } catch (e: Exception) {
-                                qrErrorBottomBar.value = "Error generating QR code: ${e.message}"
-                                Log.e(TAG, "Error generating QR code data", e)
-                            } finally {
-                                isLoadingQrDataBottomBar.value = false
-                            }
-                        }
-                    }
-
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .offset(y = (-24).dp)
-                                .size(72.dp)
-                                .clip(CircleShape)
-                                .background(colorResource(R.color.white))
-                                .border(
-                                    width = 3.dp,
-                                    color = colorResource(R.color.info_blue),
-                                    shape = CircleShape
-                                )
-                                .clickable {
-                                    if (!isLoadingQrDataBottomBar.value && userInfo?.id != null) {
-                                        generateQrCodeDataBottomBar(userInfo!!.id)
-                                    }
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (isLoadingQrDataBottomBar.value) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(40.dp),
-                                    color = colorResource(R.color.info_blue),
-                                    strokeWidth = 3.dp
-                                )
-                            } else {
-                                Icon(
-                                    imageVector = Icons.Default.QrCode,
-                                    contentDescription = "My QR",
-                                    modifier = Modifier.size(44.dp),
-                                    tint = colorResource(R.color.info_blue)
-                                )
-                            }
-                        }
+                        Icon(
+                            imageVector = Icons.Default.People,
+                            contentDescription = "My Patients",
+                            modifier = Modifier.size(24.dp),
+                            tint = Color.White
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "My QR",
+                            text = "My Patients",
                             style = MaterialTheme.typography.titleMedium,
                             color = Color.White,
-                            fontWeight = FontWeight.ExtraBold,
-                            modifier = Modifier
-                                .offset(y = (-20).dp)
-                                .align(Alignment.CenterHorizontally)
+                            fontWeight = FontWeight.Bold
                         )
-                        if (qrErrorBottomBar.value != null) {
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 8.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = colorResource(R.color.error_red).copy(alpha = 0.1f)
-                                ),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .padding(12.dp)
-                                        .fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        Icons.Filled.ErrorOutline,
-                                        contentDescription = "Error",
-                                        tint = colorResource(R.color.error_red),
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = qrErrorBottomBar.value ?: "",
-                                        color = colorResource(R.color.error_red),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        fontWeight = FontWeight.Medium,
-                                    )
-                                }
-                            }
-                        }
-                        if (showQrDialogBottomBar.value && qrCodeDataBottomBar.value != null) {
-                            AlertDialog(
-                                onDismissRequest = { handleQrDialogCloseBottomBar() },
-                                title = {
-                                    Text("Registration QR Code", fontWeight = FontWeight.Bold)
-                                },
-                                text = {
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        com.example.frontend.screens.components.QRCode(
-                                            data = qrCodeDataBottomBar.value!!,
-                                            modifier = Modifier.size(240.dp)
-                                        )
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text("QR Code for New Patient Register", style = MaterialTheme.typography.bodyMedium)
-
-                                    }
-                                },
-                                confirmButton = {
-                                    TextButton(onClick = { handleQrDialogCloseBottomBar() }) {
-                                        Text("CLOSE")
-                                    }
-                                }
-                            )
-                        }
-                    }
-                    // ASK AI Button (icon on top, text below)
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(mainButtonHeight)
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(
-                                Brush.horizontalGradient(
-                                    colors = listOf(
-                                        colorResource(R.color.gradient_caregiver_start),
-                                        colorResource(R.color.gradient_caregiver_end)
-                                    )
-                                )
-                            )
-                            .border(2.dp, colorResource(R.color.info_blue), RoundedCornerShape(20.dp))
-                            .clickable(onClick = onNavigateToChat),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Chat,
-                                contentDescription = "Ask AI",
-                                modifier = Modifier.size(28.dp),
-                                tint = colorResource(R.color.white)
-                            )
-                            Text(
-                                text = "Ask AI",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = colorResource(R.color.white),
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(top = 4.dp)
-                            )
-                        }
                     }
                 }
             }

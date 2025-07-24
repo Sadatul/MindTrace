@@ -12,7 +12,6 @@ import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.background
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.compose.foundation.border
@@ -25,14 +24,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.typography
@@ -49,8 +46,6 @@ import java.time.format.DateTimeFormatter
 import java.time.ZonedDateTime
 import java.time.LocalDate
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -100,9 +95,6 @@ fun MyLogs(
     patientName: String? = null,
     profilePicture: String? = null,
     onBack: () -> Unit = {},
-    onAskAi: () -> Unit = {},
-    onMyReminders: () -> Unit = {}, // Callback for My Reminders button
-    onMyProfile: () -> Unit = {}, // Callback for My Profile button
     isPatient: Boolean = false, // Add isPatient parameter
     isViewOnly: Boolean = false, // Add view-only mode for caregivers
     onAddLog: () -> Unit = {}, // Callback for Add Log
@@ -114,7 +106,8 @@ fun MyLogs(
     onEndDateChange: (LocalDate?) -> Unit = {},
     onClearDateFilters: () -> Unit = {},
     hasNotificationPermission: Boolean = true, // Add notification permission status
-    onRequestNotificationPermission: () -> Unit = {} // Add callback to request permission
+    onRequestNotificationPermission: () -> Unit = {}, // Add callback to request permission
+    navigationBar: NavigationBarComponent
 ) {
     Scaffold(
         topBar = {
@@ -135,42 +128,42 @@ fun MyLogs(
                         }
                     }
                 },
-        actions = {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(end = 16.dp)
-            ) {
-                if (profilePicture != null) {
-                    AsyncImage(
-                        model = profilePicture,
-                        contentDescription = "Profile Picture",
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .border(2.dp, colorResource(R.color.white), CircleShape),
-                        contentScale = ContentScale.Crop,
-                        placeholder = painterResource(R.drawable.ic_launcher_foreground),
-                        error = painterResource(R.drawable.ic_launcher_foreground)
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .border(2.dp, colorResource(R.color.white), CircleShape),
-                        contentAlignment = Alignment.Center
+                actions = {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(end = 16.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Filled.Person,
-                            contentDescription = "Default Profile",
-                            modifier = Modifier.size(28.dp),
-                            tint = colorResource(R.color.white)
-                        )
+                        if (profilePicture != null) {
+                            AsyncImage(
+                                model = profilePicture,
+                                contentDescription = "Profile Picture",
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(CircleShape)
+                                    .border(2.dp, colorResource(R.color.white), CircleShape),
+                                contentScale = ContentScale.Crop,
+                                placeholder = painterResource(R.drawable.ic_launcher_foreground),
+                                error = painterResource(R.drawable.ic_launcher_foreground)
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(CircleShape)
+                                    .border(2.dp, colorResource(R.color.white), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Person,
+                                    contentDescription = "Default Profile",
+                                    modifier = Modifier.size(28.dp),
+                                    tint = colorResource(R.color.white)
+                                )
+                            }
+                        }
                     }
-                }
-            }
-        },
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = colorResource(R.color.card_patient),
                     titleContentColor = colorResource(R.color.white),
@@ -220,142 +213,11 @@ fun MyLogs(
                     }
                 }
             }
-        }, floatingActionButtonPosition = FabPosition.End,
+        },
+        floatingActionButtonPosition = FabPosition.End,
         bottomBar = {
-            if (!isViewOnly) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color.Black)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(90.dp)
-                            .background(Color.Black)
-                            .padding(horizontal = 24.dp)
-                            .align(Alignment.BottomCenter),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // My Reminders Button (left)
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(72.dp)
-                                .clip(RoundedCornerShape(20.dp))
-                                .background(
-                                    Brush.linearGradient(
-                                        colors = listOf(
-                                            colorResource(R.color.info_blue),
-                                            colorResource(R.color.gradient_patient_end)
-                                        )
-                                    )
-                                )
-                                .border(2.dp, colorResource(R.color.white), RoundedCornerShape(20.dp))
-                                .clickable(onClick = onMyReminders),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Notifications,
-                                    contentDescription = "My Reminders",
-                                    modifier = Modifier.size(28.dp),
-                                    tint = colorResource(R.color.white)
-                                )
-                                Text(
-                                    text = "My Reminders",
-                                    style = typography.titleMedium,
-                                    color = colorResource(R.color.white),
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(top = 4.dp)
-                                )
-                            }
-                        }
-                        // My Profile Button (center, round, even smaller)
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(44.dp)
-                                .aspectRatio(1f)
-                                .clip(CircleShape)
-                                .background(
-                                    Brush.linearGradient(
-                                        colors = listOf(
-                                            colorResource(R.color.info_blue),
-                                            colorResource(R.color.gradient_patient_start)
-                                        )
-                                    )
-                                )
-                                .border(2.dp, colorResource(R.color.white), CircleShape)
-                                .clickable(onClick = onMyProfile),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center,
-                                modifier = Modifier.fillMaxSize()
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Person,
-                                    contentDescription = "My Profile",
-                                    modifier = Modifier.size(28.dp),
-                                    tint = colorResource(R.color.white)
-                                )
-                                Text(
-                                    text = "My Profile",
-                                    style = typography.labelMedium,
-                                    color = colorResource(R.color.white),
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(top = 1.dp)
-                                )
-                            }
-                        }
-                        // Ask AI Button (right)
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(72.dp)
-                                .clip(RoundedCornerShape(20.dp))
-                                .background(
-                                    Brush.linearGradient(
-                                        colors = listOf(
-                                            colorResource(R.color.info_blue),
-                                            colorResource(R.color.gradient_patient_start)
-                                        )
-                                    )
-                                )
-                                .border(2.dp, colorResource(R.color.white), RoundedCornerShape(20.dp))
-                                .clickable(onClick = onAskAi),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.Chat,
-                                    contentDescription = "Ask AI",
-                                    modifier = Modifier.size(28.dp),
-                                    tint = colorResource(R.color.white)
-                                )
-                                Text(
-                                    text = "Ask AI",
-                                    style = typography.titleMedium,
-                                    color = colorResource(R.color.white),
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(top = 4.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+            navigationBar.PatientNavigationBar(Screen.PatientLogs(null))
+
         },
         containerColor = colorResource(R.color.dark_surface)
     ) { innerPadding ->
@@ -688,10 +550,9 @@ private fun LogItem(
 fun MyLogsScreen(
     partnerId: String? = null,
     onBack: () -> Unit = {},
-    onAskAi: () -> Unit = {},
-    onMyProfile: () -> Unit = {},
     isPatient: Boolean,
-    viewModel: ViewModelLogs = viewModel()
+    viewModel: ViewModelLogs = viewModel(),
+    navigationBar: NavigationBarComponent
 ) {
     val logs by viewModel.logs.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -772,8 +633,6 @@ fun MyLogsScreen(
                 patientName = patientInfo?.name,
                 profilePicture = patientInfo?.profilePicture,
                 onBack = onBack,
-                onAskAi = onAskAi,
-                onMyProfile = onMyProfile,
                 isPatient = isPatient,
                 isViewOnly = isViewOnly, // Pass view-only mode
                 onAddLog = {
@@ -814,7 +673,8 @@ fun MyLogsScreen(
 
                         Log.d("ScreenMyLogs", "Opening app settings for notification permission")
                     }
-                }
+                },
+                navigationBar = navigationBar
             )
 
             // Snackbar positioned at the bottom
@@ -897,15 +757,13 @@ fun MyLogsScreen(
 fun ScreenMyLogs(
     partnerId: String? = null,
     onBack: () -> Unit = {},
-    onAskAi: () -> Unit = {},
-    onMyProfile: () -> Unit = {},
     isPatient: Boolean,
+    navigationBar: NavigationBarComponent
 ) {
     MyLogsScreen(
         partnerId = partnerId,
         onBack = onBack,
-        onAskAi = onAskAi,
-        onMyProfile = onMyProfile,
-        isPatient = isPatient
+        isPatient = isPatient,
+        navigationBar = navigationBar
     )
 }

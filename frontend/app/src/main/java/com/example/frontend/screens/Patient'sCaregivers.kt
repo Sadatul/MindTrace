@@ -11,7 +11,8 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun ScreenMyCaregivers(
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    navigationBar: NavigationBarComponent
 ) {
     var currentUser: UserInfo? by remember { mutableStateOf(null) }
     var caregivers by remember { mutableStateOf(listOf<PartnerInfo>()) }
@@ -51,7 +52,8 @@ fun ScreenMyCaregivers(
             onNavigateBack = onNavigateBack,
             isLoading = isLoading,
             showDeletedPartners = showDeletedPartners,
-            onToggleDeleted = { showDeletedPartners = !showDeletedPartners }
+            onToggleDeleted = { showDeletedPartners = !showDeletedPartners },
+            navigationBar = navigationBar
         )
     }
 }

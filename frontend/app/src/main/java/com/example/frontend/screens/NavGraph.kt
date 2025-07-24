@@ -18,7 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.navArgument
+import androidx.navigation.toRoute
 import com.example.frontend.api.RetrofitInstance
 import com.example.frontend.api.getSelfUserInfo
 import com.example.frontend.api.signOutUser
@@ -40,17 +40,35 @@ fun SetupNavGraph(navController: NavHostController) {
             CircularProgressIndicator()
         }
         return
-    }else{
+    } else{
         Log.d("start"," $startDestination")
     }
 
     NavHost(navController = navController, startDestination = startDestination!!) {
+
+        val navigationBar = NavigationBarComponent(
+            onPatientLogs = {
+                navController.navigate(Screen.PatientLogs(null))
+            },
+            onReminders = {
+            },
+            onPatientProfile = {
+                navController.navigate(Screen.DashBoardPatient)
+            },
+            onChatScreen = {
+                navController.navigate(Screen.Chat)
+            },
+            onCaregiverProfile = {
+                navController.navigate(Screen.DashboardCareGiver)
+            }
+        )
+        
         composable<Screen.Register> {
             ScreenRegister(
                 onNavigateToDashboard = { role ->
                     val destination =
                         when (role) {
-                            "PATIENT" -> Screen.PatientLogs // Changed from DashBoardPatient
+                            "PATIENT" -> Screen.PatientLogs(null)
                             "CAREGIVER" -> Screen.DashboardCareGiver
                             else -> throw IllegalArgumentException("Unknown role: $role")
                         }
@@ -62,7 +80,6 @@ fun SetupNavGraph(navController: NavHostController) {
         }
         composable<Screen.DashBoardPatient> {
             ScreenPatient(
-                onNavigateToChat = { navController.navigate(Screen.Chat) },
                 onNavigateToCaregivers = { navController.navigate(Screen.MyCaregivers) },
                 onSignOut = {
                     RetrofitInstance.dementiaAPI.signOutUser(context)
@@ -72,12 +89,14 @@ fun SetupNavGraph(navController: NavHostController) {
                         }
                         launchSingleTop = true
                     }
-                }
-            ) { navController.popBackStack() }
+                },
+                onBack = { navController.popBackStack() },
+                navigationBar = navigationBar
+            )
         }
+
         composable<Screen.DashboardCareGiver> {
             ScreenCareGiver(
-                onNavigateToChat = { navController.navigate(Screen.Chat) },
                 onNavigateToPatients = { navController.navigate(Screen.MyPatients) },
                 onSignOut = {
                     RetrofitInstance.dementiaAPI.signOutUser(context)
@@ -87,7 +106,8 @@ fun SetupNavGraph(navController: NavHostController) {
                         }
                         launchSingleTop = true
                     }
-                }
+                },
+                navigationBar = navigationBar
             )
         }
         composable<Screen.Chat> {
@@ -97,14 +117,17 @@ fun SetupNavGraph(navController: NavHostController) {
                 },
                 onCancelDialog = {
                     navController.popBackStack()
-                }
+                },
+                navigationBar = navigationBar
             )
         }
+
         composable<Screen.MyCaregivers> {
             ScreenMyCaregivers(
                 onNavigateBack = {
                     navController.popBackStack()
-                }
+                },
+                navigationBar = navigationBar
             )
         }
         composable<Screen.MyPatients> {
@@ -113,36 +136,20 @@ fun SetupNavGraph(navController: NavHostController) {
                     navController.popBackStack()
                 },
                 onShowLogs = { partner ->
-                    navController.navigate("patient_logs?partnerId=${partner.id}")
-                }
+                    navController.navigate(Screen.PatientLogs(partner.id))
+                },
+                navigationBar = navigationBar
             )
         }
         // Add composable for Screen.PatientLogs so it can be used as a start destination
-        composable<Screen.PatientLogs> {
+        composable<Screen.PatientLogs> { backStackEntry ->
+            val (partnerId) = backStackEntry.toRoute<Screen.PatientLogs>()
+            val isPatient = partnerId == null
             ScreenMyLogs(
                 onBack = { navController.popBackStack() },
-                onAskAi = { navController.navigate(Screen.Chat) },
-                onMyProfile = { navController.navigate(Screen.DashBoardPatient) },
-                isPatient = true,
-                partnerId = null
-            )
-        }
-        composable(
-            route = "patient_logs?partnerId={partnerId}",
-            arguments = listOf(
-                navArgument("partnerId") {
-                    nullable = true
-                    defaultValue = null
-                }
-            )
-        ) { backStackEntry ->
-            val partnerId = backStackEntry.arguments?.getString("partnerId")
-            ScreenMyLogs(
-                onBack = { navController.popBackStack() },
-                onAskAi = { navController.navigate(Screen.Chat) },
-                onMyProfile = { navController.navigate(Screen.DashBoardPatient) },
-                isPatient = partnerId == null,
-                partnerId = partnerId
+                isPatient = isPatient,
+                partnerId = partnerId,
+                navigationBar = if (isPatient) navigationBar else navigationBar
             )
         }
     }
@@ -158,6 +165,6 @@ fun SetupNavGraph(navController: NavHostController) {
 suspend fun getStartDestination(): Screen {
     val userInfo = RetrofitInstance.dementiaAPI.getSelfUserInfo(autoRedirect = false)
     return if (userInfo == null) Screen.Register
-    else if (userInfo.role == "PATIENT") Screen.PatientLogs // Changed from DashBoardPatient
+    else if (userInfo.role == "PATIENT") Screen.PatientLogs(null)
     else Screen.DashboardCareGiver
 }
