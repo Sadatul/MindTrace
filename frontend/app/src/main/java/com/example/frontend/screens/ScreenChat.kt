@@ -11,6 +11,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,7 +29,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -82,7 +82,6 @@ private const val TAG = "ScreenChat"
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
-    onNavigateBack: () -> Unit = {},
     onCancelDialog: () -> Unit = {},
     navigationBar: NavigationBarComponent
 ) {
@@ -171,6 +170,7 @@ fun ChatScreen(
     Scaffold(
         containerColor = colorResource(R.color.dark_background),
         topBar = {
+            var showTelegramDialog by remember { mutableStateOf(false) }
             CenterAlignedTopAppBar(
                 title = {
                     Text(
@@ -182,14 +182,49 @@ fun ChatScreen(
                 },
                 navigationIcon = {
                     IconButton(
-                        onClick = onNavigateBack,
-                        modifier = Modifier.padding(start = 4.dp)
+                        onClick = { showTelegramDialog = true },
+                        modifier = Modifier.padding(start = 0.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back to Dashboard",
-                            tint = colorResource(R.color.white),
-                            modifier = Modifier.size(28.dp)
+                        val boxSize = 200.dp
+                        val borderWidth = 2.dp
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(boxSize)
+                                .clip(CircleShape)
+                                .background(colorResource(R.color.white))
+                                .border(
+                                    width = borderWidth,
+                                    color = colorResource(R.color.gradient_caregiver_start),
+                                    shape = CircleShape
+                                )
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_telegram),
+                                contentDescription = "Telegram",
+                                tint = Color(0xFF229ED9),
+                                modifier = Modifier.size(boxSize - borderWidth * 2)
+                            )
+                        }
+                    }
+                    if (showTelegramDialog) {
+                        androidx.compose.material3.AlertDialog(
+                            onDismissRequest = { showTelegramDialog = false },
+                            title = { Text("Confirmation") },
+                            text = { Text("You want to chat with telegram?") },
+                            confirmButton = {
+                                androidx.compose.material3.TextButton(onClick = {
+                                    showTelegramDialog = false
+                                    // TODO: Implement Telegram chat action here
+                                }) {
+                                    Text("Yes")
+                                }
+                            },
+                            dismissButton = {
+                                androidx.compose.material3.TextButton(onClick = { showTelegramDialog = false }) {
+                                    Text("No")
+                                }
+                            }
                         )
                     }
                 },actions = {
