@@ -152,6 +152,12 @@ fun SetupNavGraph(navController: NavHostController) {
                 navigationBar = if (isPatient) navigationBar else navigationBar
             )
         }
+
+        composable<Screen.Reminder> { backStackEntry ->
+            val (userId) = backStackEntry.toRoute<Screen.Reminder>()
+
+            ScreenReminder(userId)
+        }
     }
 
     if (showCloseAppDialog) {

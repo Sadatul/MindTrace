@@ -30,7 +30,7 @@ public class ReminderSchedulerServiceImpl implements ReminderSchedulerService {
 
     @Override
     public void scheduleReminder(ReminderDTO req){
-        Optional<Integer> optionalDelay = getDelay(req.getCronExpression(), ZoneId.of(req.getZoneId()));
+        Optional<Long> optionalDelay = getDelay(req.getCronExpression(), ZoneId.of(req.getZoneId()));
         if(optionalDelay.isEmpty()){
             log.debug("No next reminder found");
             return;
@@ -66,7 +66,7 @@ public class ReminderSchedulerServiceImpl implements ReminderSchedulerService {
 
     @Override
     public boolean isReminderScheduled(String cronExpression, ZoneId timezone) {
-        Optional<Integer> delayOptional = getDelay(cronExpression, timezone);
+        Optional<Long> delayOptional = getDelay(cronExpression, timezone);
         if (delayOptional.isEmpty()) {
             return false;
         }
@@ -74,7 +74,7 @@ public class ReminderSchedulerServiceImpl implements ReminderSchedulerService {
         return delay <= reminderSchedulerConfig.getRedis().getMaxDelay() && delay >= 0;
     }
 
-    public Optional<Integer> getDelay(String cronExpression, ZoneId timezone) {
+    public Optional<Long> getDelay(String cronExpression, ZoneId timezone) {
         Instant now = Instant.now();
         Optional<Instant> nextExecution = getNextExecution(cronExpression, timezone);
         if (nextExecution.isEmpty()) {
@@ -82,7 +82,7 @@ public class ReminderSchedulerServiceImpl implements ReminderSchedulerService {
         }
         Instant nextRun = nextExecution.get();
         long delay = Duration.between(now, nextRun).toMillis();
-        return delay > 0 ? Optional.of((int) delay) : Optional.of(0);
+        return delay > 0 ? Optional.of(delay) : Optional.of(0L);
     }
 
     private void sendToRedis(ReminderDTO req, long delay) {

@@ -34,8 +34,8 @@ data class ReminderSchedule(
 
     val repeatMode: RepeatMode,        // Determines which mode is active
 
-    val daysOfWeek: List<DayOfWeek>?,  // Kotlin's built-in enum: MONDAY, TUESDAY, etc.
-    val dayOfMonth: Int?,              // 1–31
+    val daysOfWeek: List<DayOfWeek>?,  // Kotlin's built-in enum: MONDAY, TUESDAY, etc. or null if not specified
+    val daysOfMonth: List<Int>?,              // [1, 15, 28] or null if not specified
     val month: Int?,                   // 1–12 (nullable if not specified)
 
     val isRecurring: Boolean           // Toggle: recurring or one-time
@@ -48,30 +48,52 @@ data class ReminderSchedule(
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun toCronExpression(): String {
         val second = 0
-        val minuteStr = minute.toString()
-        val hourStr = get24Hour().toString()
+        val minuteStr = "%02d".format(minute)
+        val hourStr = "%02d".format(get24Hour())
+        val monthStr = month?.toString() ?: "*"
 
         val dayOfMonthStr: String
         val dayOfWeekStr: String
-        val monthStr: String = month?.toString() ?: if (isRecurring) "*" else "?"
 
-        when (repeatMode) {
-            RepeatMode.DAY_OF_WEEK -> {
-                dayOfWeekStr = if (!daysOfWeek.isNullOrEmpty()) {
-                    daysOfWeek.joinToString(",") { it.name.substring(0, 3).uppercase() }  // MON, TUE, etc.
-                } else if (isRecurring) {
-                    "*"
-                } else {
-                    "?"
+        if (!isRecurring) {
+            // One-time schedule: cron is still required in recurring form
+            // Fallback to running every day (safe and valid)
+            dayOfMonthStr = "*"
+            dayOfWeekStr = "?"
+        } else {
+            when (repeatMode) {
+                RepeatMode.DAY_OF_WEEK -> {
+                    // Only daysOfWeek is set (guaranteed by assumption)
+                    dayOfWeekStr = if (daysOfWeek!!.isNotEmpty()) {
+                        daysOfWeek.joinToString(",") {
+                            when (it) {
+                                DayOfWeek.SUNDAY -> "0"
+                                DayOfWeek.MONDAY -> "1"
+                                DayOfWeek.TUESDAY -> "2"
+                                DayOfWeek.WEDNESDAY -> "3"
+                                DayOfWeek.THURSDAY -> "4"
+                                DayOfWeek.FRIDAY -> "5"
+                                DayOfWeek.SATURDAY -> "6"
+                            }
+                        }
+                    } else {
+                        "*"  // Run every day of the week
+                    }
+                    dayOfMonthStr = "?"
                 }
-                dayOfMonthStr = "?"
-            }
 
-            RepeatMode.DAY_OF_MONTH -> {
-                dayOfWeekStr = "?"
-                dayOfMonthStr = dayOfMonth?.toString() ?: if (isRecurring) "*" else "?"
+                RepeatMode.DAY_OF_MONTH -> {
+                    // Only daysOfMonth is set (guaranteed by assumption)
+                    dayOfMonthStr = if (daysOfMonth!!.isNotEmpty()) {
+                        daysOfMonth.joinToString(",")
+                    } else {
+                        "*"  // Run every day of the month
+                    }
+                    dayOfWeekStr = "?"
+                }
             }
         }
 
@@ -86,46 +108,87 @@ data class ReminderSchedule(
             return "Runs once at $timeStr"
         }
 
-        val base = StringBuilder("Runs every ")
+        val base = StringBuilder()
 
         when (repeatMode) {
             RepeatMode.DAY_OF_WEEK -> {
-                val days = if (!daysOfWeek.isNullOrEmpty()) {
-                    daysOfWeek.joinToString(", ") { it.name.lowercase().replaceFirstChar { c -> c.uppercase() } }
+                if (!daysOfWeek.isNullOrEmpty()) {
+                    val dayNames = daysOfWeek.joinToString(", ") {
+                        it.name.lowercase().replaceFirstChar { c -> c.uppercase() }
+                    }
+                    base.append("Repeats on $dayNames")
                 } else {
-                    "day"
+                    base.append("Repeats daily")
                 }
-                base.append("$days at $timeStr")
+                
+                if (month != null) {
+                    val monthName = java.time.Month.of(month)
+                        .name.lowercase().replaceFirstChar { it.uppercase() }
+                    base.append(" in $monthName")
+                }
+                
+                base.append(" at $timeStr")
             }
 
             RepeatMode.DAY_OF_MONTH -> {
-                base.append("month on day ${dayOfMonth ?: "?"}")
-                if (month != null) {
-                    val monthName = java.time.Month.of(month).name.lowercase().replaceFirstChar { it.uppercase() }
-                    base.append(" of $monthName")
+                if (!daysOfMonth.isNullOrEmpty()) {
+                    val sortedDays = daysOfMonth.sorted()
+                    val daysStr = when (sortedDays.size) {
+                        1 -> "the ${getOrdinal(sortedDays[0])}"
+                        2 -> "the ${getOrdinal(sortedDays[0])} and ${getOrdinal(sortedDays[1])}"
+                        else -> {
+                            val lastDay = sortedDays.last()
+                            val otherDays = sortedDays.dropLast(1).joinToString(", ") { getOrdinal(it) }
+                            "the $otherDays, and ${getOrdinal(lastDay)}"
+                        }
+                    }
+                    base.append("Repeats on $daysStr of")
+                } else {
+                    base.append("Repeats monthly on")
                 }
+
+                if (month != null) {
+                    val monthName = java.time.Month.of(month)
+                        .name.lowercase().replaceFirstChar { it.uppercase() }
+                    base.append(" $monthName")
+                } else {
+                    base.append(" every month")
+                }
+                
                 base.append(" at $timeStr")
             }
         }
 
         return base.toString()
     }
+    
+    private fun getOrdinal(day: Int): String {
+        val suffix = when {
+            day in 11..13 -> "th"
+            day % 10 == 1 -> "st"
+            day % 10 == 2 -> "nd"
+            day % 10 == 3 -> "rd"
+            else -> "th"
+        }
+        return "$day$suffix"
+    }
 
     companion object {
-        fun fromCronExpression(cron: String): ReminderSchedule? {
+        @RequiresApi(Build.VERSION_CODES.O)
+        fun fromCronExpression(cron: String, isRecurring: Boolean): ReminderSchedule? {
             val parts = cron.trim().split(" ")
             if (parts.size != 6) return null
 
-            val secondStr = parts[0]
             val minuteStr = parts[1]
             val hourStr = parts[2]
             val domStr = parts[3]
             val monthStr = parts[4]
             val dowStr = parts[5]
 
+            // Parse hour and period
             val hour24 = hourStr.toIntOrNull() ?: return null
             val period: TimePeriod
-            val hour12: Int = when {
+            val hour12 = when {
                 hour24 == 0 -> {
                     period = TimePeriod.AM
                     12
@@ -138,38 +201,58 @@ data class ReminderSchedule(
                     period = TimePeriod.PM
                     12
                 }
-                else -> {
+                hour24 in 13..23 -> {
                     period = TimePeriod.PM
                     hour24 - 12
                 }
+                else -> return null
             }
 
             val minute = minuteStr.toIntOrNull() ?: return null
-
-            val isRecurring = (domStr == "*" || dowStr == "*" || monthStr == "*")
+            if (minute !in 0..59) return null
 
             val repeatMode: RepeatMode
             val daysOfWeek: List<DayOfWeek>?
-            val dayOfMonth: Int?
+            val daysOfMonth: List<Int>?
             val month: Int?
 
-            if (dowStr != "?" && dowStr != "*") {
+            if (dowStr != "?") {
+                // DAY_OF_WEEK mode
                 repeatMode = RepeatMode.DAY_OF_WEEK
-                daysOfWeek = dowStr.split(",").mapNotNull { dayStr ->
-                    try {
-                        DayOfWeek.valueOf(dayStr.uppercase())
-                    } catch (e: Exception) {
-                        null
+                daysOfWeek = if (dowStr == "*") {
+                    emptyList()
+                } else {
+                    dowStr.split(",").mapNotNull { dayNum ->
+                        when (dayNum.trim()) {
+                            "0" -> DayOfWeek.SUNDAY
+                            "1" -> DayOfWeek.MONDAY
+                            "2" -> DayOfWeek.TUESDAY
+                            "3" -> DayOfWeek.WEDNESDAY
+                            "4" -> DayOfWeek.THURSDAY
+                            "5" -> DayOfWeek.FRIDAY
+                            "6" -> DayOfWeek.SATURDAY
+                            else -> null
+                        }
                     }
                 }
-                dayOfMonth = null
+                daysOfMonth = null
             } else {
+                // DAY_OF_MONTH mode
                 repeatMode = RepeatMode.DAY_OF_MONTH
                 daysOfWeek = null
-                dayOfMonth = domStr.toIntOrNull()
+                daysOfMonth = if (domStr == "*" || domStr == "?") {
+                    emptyList()
+                } else {
+                    domStr.split(",").mapNotNull { it.trim().toIntOrNull() }
+                        .filter { it in 1..31 }
+                }
             }
 
-            month = if (monthStr != "*" && monthStr != "?") monthStr.toIntOrNull() else null
+            month = if (monthStr != "*" && monthStr.isNotEmpty()) {
+                monthStr.toIntOrNull()?.takeIf { it in 1..12 }
+            } else {
+                null
+            }
 
             return ReminderSchedule(
                 hour = hour12,
@@ -177,7 +260,7 @@ data class ReminderSchedule(
                 period = period,
                 repeatMode = repeatMode,
                 daysOfWeek = daysOfWeek,
-                dayOfMonth = dayOfMonth,
+                daysOfMonth = daysOfMonth,
                 month = month,
                 isRecurring = isRecurring
             )
@@ -188,7 +271,8 @@ data class ReminderSchedule(
 }
 
 data class RequestStoreReminderRaw(val userId: String?, val title: String, val description: String, val reminderType: String, val cronExpression: String, val isRecurring: Boolean = false)
-data class RequestStoreReminder(val userId: String, val title: String, val description: String, val reminderType: ReminderType, val schedule: ReminderSchedule) {
+data class RequestStoreReminder(val userId: String?, val title: String, val description: String, val reminderType: ReminderType, val schedule: ReminderSchedule) {
+    @RequiresApi(Build.VERSION_CODES.O)
     fun toRaw(): RequestStoreReminderRaw {
         return RequestStoreReminderRaw(userId, title, description, reminderTypeToString(reminderType), schedule.toCronExpression(), schedule.isRecurring)
     }
@@ -199,6 +283,14 @@ data class Reminder(val id: String, val reminderType: ReminderType, val title: S
 data class ReminderRaw(val id: String, val reminderType: String, val title: String, val description: String, val cronExpression: String, val createdAt: String, val isRecurring: Boolean, val nextExecution: String, val zoneId: String) {
     @RequiresApi(Build.VERSION_CODES.O)
     fun toWrapper(): Reminder {
-        return Reminder(id, reminderStringToType(reminderType), title, description, ReminderSchedule.fromCronExpression(cronExpression)!!, convertUtcToLocal(createdAt), convertUtcToLocal(nextExecution))
+        return Reminder(id, reminderStringToType(reminderType), title, description, ReminderSchedule.fromCronExpression(cronExpression, isRecurring)!!, convertUtcToLocal(createdAt), convertUtcToLocal(nextExecution))
+    }
+}
+
+data class ResponseGetReminders(val content: List<Reminder>, val page: PageInfo)
+data class ResponseGetRemindersRaw(val content: List<ReminderRaw>, val page: PageInfo) {
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun toWrapper(): ResponseGetReminders {
+        return ResponseGetReminders(content.map { it.toWrapper() }, page)
     }
 }

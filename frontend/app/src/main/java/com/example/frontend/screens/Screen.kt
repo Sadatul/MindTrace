@@ -23,5 +23,9 @@ sealed class Screen {
     data object MyPatients: Screen()
 
     @Serializable
+    data class Reminder(val userId: String?): Screen()
+
+    @Serializable
     data class PatientLogs(val partnerId: String?): Screen()
+
 }
