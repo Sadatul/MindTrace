@@ -1,6 +1,5 @@
 package com.example.frontend.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,9 +39,6 @@ import com.example.frontend.api.SelfUserInfoCache
 import com.example.frontend.api.UserInfo
 import com.example.frontend.api.getIdToken
 
-val NavigationBarSelectedColor = Color(0xFFB9F6CA)
-val NavigationBarQRColor = Color(0xFFB3E5FC)
-
 data class NavigationBarComponent(
     val onPatientLogs: () -> Unit,
     val onReminders: () -> Unit,
@@ -64,7 +60,6 @@ data class NavigationBarComponent(
             AlertDialog(
                 onDismissRequest = {
                     showQrDialog = false
-                    // No qrData for patient, but for consistency, you could reset any related state here if needed
                 },
                 title = {
                     Text("Your QR Code", fontWeight = FontWeight.Bold)
@@ -82,7 +77,6 @@ data class NavigationBarComponent(
                 confirmButton = {
                     TextButton(onClick = {
                         showQrDialog = false
-                        // No qrData for patient, but for consistency, you could reset any related state here if needed
                     }) {
                         Text("CLOSE")
                     }
@@ -110,9 +104,6 @@ data class NavigationBarComponent(
                 },
                 selected = selectedScreen is Screen.PatientLogs,
                 onClick = onPatientLogs,
-                colors = androidx.compose.material3.NavigationBarItemDefaults.colors(
-                    indicatorColor = if (selectedScreen is Screen.PatientLogs) NavigationBarSelectedColor else Color.Transparent
-                )
             )
             NavigationBarItem(
                 icon = {
@@ -138,7 +129,6 @@ data class NavigationBarComponent(
                         modifier = Modifier
                             .size(40.dp)
                             .clip(CircleShape)
-                            .background(NavigationBarQRColor, shape = CircleShape)
                             .border(width = 2.dp, color = Color(0xFF26A69A), shape = CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
@@ -179,9 +169,6 @@ data class NavigationBarComponent(
                 onClick = {
                     onPatientProfile(true)
                 },
-                colors = androidx.compose.material3.NavigationBarItemDefaults.colors(
-                    indicatorColor = if (selectedScreen is Screen.DashBoardPatient) NavigationBarSelectedColor else Color.Transparent
-                )
             )
             NavigationBarItem(
                 icon = {
@@ -199,10 +186,7 @@ data class NavigationBarComponent(
                     )
                 },
                 selected = selectedScreen is Screen.Chat,
-                onClick = onChatScreen,
-                colors = androidx.compose.material3.NavigationBarItemDefaults.colors(
-                    indicatorColor = if (selectedScreen is Screen.Chat) NavigationBarSelectedColor else Color.Transparent
-                )
+                onClick = onChatScreen
             )
         }
     }
@@ -262,78 +246,71 @@ data class NavigationBarComponent(
         NavigationBar(
             windowInsets = WindowInsets(0.dp)
         ) {
-        NavigationBarItem(
-            icon = {
-                Icon(
-                    imageVector = Icons.Filled.Person,
-                    contentDescription = "Profile",
-                    modifier = Modifier.size(32.dp),
-                )
-            },
-            label = {
-                Text(
-                    "Profile",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-            },
-            selected = selectedScreen is Screen.DashboardCareGiver,
-            onClick = {
-                onCaregiverProfile(true)
-            },
-            colors = androidx.compose.material3.NavigationBarItemDefaults.colors(
-                indicatorColor = if (selectedScreen is Screen.DashboardCareGiver) NavigationBarSelectedColor else Color.Transparent
-            )
-        )
-        NavigationBarItem(
-            icon = {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(NavigationBarQRColor, shape = CircleShape)
-                        .border(width = 2.dp, color = Color(0xFF26A69A), shape = CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
+            NavigationBarItem(
+                icon = {
                     Icon(
-                        imageVector = Icons.Default.QrCode,
-                        contentDescription = "Show QR Code for Patient Registration",
-                        modifier = Modifier.size(28.dp),
-                        tint = MaterialTheme.colorScheme.onSurface
+                        imageVector = Icons.Filled.Person,
+                        contentDescription = "Profile",
+                        modifier = Modifier.size(32.dp),
                     )
+                },
+                label = {
+                    Text(
+                        "Profile",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                },
+                selected = selectedScreen is Screen.DashboardCareGiver,
+                onClick = {
+                    onCaregiverProfile(true)
                 }
-            },
-            label = {
-                Text(
-                    "QR Code",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-            },
-            selected = false,
-            onClick = { showQrDialog = true }
-        )
-        NavigationBarItem(
-            icon = {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.Chat,
-                    contentDescription = "Ask AI",
-                    modifier = Modifier.size(32.dp),
-                )
-            },
-            label = {
-                Text(
-                    "Ask AI",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-            },
-            selected = selectedScreen is Screen.Chat,
-            onClick = onChatScreen,
-            colors = androidx.compose.material3.NavigationBarItemDefaults.colors(
-                indicatorColor = if (selectedScreen is Screen.Chat) NavigationBarSelectedColor else Color.Transparent
             )
-        )
+            NavigationBarItem(
+                icon = {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .border(width = 2.dp, color = Color(0xFF26A69A), shape = CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.QrCode,
+                            contentDescription = "Show QR Code for Patient Registration",
+                            modifier = Modifier.size(28.dp),
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                },
+                label = {
+                    Text(
+                        "QR Code",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                },
+                selected = false,
+                onClick = { showQrDialog = true }
+            )
+            NavigationBarItem(
+                icon = {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Chat,
+                        contentDescription = "Ask AI",
+                        modifier = Modifier.size(32.dp),
+                    )
+                },
+                label = {
+                    Text(
+                        "Ask AI",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                },
+                selected = selectedScreen is Screen.Chat,
+                onClick = onChatScreen
+            )
         }
     }
 }
