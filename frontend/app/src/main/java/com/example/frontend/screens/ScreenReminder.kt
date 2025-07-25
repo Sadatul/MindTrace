@@ -28,23 +28,29 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -58,12 +64,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import com.example.frontend.R
 import com.example.frontend.api.RetrofitInstance
+import com.example.frontend.api.SelfUserInfoCache
+import com.example.frontend.api.UserInfo
 import com.example.frontend.api.deleteReminder
+import com.example.frontend.api.getIdToken
 import com.example.frontend.api.getReminders
 import com.example.frontend.api.models.Reminder
 import com.example.frontend.api.models.ReminderSchedule
@@ -76,21 +90,89 @@ import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.Month
 
+@OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun ScreenReminder(userId: String?, navigationBar: NavigationBarComponent) {
+fun ScreenReminder(userId: String?, navigationBar: NavigationBarComponent, onBack: () -> Unit) {
     var showCreateForm by remember { mutableStateOf(false) }
     var reminders by remember { mutableStateOf<List<Reminder>>(emptyList()) }
     var showDeleteDialog by remember { mutableStateOf<Reminder?>(null) }
     val scope = rememberCoroutineScope()
+    var userInfo: UserInfo? by remember { mutableStateOf(null) }
 
     LaunchedEffect(userId) {
         loadReminders(userId) { loadedReminders ->
             reminders = loadedReminders
         }
+
+        if (userId == null) userInfo = SelfUserInfoCache.getUserInfo()
+        else {
+            val token = RetrofitInstance.dementiaAPI.getIdToken()
+            if (token != null) RetrofitInstance.dementiaAPI.getUserInfo(token, userId)
+        }
     }
 
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = if (userInfo != null) "${userInfo!!.name}'s Reminders" else "My Reminders",
+                            style = typography.titleLarge,
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(end = 16.dp)
+                    ) {
+                        if (userInfo != null && userInfo!!.profilePicture != null) {
+                            AsyncImage(
+                                model = userInfo!!.profilePicture,
+                                contentDescription = "Profile Picture",
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(CircleShape)
+                                    .border(2.dp, colorResource(R.color.white), CircleShape),
+                                contentScale = ContentScale.Crop,
+                                placeholder = painterResource(R.drawable.ic_launcher_foreground),
+                                error = painterResource(R.drawable.ic_launcher_foreground)
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(CircleShape)
+                                    .border(2.dp, colorResource(R.color.white), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Person,
+                                    contentDescription = "Default Profile",
+                                    modifier = Modifier.size(28.dp),
+                                    tint = colorResource(R.color.white)
+                                )
+                            }
+                        }
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = colorResource(R.color.card_patient),
+                    titleContentColor = colorResource(R.color.white),
+                    navigationIconContentColor = colorResource(R.color.white),
+                    actionIconContentColor = colorResource(R.color.white)
+                )
+            )
+        },
         bottomBar = {
             if (userId == null) navigationBar.PatientNavigationBar(selectedScreen = Screen.Reminder(null))
             else navigationBar.CaregiverNavigationBar(selectedScreen = Screen.Reminder(null))
