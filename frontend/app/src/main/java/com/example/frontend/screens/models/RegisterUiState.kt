@@ -11,5 +11,6 @@ data class RegisterUiState(
     val selectedRole: String? = null,
     val caregiverFormData: CaregiverFormData = CaregiverFormData(),
     val patientFormData: PatientFormData = PatientFormData(),
-    val firebaseCredentials: FirebaseCredentials? = null
+    val firebaseCredentials: FirebaseCredentials? = null,
+    val isRegistered: Boolean = false
 )

@@ -363,7 +363,7 @@ class ViewModelRegister : ViewModel() {
         }
     }
 
-    fun handleCaregiverRegistration(onNavigateToDashboard: (String) -> Unit) {
+    fun handleCaregiverRegistration(onRegistrationSuccess: (String) -> Unit) {
         Log.d(TAG, "handleCaregiverRegistration called.")
         val formData = _uiState.value.caregiverFormData
         val credentials = _uiState.value.firebaseCredentials
@@ -418,11 +418,12 @@ class ViewModelRegister : ViewModel() {
                     // Fetch and cache user info after successful registration
                     val userInfo = RetrofitInstance.dementiaAPI.getSelfUserInfo()
                     Log.d(TAG, "Cached user info after caregiver registration: $userInfo")
-                    
+
                     // Register FCM token with backend after successful registration
                     appContext?.let { registerDeviceToken(it) }
-                    
-                    onNavigateToDashboard("CAREGIVER")
+
+                    // Registration successful, callback with role only
+                    onRegistrationSuccess("CAREGIVER")
                 } else {
                     registrationApiFailed = true
                     val errorBody = response.errorBody()?.string() ?: "Unknown error"
@@ -455,17 +456,17 @@ class ViewModelRegister : ViewModel() {
     /**
      * Registers the device FCM token with the backend.
      * Called after successful login or user registration.
-     * 
+     *
      * Requirements: 1.1, 1.2, 1.3, 4.1
      */
     private fun registerDeviceToken(context: Context) {
         Log.d(TAG, "Registering device FCM token after successful authentication")
-        
+
         viewModelScope.launch {
             try {
                 val deviceRegistrationManager = DeviceRegistrationManager(context)
                 val success = deviceRegistrationManager.registerDeviceOnLogin()
-                
+
                 if (success) {
                     Log.i(TAG, "Device FCM token registration completed successfully")
                 } else {
@@ -478,8 +479,8 @@ class ViewModelRegister : ViewModel() {
             }
         }
     }
-    
-    fun handlePatientRegistration(onNavigateToDashboard: (String) -> Unit) {
+
+    fun handlePatientRegistration(onRegistrationSuccess: (String) -> Unit) {
         Log.d(TAG, "handlePatientRegistration called.")
         val formData = _uiState.value.patientFormData
         val credentials = _uiState.value.firebaseCredentials
@@ -539,12 +540,10 @@ class ViewModelRegister : ViewModel() {
                     // Fetch and cache user info after successful registration
                     val userInfo = RetrofitInstance.dementiaAPI.getSelfUserInfo()
                     Log.d(TAG, "Cached user info after patient registration: $userInfo")
-                    
                     // Register FCM token with backend after successful registration
                     appContext?.let { registerDeviceToken(it) }
-                    
-                    // Always navigate to PatientLogs after patient registration
-                    onNavigateToDashboard("PATIENT")
+                    // Registration successful, callback with role only
+                    onRegistrationSuccess("PATIENT")
                 } else {
                     registrationApiFailed = true
                     val errorBody = response.errorBody()?.string() ?: "Unknown error"

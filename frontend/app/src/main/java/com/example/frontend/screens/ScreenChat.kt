@@ -11,7 +11,6 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,6 +30,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -134,11 +134,6 @@ fun ChatScreen(
             // Check if the first visible item (oldest due to reverseLayout) is within threshold
             listState.layoutInfo.visibleItemsInfo.firstOrNull()?.index
         }.collect { firstVisibleIndex ->
-            // If reverseLayout is true, the "first" visible item is the oldest.
-            // We want to load more when the user scrolls towards the "top" of the list,
-            // which visually appears as scrolling up to see older messages.
-            // The condition should be when the *last* visible item (which is actually the oldest loaded message)
-            // is near the end of the current `messages` list.
             val lastVisibleItemIndex = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
             if (lastVisibleItemIndex != null &&
                 lastVisibleItemIndex >= messages.size - 5 && // Load when 5 items from the end (oldest) are visible
@@ -170,7 +165,6 @@ fun ChatScreen(
     Scaffold(
         containerColor = colorResource(R.color.dark_background),
         topBar = {
-            var showTelegramDialog by remember { mutableStateOf(false) }
             CenterAlignedTopAppBar(
                 title = {
                     Text(
@@ -181,53 +175,14 @@ fun ChatScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(
-                        onClick = { showTelegramDialog = true },
-                        modifier = Modifier.padding(start = 0.dp)
-                    ) {
-                        val boxSize = 200.dp
-                        val borderWidth = 2.dp
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .size(boxSize)
-                                .clip(CircleShape)
-                                .background(colorResource(R.color.white))
-                                .border(
-                                    width = borderWidth,
-                                    color = colorResource(R.color.gradient_caregiver_start),
-                                    shape = CircleShape
-                                )
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_telegram_logo),
-                                contentDescription = "Telegram",
-                                tint = Color(0xFF229ED9),
-                                modifier = Modifier.size(boxSize - borderWidth * 2)
-                            )
-                        }
-                    }
-                    if (showTelegramDialog) {
-                        androidx.compose.material3.AlertDialog(
-                            onDismissRequest = { showTelegramDialog = false },
-                            title = { Text("Confirmation") },
-                            text = { Text("You want to chat with telegram?") },
-                            confirmButton = {
-                                androidx.compose.material3.TextButton(onClick = {
-                                    showTelegramDialog = false
-                                    // TODO: Implement Telegram chat action here
-                                }) {
-                                    Text("Yes")
-                                }
-                            },
-                            dismissButton = {
-                                androidx.compose.material3.TextButton(onClick = { showTelegramDialog = false }) {
-                                    Text("No")
-                                }
-                            }
+                    IconButton(onClick = { onCancelDialog() }) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back"
                         )
                     }
-                },actions = {
+                },
+                actions = {
                     Box(
                         modifier = Modifier.padding(end = 12.dp),
                         contentAlignment = Alignment.Center
@@ -287,7 +242,7 @@ fun ChatScreen(
                     .fillMaxSize()
                     .padding(innerPadding)
                     .padding(horizontal = 16.dp, vertical = 8.dp) // Adjusted padding
-            ) { // Corrected: Removed extra parenthesis here
+            ) {
                 if (isInitiallyLoading && messages.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(color = colorResource(R.color.dark_primary))
@@ -559,7 +514,7 @@ fun ChatScreen(
         LastChatDialog(
             onDismiss = {
                 showLastChatDialog = false
-                onCancelDialog() // Navigate back to dashboard
+                onCancelDialog()
             },
             onViewLastChat = {
                 showLastChatDialog = false

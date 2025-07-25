@@ -75,6 +75,7 @@ data class PrimaryContact(
     val createdAt: String
 )
 
+
 data class UserInfo(
     val id: String,
     val name: String,
@@ -86,6 +87,10 @@ data class UserInfo(
     val primaryContact: PrimaryContact?,
     val createdAt: String,
     val telegramChatId: String?
+)
+
+data class TelegramUUIDResponse(
+    val value: String
 )
 
 data class RequestPatientAdd(
@@ -141,6 +146,11 @@ interface DementiaAPI {
         @Header("Authorization") firebaseIdToken: String,
         @Body request: RequestChat
     ): Response<ResponseBody>
+
+    @GET("/v1/telegram/register")
+    suspend fun getTelegramUUIDWithAuth(
+        @Header("Authorization") firebaseIdToken: String
+    ): Response<TelegramUUIDResponse> 
 
     @GET("/v1/users")
     suspend fun getUserInfo(
@@ -536,6 +546,16 @@ suspend fun DementiaAPI.deleteReminder(id: String): Boolean {
     val token = getIdToken() ?: return false
     val response = deleteReminderWithAuth(firebaseIdToken = "Bearer $token", id)
     return response.isSuccessful
+}
+
+suspend fun DementiaAPI.getTelegramUUID(): TelegramUUIDResponse? {
+    val token = getIdToken() ?: return null
+    val response = getTelegramUUIDWithAuth(firebaseIdToken = "Bearer $token")
+    return response.body()
+}
+
+fun DementiaAPI.getTelegramURL(uuid: String): String {
+    return "https://t.me/mindtracebot?start=$uuid"
 }
 
 /**

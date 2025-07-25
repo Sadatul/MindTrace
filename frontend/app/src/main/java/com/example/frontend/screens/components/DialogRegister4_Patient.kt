@@ -22,7 +22,6 @@ fun PatientRegisterDialog(
     profilePictureUrl: String?,
     onDobChange: (String) -> Unit,
     onGenderChange: (String) -> Unit,
-    onPrimaryContactChange: (String) -> Unit,
     onPrimaryInfoChange: (String, String) -> Unit,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
@@ -41,7 +40,6 @@ fun PatientRegisterDialog(
                 qrScanned = true
             } else {
                 // Fallback: treat entire string as caregiver ID for backwards compatibility
-                onPrimaryContactChange(scannedData)
                 qrScannerActive = false
                 qrScanned = true
             }

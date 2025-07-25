@@ -18,8 +18,13 @@ import com.example.frontend.screens.components.RegisterPromptDialog
 import com.example.frontend.screens.components.RegisterScreenUI
 import com.example.frontend.screens.components.RoleSelectionDialog
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
+import com.example.frontend.screens.components.DialogTelegramBot
+
 private const val TAG = "ScreenRegister"
 
 @Composable
@@ -30,6 +35,9 @@ fun ScreenRegister(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val uiState by viewModel.uiState.collectAsState()    // Initialize Google Sign-In Client
+    var showTelegramDialog by remember { mutableStateOf(false) }
+    var userRole by remember { mutableStateOf<String?>(null) }
+
     LaunchedEffect(Unit) {
         viewModel.initializeGoogleSignInClient(context)
     }
@@ -62,6 +70,22 @@ fun ScreenRegister(
             },
             showWelcomeAnimation = true
         )
+
+        if (showTelegramDialog && userRole != null) {
+            DialogTelegramBot(
+                onDismiss = { showTelegramDialog = false },
+                onYes = {
+                    showTelegramDialog = false
+                    userRole?.let { onNavigateToDashboard(it) }
+                    userRole = null
+                },
+                onNo = {
+                    showTelegramDialog = false
+                    userRole?.let { onNavigateToDashboard(it) }
+                    userRole = null
+                }
+            )
+        }
 
         if (uiState.showRegisterPrompt) {
             Log.d(TAG, "Displaying RegisterPromptDialog.")
@@ -128,7 +152,10 @@ fun ScreenRegister(
                 },
                 onConfirm = {
                     Log.d(TAG, "CaregiverRegisterDialog: Confirm (Register) clicked.")
-                    viewModel.handleCaregiverRegistration(onNavigateToDashboard)
+                    viewModel.handleCaregiverRegistration { role ->
+                        userRole = role
+                        showTelegramDialog = true
+                    }
                 }
             )
         }
@@ -146,9 +173,6 @@ fun ScreenRegister(
                 onGenderChange = { gender ->
                     viewModel.updatePatientFormData(uiState.patientFormData.copy(gender = gender))
                 },
-                onPrimaryContactChange = { contact ->
-                    viewModel.updatePatientFormData(uiState.patientFormData.copy(primaryContact = contact))
-                },
                 onPrimaryInfoChange = {contact, otp ->
                     viewModel.updatePatientFormData(uiState.patientFormData.copy(primaryContact = contact, otp = otp))
                 },
@@ -158,7 +182,10 @@ fun ScreenRegister(
                 },
                 onConfirm = {
                     Log.d(TAG, "PatientRegisterDialog: Confirm (Register) clicked.")
-                    viewModel.handlePatientRegistration(onNavigateToDashboard)
+                    viewModel.handlePatientRegistration { role ->
+                        userRole = role
+                        showTelegramDialog = true
+                    }
                 }
             )
         }
