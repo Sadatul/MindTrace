@@ -118,7 +118,7 @@ fun ScreenReminder(userId: String?, navigationBar: NavigationBarComponent, onBac
                 title = {
                     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                         Text(
-                            text = if (userInfo != null) "${userInfo!!.name}'s Reminders" else "My Reminders",
+                            text = if (userInfo != null) "${userInfo!!.name}'s Reminders" else "Reminders",
                             style = typography.titleLarge,
                             modifier = Modifier.align(Alignment.Center)
                         )
