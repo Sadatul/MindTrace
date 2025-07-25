@@ -553,7 +553,7 @@ fun MyLogsScreen(
     onBack: () -> Unit = {},
     isPatient: Boolean,
     viewModel: ViewModelLogs = viewModel(),
-    navigationBar: NavigationBarComponent
+    navigationBar: NavigationBarComponent,
 ) {
     val logs by viewModel.logs.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()

@@ -418,10 +418,12 @@ class ViewModelRegister : ViewModel() {
                     // Fetch and cache user info after successful registration
                     val userInfo = RetrofitInstance.dementiaAPI.getSelfUserInfo()
                     Log.d(TAG, "Cached user info after caregiver registration: $userInfo")
-                    
+
                     // Register FCM token with backend after successful registration
                     appContext?.let { registerDeviceToken(it) }
-                    
+
+                    // Set isRegistered to true to trigger Telegram dialog
+                    _uiState.value = _uiState.value.copy(isRegistered = true)
                     onNavigateToDashboard("CAREGIVER")
                 } else {
                     registrationApiFailed = true
@@ -455,17 +457,17 @@ class ViewModelRegister : ViewModel() {
     /**
      * Registers the device FCM token with the backend.
      * Called after successful login or user registration.
-     * 
+     *
      * Requirements: 1.1, 1.2, 1.3, 4.1
      */
     private fun registerDeviceToken(context: Context) {
         Log.d(TAG, "Registering device FCM token after successful authentication")
-        
+
         viewModelScope.launch {
             try {
                 val deviceRegistrationManager = DeviceRegistrationManager(context)
                 val success = deviceRegistrationManager.registerDeviceOnLogin()
-                
+
                 if (success) {
                     Log.i(TAG, "Device FCM token registration completed successfully")
                 } else {
@@ -478,7 +480,7 @@ class ViewModelRegister : ViewModel() {
             }
         }
     }
-    
+
     fun handlePatientRegistration(onNavigateToDashboard: (String) -> Unit) {
         Log.d(TAG, "handlePatientRegistration called.")
         val formData = _uiState.value.patientFormData
@@ -539,11 +541,10 @@ class ViewModelRegister : ViewModel() {
                     // Fetch and cache user info after successful registration
                     val userInfo = RetrofitInstance.dementiaAPI.getSelfUserInfo()
                     Log.d(TAG, "Cached user info after patient registration: $userInfo")
-                    
                     // Register FCM token with backend after successful registration
                     appContext?.let { registerDeviceToken(it) }
-                    
-                    // Always navigate to PatientLogs after patient registration
+                    // Set isRegistered to true to trigger Telegram dialog
+                    _uiState.value = _uiState.value.copy(isRegistered = true)
                     onNavigateToDashboard("PATIENT")
                 } else {
                     registrationApiFailed = true

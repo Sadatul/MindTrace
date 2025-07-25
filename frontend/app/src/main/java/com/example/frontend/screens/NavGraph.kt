@@ -69,7 +69,7 @@ fun SetupNavGraph(navController: NavHostController) {
                 onNavigateToDashboard = { role ->
                     val destination =
                         when (role) {
-                            "PATIENT" -> Screen.PatientLogs(null)
+                            "PATIENT" -> Screen.DashBoardPatient
                             "CAREGIVER" -> Screen.DashboardCareGiver
                             else -> throw IllegalArgumentException("Unknown role: $role")
                         }

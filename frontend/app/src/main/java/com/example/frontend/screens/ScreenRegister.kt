@@ -18,8 +18,13 @@ import com.example.frontend.screens.components.RegisterPromptDialog
 import com.example.frontend.screens.components.RegisterScreenUI
 import com.example.frontend.screens.components.RoleSelectionDialog
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
+import com.example.frontend.screens.components.DialogTelegramBot
+
 private const val TAG = "ScreenRegister"
 
 @Composable
@@ -30,6 +35,14 @@ fun ScreenRegister(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val uiState by viewModel.uiState.collectAsState()    // Initialize Google Sign-In Client
+    var showTelegramDialog by remember { mutableStateOf(false) }
+    var pendingRoleForNavigation by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(uiState.isRegistered) {
+        if (uiState.isRegistered && uiState.selectedRole != null) {
+            showTelegramDialog = true
+            pendingRoleForNavigation = uiState.selectedRole
+        }
+    }
     LaunchedEffect(Unit) {
         viewModel.initializeGoogleSignInClient(context)
     }
@@ -62,6 +75,22 @@ fun ScreenRegister(
             },
             showWelcomeAnimation = true
         )
+
+        if (showTelegramDialog && pendingRoleForNavigation != null) {
+            DialogTelegramBot(
+                showDialog = true,
+                onDismiss = { showTelegramDialog = false },
+                context = context,
+                scope = coroutineScope,
+                onResult = { _ ->
+                    showTelegramDialog = false
+                    pendingRoleForNavigation?.let { role ->
+                        onNavigateToDashboard(role)
+                        pendingRoleForNavigation = null
+                    }
+                }
+            )
+        }
 
         if (uiState.showRegisterPrompt) {
             Log.d(TAG, "Displaying RegisterPromptDialog.")
@@ -128,7 +157,7 @@ fun ScreenRegister(
                 },
                 onConfirm = {
                     Log.d(TAG, "CaregiverRegisterDialog: Confirm (Register) clicked.")
-                    viewModel.handleCaregiverRegistration(onNavigateToDashboard)
+                    viewModel.handleCaregiverRegistration { /* Navigation handled after Telegram dialog */ }
                 }
             )
         }
@@ -158,7 +187,7 @@ fun ScreenRegister(
                 },
                 onConfirm = {
                     Log.d(TAG, "PatientRegisterDialog: Confirm (Register) clicked.")
-                    viewModel.handlePatientRegistration(onNavigateToDashboard)
+                    viewModel.handlePatientRegistration { /* Navigation handled after Telegram dialog */ }
                 }
             )
         }
