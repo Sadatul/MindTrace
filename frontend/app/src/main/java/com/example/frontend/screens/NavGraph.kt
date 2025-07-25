@@ -160,7 +160,11 @@ fun SetupNavGraph(navController: NavHostController) {
         composable<Screen.Reminder> { backStackEntry ->
             val (userId) = backStackEntry.toRoute<Screen.Reminder>()
 
-            ScreenReminder(userId, navigationBar)
+            ScreenReminder(
+                userId = userId,
+                navigationBar = navigationBar,
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 
