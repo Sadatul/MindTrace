@@ -27,7 +27,6 @@ fun DialogTelegramBot(
         text = { Text("Do You Want To Get OTP in Telegram?") },
         confirmButton = {
             TextButton(onClick = {
-                onDismiss()
                 scope.launch {
                     try {
                         val uuidBody = RetrofitInstance.dementiaAPI.getTelegramUUID()
@@ -40,6 +39,7 @@ fun DialogTelegramBot(
                     } catch (e: Exception) {
                         Log.e("DialogTelegramBot", "Telegram UUID API exception", e)
                     }
+                    onDismiss()
                     onYes()
                 }
             }) {
