@@ -363,7 +363,7 @@ class ViewModelRegister : ViewModel() {
         }
     }
 
-    fun handleCaregiverRegistration(onNavigateToDashboard: (String) -> Unit) {
+    fun handleCaregiverRegistration(onRegistrationSuccess: (String) -> Unit) {
         Log.d(TAG, "handleCaregiverRegistration called.")
         val formData = _uiState.value.caregiverFormData
         val credentials = _uiState.value.firebaseCredentials
@@ -422,9 +422,8 @@ class ViewModelRegister : ViewModel() {
                     // Register FCM token with backend after successful registration
                     appContext?.let { registerDeviceToken(it) }
 
-                    // Set isRegistered to true to trigger Telegram dialog
-                    _uiState.value = _uiState.value.copy(isRegistered = true)
-                    onNavigateToDashboard("CAREGIVER")
+                    // Registration successful, callback with role only
+                    onRegistrationSuccess("CAREGIVER")
                 } else {
                     registrationApiFailed = true
                     val errorBody = response.errorBody()?.string() ?: "Unknown error"
@@ -481,7 +480,7 @@ class ViewModelRegister : ViewModel() {
         }
     }
 
-    fun handlePatientRegistration(onNavigateToDashboard: (String) -> Unit) {
+    fun handlePatientRegistration(onRegistrationSuccess: (String) -> Unit) {
         Log.d(TAG, "handlePatientRegistration called.")
         val formData = _uiState.value.patientFormData
         val credentials = _uiState.value.firebaseCredentials
@@ -543,9 +542,8 @@ class ViewModelRegister : ViewModel() {
                     Log.d(TAG, "Cached user info after patient registration: $userInfo")
                     // Register FCM token with backend after successful registration
                     appContext?.let { registerDeviceToken(it) }
-                    // Set isRegistered to true to trigger Telegram dialog
-                    _uiState.value = _uiState.value.copy(isRegistered = true)
-                    onNavigateToDashboard("PATIENT")
+                    // Registration successful, callback with role only
+                    onRegistrationSuccess("PATIENT")
                 } else {
                     registrationApiFailed = true
                     val errorBody = response.errorBody()?.string() ?: "Unknown error"

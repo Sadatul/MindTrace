@@ -36,13 +36,8 @@ fun ScreenRegister(
     val coroutineScope = rememberCoroutineScope()
     val uiState by viewModel.uiState.collectAsState()    // Initialize Google Sign-In Client
     var showTelegramDialog by remember { mutableStateOf(false) }
-    var pendingRoleForNavigation by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(uiState.isRegistered) {
-        if (uiState.isRegistered && uiState.selectedRole != null) {
-            showTelegramDialog = true
-            pendingRoleForNavigation = uiState.selectedRole
-        }
-    }
+    var userRole by remember { mutableStateOf<String?>(null) }
+
     LaunchedEffect(Unit) {
         viewModel.initializeGoogleSignInClient(context)
     }
@@ -76,18 +71,18 @@ fun ScreenRegister(
             showWelcomeAnimation = true
         )
 
-        if (showTelegramDialog && pendingRoleForNavigation != null) {
+        if (showTelegramDialog && userRole != null) {
             DialogTelegramBot(
-                showDialog = true,
                 onDismiss = { showTelegramDialog = false },
-                context = context,
-                scope = coroutineScope,
-                onResult = { _ ->
+                onYes = {
                     showTelegramDialog = false
-                    pendingRoleForNavigation?.let { role ->
-                        onNavigateToDashboard(role)
-                        pendingRoleForNavigation = null
-                    }
+                    userRole?.let { onNavigateToDashboard(it) }
+                    userRole = null
+                },
+                onNo = {
+                    showTelegramDialog = false
+                    userRole?.let { onNavigateToDashboard(it) }
+                    userRole = null
                 }
             )
         }
@@ -157,7 +152,10 @@ fun ScreenRegister(
                 },
                 onConfirm = {
                     Log.d(TAG, "CaregiverRegisterDialog: Confirm (Register) clicked.")
-                    viewModel.handleCaregiverRegistration { /* Navigation handled after Telegram dialog */ }
+                    viewModel.handleCaregiverRegistration { role ->
+                        userRole = role
+                        showTelegramDialog = true
+                    }
                 }
             )
         }
@@ -175,9 +173,6 @@ fun ScreenRegister(
                 onGenderChange = { gender ->
                     viewModel.updatePatientFormData(uiState.patientFormData.copy(gender = gender))
                 },
-                onPrimaryContactChange = { contact ->
-                    viewModel.updatePatientFormData(uiState.patientFormData.copy(primaryContact = contact))
-                },
                 onPrimaryInfoChange = {contact, otp ->
                     viewModel.updatePatientFormData(uiState.patientFormData.copy(primaryContact = contact, otp = otp))
                 },
@@ -187,7 +182,10 @@ fun ScreenRegister(
                 },
                 onConfirm = {
                     Log.d(TAG, "PatientRegisterDialog: Confirm (Register) clicked.")
-                    viewModel.handlePatientRegistration { /* Navigation handled after Telegram dialog */ }
+                    viewModel.handlePatientRegistration { role ->
+                        userRole = role
+                        showTelegramDialog = true
+                    }
                 }
             )
         }
