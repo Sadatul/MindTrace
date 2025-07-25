@@ -148,7 +148,7 @@ interface DementiaAPI {
     ): Response<ResponseBody>
 
     @GET("/v1/telegram/register")
-    suspend fun getTelegramUUID(
+    suspend fun getTelegramUUIDWithAuth(
         @Header("Authorization") firebaseIdToken: String
     ): Response<TelegramUUIDResponse> 
 
@@ -546,6 +546,16 @@ suspend fun DementiaAPI.deleteReminder(id: String): Boolean {
     val token = getIdToken() ?: return false
     val response = deleteReminderWithAuth(firebaseIdToken = "Bearer $token", id)
     return response.isSuccessful
+}
+
+suspend fun DementiaAPI.getTelegramUUID(): TelegramUUIDResponse? {
+    val token = getIdToken() ?: return null
+    val response = getTelegramUUIDWithAuth(firebaseIdToken = "Bearer $token")
+    return response.body()
+}
+
+fun DementiaAPI.getTelegramURL(uuid: String): String {
+    return "https://t.me/mindtracebot?start=$uuid"
 }
 
 /**

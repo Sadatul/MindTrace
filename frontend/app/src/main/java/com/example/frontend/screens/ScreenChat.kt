@@ -69,6 +69,8 @@ import com.example.frontend.api.RetrofitInstance
 import com.example.frontend.api.SelfUserInfoCache
 import com.example.frontend.api.UserInfo
 import com.example.frontend.api.getIdToken
+import com.example.frontend.api.getTelegramURL
+import com.example.frontend.api.getTelegramUUID
 import com.example.frontend.api.models.RequestChat
 import com.example.frontend.screens.components.ChatBubble
 import com.example.frontend.screens.components.LastChatDialog
@@ -218,17 +220,12 @@ fun ChatScreen(
                                     showTelegramDialog = false
                                     scope.launch {
                                         try {
-                                            val token = RetrofitInstance.dementiaAPI.getIdToken()
-                                            val response = RetrofitInstance.dementiaAPI.getTelegramUUID("Bearer $token")
-                                            if (response.isSuccessful) {
-                                                val uuid = response.body()?.value
-                                                if (uuid != null) {
-                                                    val telegramUrl = "https://t.me/mindtracebot?start=$uuid"
-                                                    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(telegramUrl))
-                                                    context.startActivity(intent)
-                                                }
-                                            } else {
-                                                Log.e(TAG, "Telegram UUID API error: ${response.code()} - ${response.errorBody()?.string()}")
+                                            val uuidBody = RetrofitInstance.dementiaAPI.getTelegramUUID()
+                                            if (uuidBody != null) {
+                                                val uuid = uuidBody.value
+                                                val telegramUrl = RetrofitInstance.dementiaAPI.getTelegramURL(uuid)
+                                                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(telegramUrl))
+                                                context.startActivity(intent)
                                             }
                                         } catch (e: Exception) {
                                             Log.e(TAG, "Telegram UUID API exception", e)
