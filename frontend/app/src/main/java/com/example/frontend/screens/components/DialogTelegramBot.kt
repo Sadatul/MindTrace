@@ -3,15 +3,25 @@ package com.example.frontend.screens.components
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import com.example.frontend.api.RetrofitInstance
 import com.example.frontend.api.getTelegramURL
 import com.example.frontend.api.getTelegramUUID
+import com.example.frontend.R
 
 @Composable
 fun DialogTelegramBot(
@@ -23,8 +33,21 @@ fun DialogTelegramBot(
     val scope = rememberCoroutineScope()
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Confirmation") },
-        text = { Text("Do You Want To Get OTP in Telegram?") },
+        title = { Text("Telegram") },
+        text = { 
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_telegram_logo),
+                    contentDescription = "Telegram",
+                    modifier = Modifier.size(24.dp),
+                    tint = Color.Unspecified
+                )
+                Text("Connect to Telegram")
+            }
+        },
         confirmButton = {
             TextButton(onClick = {
                 scope.launch {
@@ -43,7 +66,7 @@ fun DialogTelegramBot(
                     onYes()
                 }
             }) {
-                Text("Yes")
+                Text("Connect")
             }
         },
         dismissButton = {
@@ -51,7 +74,7 @@ fun DialogTelegramBot(
                 onDismiss()
                 onNo()
             }) {
-                Text("No")
+                Text("Skip")
             }
         }
     )
