@@ -48,8 +48,8 @@ jobs:
       with:
         name: mindtrace
         file: infrastructure/docker/docker-stack.yml
-        host: 4.216.184.149
-        user: deployer
+        host: ${{ secrets.DEPLOY_HOST }}
+        user: ${{ secrets.DEPLOY_USER }}
         ssh_key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
         env_file: ./envfile
         registry_host: ghcr.io
