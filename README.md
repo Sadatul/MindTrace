@@ -3,7 +3,7 @@
 **Authors :** Sadatul Islam Sadi, Irtiaz Kabir, Ninad Mahmud Nobo <br>
 **Supervisor:** Sheikh Azizul Hakim, Lecturer, BUET
 
-**Download APK**: [Google Drive](https://drive.google.com/drive/folders/14WXv_mqQwlbYGB3XA5HGF0AK042b_2oF?usp=sharing)
+**Download APK**: [APK RELEASE](https://github.com/Sadatul/MindTrace/releases/download/1.0.0-RELEASE/app-debug.apk)
 
 ## Table of Contents
 
