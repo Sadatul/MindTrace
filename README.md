@@ -3,11 +3,10 @@
 **Authors :** Sadatul Islam Sadi, Irtiaz Kabir, Ninad Mahmud Nobo <br>
 **Supervisor:** Sheikh Azizul Hakim, Lecturer, BUET
 
-**Download APK:** [Google Drive](https://drive.google.com/drive/folders/14WXv_mqQwlbYGB3XA5HGF0AK042b_2oF?usp=sharing)
-
 ## Table of Contents
 
 - [Introduction](#introduction)
+- [Demo Videos](#demo-videos)
 - [Features](#features)
 - [Database Schema](#database-schema)
 - [Infrastructure Architecture](#infrastructure-architecture)
@@ -29,6 +28,22 @@ At its core, MindTrace is more than just an app - it's a digital companion that 
 We believe that technology should serve humanity, not replace it. That's why MindTrace is designed to work seamlessly with your existing care network - whether it's a trusted family member, a professional caregiver, or a dedicated maid. Our multi-layered security ensures that your loved one's privacy and dignity are always protected, while our intelligent notification system keeps everyone who cares informed and connected.
 
 In a world where dementia can make communication difficult and memories fade, MindTrace helps preserve the precious moments, maintain routines, and ensure that no important detail is lost. It's our way of saying that even in the face of cognitive challenges, every life deserves to be lived with dignity, connection, and love.
+
+## Demo Videos
+
+### 🎥 Feature Demo
+Watch our comprehensive feature demonstration showcasing MindTrace's AI-powered conversational assistant, caregiver management, and real-time logging capabilities:
+
+[![Feature Demo](https://img.youtube.com/vi/BpRmKZYAOhM/0.jpg)](https://youtu.be/BpRmKZYAOhM)
+
+**[🔗 Feature Demo Video](https://youtu.be/BpRmKZYAOhM)**
+
+### 🏗️ Infrastructure Demo
+Explore our complete deployment infrastructure, CI/CD pipeline, and system architecture in action:
+
+[![Infrastructure Demo](https://img.youtube.com/vi/i0GG_g0eZck/0.jpg)](https://www.youtube.com/watch?v=i0GG_g0eZck)
+
+**[🔗 Infrastructure Demo Video](https://www.youtube.com/watch?v=i0GG_g0eZck)**
 
 ## Features
 
